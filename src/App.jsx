@@ -8,35 +8,43 @@ import 'leaflet/dist/leaflet.css';
 import Auth from './components/Auth';
 import UserProfile from './components/UserProfile';
 
-
 function App() {
   const [showMap, setShowMap] = useState(false);
+  const [showListings, setShowListings] = useState(false);
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(setUser);
+    return () => unsubscribe();
+  }, []);
 
   React.useEffect(() => {
     if (!showMap) return;
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
+        navigator.geolocation.getCurrentPosition((pos) => {
           const { latitude, longitude } = pos.coords;
-          await setDoc(doc(db, 'sellers', user.uid), {
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            lat: latitude,
-            lng: longitude,
-            photoURL: user.photoURL || '',
-            updatedAt: new Date(),
-          }, { merge: true });
+          (async () => {
+            await setDoc(doc(db, 'sellers', user.uid), {
+              uid: user.uid,
+              displayName: user.displayName,
+              email: user.email,
+              lat: latitude,
+              lng: longitude,
+              photoURL: user.photoURL || '',
+              updatedAt: new Date(),
+            }, { merge: true });
+          })();
         });
       }
     });
     return () => unsubscribe();
   }, [showMap]);
 
-  if (!showMap) {
+  if (!showMap && !showListings) {
     return (
       <div className="min-h-screen flex flex-col justify-between bg-green-50">
-        <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center pb-32">
           <h1 className="text-4xl font-bold text-green-800 mb-4 mt-16">WELCOME TO ZEDLOCA MARKET PLACE</h1>
           <p className="text-lg text-green-700 mb-8">Buy and sell locally with ease. Sign in to get started!</p>
           <div className="mb-8">
@@ -44,16 +52,63 @@ function App() {
             <UserProfile />
           </div>
         </div>
-        <footer className="bg-green-700 text-white py-4 w-full flex justify-center">
+        <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
+          {user ? (
+            <>
+              <button
+                className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+                onClick={() => setShowMap(true)}
+              >
+                View Map
+              </button>
+              <button
+                className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+                onClick={() => setShowListings(true)}
+              >
+                My Listings
+              </button>
+            </>
+          ) : (
+            <span className="text-white font-semibold">Sign in to view the map</span>
+          )}
+        </footer>
+      </div>
+    );
+  }
+
+  // Show listings panel/modal
+  if (showListings && user) {
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-green-50">
+        <div className="flex-1 flex flex-col items-center justify-center pb-32">
+          <h1 className="text-4xl font-bold text-green-800 mb-4 mt-16">MY LISTINGS</h1>
+          <div className="mb-8 w-full max-w-2xl">
+            <Listings userId={user.uid} />
+          </div>
+        </div>
+        <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
           <button
             className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
-            onClick={() => setShowMap(true)}
+            onClick={() => { setShowListings(false); setShowMap(true); }}
           >
             View Map
+          </button>
+          <button
+            className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+            onClick={() => setShowListings(false)}
+          >
+            Back
           </button>
         </footer>
       </div>
     );
+  }
+
+  // Only allow map view if user is signed in
+  if (!user) {
+    setShowMap(false);
+    setShowListings(false);
+    return null;
   }
 
   return (
@@ -61,7 +116,7 @@ function App() {
       <h1 className="text-3xl font-bold absolute top-0 left-0 p-4 text-white bg-green-700 z-20">
         WELCOME TO ZEDLOCA MARKET PLACE
       </h1>
-      <div className="absolute top-20 left-0 w-full z-30 flex flex-col items-center">
+      <div className="absolute top-20 left-0 w-full z-30 flex flex-col items-center pb-32">
         <Auth />
         <UserProfile />
       </div>
@@ -77,12 +132,18 @@ function App() {
         />
         <MapSellers />
       </MapContainer>
-      <footer className="bg-green-700 text-white py-4 w-full flex justify-center absolute bottom-0 left-0 z-40">
+      <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
         <button
           className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
           onClick={() => setShowMap(false)}
         >
-          Hide Map
+          Back
+        </button>
+        <button
+          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+          onClick={() => { setShowMap(false); setShowListings(true); }}
+        >
+          My Listings
         </button>
       </footer>
     </div>
