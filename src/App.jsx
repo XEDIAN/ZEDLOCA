@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import Auth from './components/Auth';
 
 function App() {
   return (
@@ -8,6 +10,9 @@ function App() {
       <h1 className="text-3xl font-bold absolute top-0 left-0 p-4 text-white bg-gray-900 z-20">
         WELCOME TO ZEDLOCA MARKET PLACE
       </h1>
+      <div className="absolute top-20 left-0 w-full z-30 flex justify-center">
+        <Auth />
+      </div>
       <MapContainer
         center={[-15.417, 28.283]} // Lusaka coordinates
         zoom={13}
