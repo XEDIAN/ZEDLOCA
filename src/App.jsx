@@ -1,16 +1,20 @@
-
 import React, { useState } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import MapSellers from './components/MapSellers';
+import MapControls from './components/MapControls';
 import { auth, db } from './firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import 'leaflet/dist/leaflet.css';
 import Auth from './components/Auth';
 import UserProfile from './components/UserProfile';
+import DraggableSidebar from './components/DraggableSidebar';
+import Listings from './components/Listings';
+import SellerListings from './components/SellerListings';
 
 function App() {
   const [showMap, setShowMap] = useState(false);
   const [showListings, setShowListings] = useState(false);
+  const [showSellerListings, setShowSellerListings] = useState(null);
   const [user, setUser] = React.useState(null);
 
   React.useEffect(() => {
@@ -41,6 +45,16 @@ function App() {
     return () => unsubscribe();
   }, [showMap]);
 
+  // Show seller listings
+  if (showSellerListings) {
+    return (
+      <SellerListings
+        sellerId={showSellerListings}
+        onBack={() => setShowSellerListings(null)}
+      />
+    );
+  }
+
   if (!showMap && !showListings) {
     return (
       <div className="min-h-screen flex flex-col justify-between bg-green-50">
@@ -49,7 +63,6 @@ function App() {
           <p className="text-lg text-green-700 mb-8">Buy and sell locally with ease. Sign in to get started!</p>
           <div className="mb-8">
             <Auth />
-            <UserProfile />
           </div>
         </div>
         <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
@@ -99,6 +112,7 @@ function App() {
           >
             Back
           </button>
+          <DraggableSidebar />
         </footer>
       </div>
     );
@@ -118,19 +132,20 @@ function App() {
       </h1>
       <div className="absolute top-20 left-0 w-full z-30 flex flex-col items-center pb-32">
         <Auth />
-        <UserProfile />
       </div>
       <MapContainer
         center={[-15.417, 28.283]} // Lusaka coordinates
         zoom={13}
         style={{ height: '100%', width: '100%' }}
         className="z-0"
+        zoomControl={false} // Disable default zoom controls
       >
         <TileLayer
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
         <MapSellers />
+        <MapControls />
       </MapContainer>
       <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
         <button
@@ -145,10 +160,16 @@ function App() {
         >
           My Listings
         </button>
+        <button
+          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+          onClick={() => setShowSellerListings('example-seller-id')}
+        >
+          Stores
+        </button>
+        <DraggableSidebar />
       </footer>
     </div>
   );
 }
 
 export default App;
-

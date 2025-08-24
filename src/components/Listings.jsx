@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { db, storage } from '../firebase';
-import { collection, addDoc, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 function Listings({ userId }) {
@@ -9,6 +9,7 @@ function Listings({ userId }) {
   const [form, setForm] = useState({ title: '', price: '', description: '', image: '' });
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -22,7 +23,6 @@ function Listings({ userId }) {
     });
     return () => unsub();
   }, [userId]);
-
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -42,24 +42,64 @@ function Listings({ userId }) {
         await uploadBytes(storageRef, file);
         imageUrl = await getDownloadURL(storageRef);
       }
-      await addDoc(collection(db, 'listings'), {
-        ...form,
-        image: imageUrl,
-        userId,
-        createdAt: new Date(),
-      });
+      
+      if (editingId) {
+        // Update existing listing
+        await updateDoc(doc(db, 'listings', editingId), {
+          ...form,
+          image: imageUrl,
+          updatedAt: new Date(),
+        });
+        setEditingId(null);
+      } else {
+        // Create new listing
+        await addDoc(collection(db, 'listings'), {
+          ...form,
+          image: imageUrl,
+          userId,
+          createdAt: new Date(),
+        });
+      }
+      
       setForm({ title: '', price: '', description: '', image: '' });
       setFile(null);
     } catch (err) {
-      alert('Error adding listing: ' + err.message);
+      alert('Error saving listing: ' + err.message);
     }
     setLoading(false);
+  };
+
+  const handleEdit = (listing) => {
+    setForm({
+      title: listing.title,
+      price: listing.price,
+      description: listing.description,
+      image: listing.image || '',
+    });
+    setEditingId(listing.id);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this listing?')) {
+      try {
+        await deleteDoc(doc(db, 'listings', id));
+      } catch (err) {
+        alert('Error deleting listing: ' + err.message);
+      }
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm({ title: '', price: '', description: '', image: '' });
+    setFile(null);
   };
 
   return (
     <div className="mt-6">
       <h3 className="text-lg font-semibold mb-2">My Listings</h3>
-  <form onSubmit={handleSubmit} className="mb-4 p-4 border rounded bg-gray-50" encType="multipart/form-data">
+      <form onSubmit={handleSubmit} className="mb-4 p-4 border rounded bg-gray-50" encType="multipart/form-data">
+        <h4 className="font-semibold mb-2">{editingId ? 'Edit Listing' : 'Add New Listing'}</h4>
         <div className="mb-2">
           <input
             name="title"
@@ -106,9 +146,20 @@ function Listings({ userId }) {
             required
           />
         </div>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded" disabled={loading}>
-          {loading ? 'Adding...' : 'Add Listing'}
-        </button>
+        <div className="flex gap-2">
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded" disabled={loading}>
+            {loading ? 'Saving...' : editingId ? 'Update Listing' : 'Add Listing'}
+          </button>
+          {editingId && (
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="bg-gray-500 text-white px-4 py-2 rounded"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {listings.map(listing => (
@@ -119,7 +170,20 @@ function Listings({ userId }) {
             <h4 className="font-bold">{listing.title}</h4>
             <p className="text-green-700 font-semibold">{listing.price}</p>
             <p className="text-gray-600 text-sm mb-2">{listing.description}</p>
-            {/* Add edit/delete buttons here for real user listings */}
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => handleEdit(listing)}
+                className="bg-yellow-500 text-white px-3 py-1 rounded text-sm"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(listing.id)}
+                className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         ))}
       </div>
