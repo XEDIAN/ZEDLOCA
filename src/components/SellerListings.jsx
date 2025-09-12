@@ -22,7 +22,7 @@ function SellerListings({ sellerId, onBack }) {
       }
     };
 
-    // Fetch seller listings
+    // Fetch seller listings ordered by newest first (requires composite index: userId asc + createdAt desc)
     const q = query(
       collection(db, 'listings'),
       where('userId', '==', sellerId),
@@ -30,7 +30,9 @@ function SellerListings({ sellerId, onBack }) {
     );
     
     const unsubListings = onSnapshot(q, (snapshot) => {
-      setListings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      // With Firestore ordering, map directly
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setListings(docs);
       setLoading(false);
     }, (error) => {
       console.error('Error fetching listings:', error);
@@ -74,7 +76,11 @@ function SellerListings({ sellerId, onBack }) {
                 {listings.map(listing => (
                   <div key={listing.id} className="border rounded p-4 bg-white shadow">
                     {listing.image && (
-                      <img src={listing.image} alt={listing.title} className="w-full h-32 object-cover rounded mb-2" />
+                      listing.mediaType === 'video' ? (
+                        <video src={listing.image} controls className="w-full h-32 object-cover rounded mb-2" />
+                      ) : (
+                        <img src={listing.image} alt={listing.title} className="w-full h-32 object-cover rounded mb-2" />
+                      )
                     )}
                     <h4 className="font-bold">{listing.title}</h4>
                     <p className="text-green-700 font-semibold">{listing.price}</p>

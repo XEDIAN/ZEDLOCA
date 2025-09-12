@@ -55,6 +55,43 @@ function App() {
     );
   }
 
+  // Consistent footer component for authenticated users
+  const renderFooter = () => {
+    if (!user) return null;
+    
+    return (
+      <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
+        <button
+          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+          onClick={() => {
+            setShowMap(true);
+            setShowListings(false);
+            setShowSellerListings(null);
+          }}
+        >
+          View Map
+        </button>
+        <button
+          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+          onClick={() => {
+            setShowListings(true);
+            setShowMap(false);
+            setShowSellerListings(null);
+          }}
+        >
+          My Listings
+        </button>
+        <button
+          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+          onClick={() => setShowSellerListings(user.uid)}
+        >
+          Stores
+        </button>
+        <DraggableSidebar />
+      </footer>
+    );
+  };
+
   if (!showMap && !showListings) {
     return (
       <div className="min-h-screen flex flex-col justify-between bg-green-50">
@@ -65,26 +102,7 @@ function App() {
             <Auth />
           </div>
         </div>
-        <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
-          {user ? (
-            <>
-              <button
-                className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
-                onClick={() => setShowMap(true)}
-              >
-                View Map
-              </button>
-              <button
-                className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
-                onClick={() => setShowListings(true)}
-              >
-                My Listings
-              </button>
-            </>
-          ) : (
-            <span className="text-white font-semibold">Sign in to view the map</span>
-          )}
-        </footer>
+        {renderFooter()}
       </div>
     );
   }
@@ -99,21 +117,7 @@ function App() {
             <Listings userId={user.uid} />
           </div>
         </div>
-        <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
-          <button
-            className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
-            onClick={() => { setShowListings(false); setShowMap(true); }}
-          >
-            View Map
-          </button>
-          <button
-            className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
-            onClick={() => setShowListings(false)}
-          >
-            Back
-          </button>
-          <DraggableSidebar />
-        </footer>
+        {renderFooter()}
       </div>
     );
   }
@@ -147,27 +151,7 @@ function App() {
         <MapSellers />
         <MapControls />
       </MapContainer>
-      <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
-        <button
-          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
-          onClick={() => setShowMap(false)}
-        >
-          Back
-        </button>
-        <button
-          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
-          onClick={() => { setShowMap(false); setShowListings(true); }}
-        >
-          My Listings
-        </button>
-        <button
-          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
-          onClick={() => setShowSellerListings('example-seller-id')}
-        >
-          Stores
-        </button>
-        <DraggableSidebar />
-      </footer>
+      {renderFooter()}
     </div>
   );
 }

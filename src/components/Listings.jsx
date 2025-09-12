@@ -1,26 +1,53 @@
-
 import React, { useEffect, useState } from 'react';
-import { db, storage } from '../firebase';
-import { collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '../firebase';
+import { collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 
 function Listings({ userId }) {
   const [listings, setListings] = useState([]);
-  const [form, setForm] = useState({ title: '', price: '', description: '', image: '' });
-  const [file, setFile] = useState(null);
+  const [form, setForm] = useState({ title: '', price: '', description: '' });
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     if (!userId) return;
+
+    // Query listings for this user, ordered by newest first (requires composite index on userId + createdAt desc)
     const q = query(
       collection(db, 'listings'),
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
-    const unsub = onSnapshot(q, (snapshot) => {
-      setListings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        const toMs = (t) => {
+          try {
+            if (!t) return 0;
+            if (typeof t.toMillis === 'function') return t.toMillis();
+            return new Date(t).getTime() || 0;
+          } catch {
+            return 0;
+          }
+        };
+        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Sort newest first
+        docs.sort((a, b) => toMs(b.createdAt) - toMs(a.createdAt));
+        setListings(docs);
+        setErrorMessage('');
+      },
+      (error) => {
+        console.error('Listings listener error:', error);
+        const msg = error?.message || 'Failed to load listings.';
+        setErrorMessage(
+          msg.toLowerCase().includes('index')
+            ? msg
+            : 'Failed to load listings. Check Firestore rules and required composite indexes. ' + msg
+        );
+      }
+    );
     return () => unsub();
   }, [userId]);
 
@@ -28,43 +55,63 @@ function Listings({ userId }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!navigator.onLine) {
+      setErrorMessage('You appear to be offline. Please check your internet connection and try again.');
+      setLoading(false);
+      return;
+    }
+    if (!userId) {
+      alert('You must be logged in to create a listing');
+      return;
+    }
+    if (!form.title || !form.title.trim()) {
+      alert('Please enter a title for your listing');
+      return;
+    }
+    if (!form.price || !form.price.trim()) {
+      alert('Please enter a price for your listing');
+      return;
+    }
+    if (isNaN(form.price)) {
+      alert('Please enter a valid price (numbers only)');
+      return;
+    }
+    if (!form.description || !form.description.trim()) {
+      alert('Please enter a description for your listing');
+      return;
+    }
     setLoading(true);
-    let imageUrl = form.image;
+    setSuccessMessage('');
     try {
-      if (file) {
-        const storageRef = ref(storage, `listing-images/${userId}/${Date.now()}_${file.name}`);
-        await uploadBytes(storageRef, file);
-        imageUrl = await getDownloadURL(storageRef);
-      }
-      
       if (editingId) {
         // Update existing listing
         await updateDoc(doc(db, 'listings', editingId), {
           ...form,
-          image: imageUrl,
-          updatedAt: new Date(),
+          updatedAt: serverTimestamp(),
         });
+        setSuccessMessage('Listing updated successfully!');
         setEditingId(null);
       } else {
         // Create new listing
         await addDoc(collection(db, 'listings'), {
           ...form,
-          image: imageUrl,
           userId,
-          createdAt: new Date(),
+          createdAt: serverTimestamp(),
         });
+        setSuccessMessage('Listing added successfully!');
       }
-      
-      setForm({ title: '', price: '', description: '', image: '' });
-      setFile(null);
+      setForm({ title: '', price: '', description: '' });
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
     } catch (err) {
-      alert('Error saving listing: ' + err.message);
+      console.error('Error saving listing:', err);
+      setSuccessMessage('');
+      let errorMessage = 'Error saving listing: ' + (err?.message || 'Unknown error');
+      setErrorMessage(errorMessage);
     }
     setLoading(false);
   };
@@ -74,7 +121,6 @@ function Listings({ userId }) {
       title: listing.title,
       price: listing.price,
       description: listing.description,
-      image: listing.image || '',
     });
     setEditingId(listing.id);
   };
@@ -91,14 +137,23 @@ function Listings({ userId }) {
 
   const cancelEdit = () => {
     setEditingId(null);
-    setForm({ title: '', price: '', description: '', image: '' });
-    setFile(null);
+    setForm({ title: '', price: '', description: '' });
   };
 
   return (
     <div className="mt-6">
       <h3 className="text-lg font-semibold mb-2">My Listings</h3>
-      <form onSubmit={handleSubmit} className="mb-4 p-4 border rounded bg-gray-50" encType="multipart/form-data">
+      {errorMessage && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          {errorMessage}
+        </div>
+      )}
+      {successMessage && (
+        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+          {successMessage}
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="mb-4 p-4 border rounded bg-gray-50">
         <h4 className="font-semibold mb-2">{editingId ? 'Edit Listing' : 'Add New Listing'}</h4>
         <div className="mb-2">
           <input
@@ -118,22 +173,6 @@ function Listings({ userId }) {
             placeholder="Price"
             className="border p-2 rounded w-full"
             required
-          />
-        </div>
-        <div className="mb-2">
-          <label className="block mb-1">Image (upload or paste URL)</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="border p-2 rounded w-full mb-1"
-          />
-          <input
-            name="image"
-            value={form.image}
-            onChange={handleChange}
-            placeholder="Image URL (optional if uploading)"
-            className="border p-2 rounded w-full"
           />
         </div>
         <div className="mb-2">
@@ -164,9 +203,6 @@ function Listings({ userId }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {listings.map(listing => (
           <div key={listing.id} className="border rounded p-4 bg-white shadow">
-            {listing.image && (
-              <img src={listing.image} alt={listing.title} className="w-full h-32 object-cover rounded mb-2" />
-            )}
             <h4 className="font-bold">{listing.title}</h4>
             <p className="text-green-700 font-semibold">{listing.price}</p>
             <p className="text-gray-600 text-sm mb-2">{listing.description}</p>
