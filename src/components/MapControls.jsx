@@ -87,8 +87,8 @@ function MapControls() {
         <div className="flex flex-col bg-white rounded-lg shadow-lg overflow-hidden">
           <button
             onClick={handleZoomIn}
-            className="w-12 h-12 md:w-10 md:h-10 bg-white hover:bg-green-50 active:bg-green-100 
-                     flex items-center justify-center text-green-700 font-bold text-xl
+            className="w-12 h-12 md:w-10 md:h-10 bg-white hover:bg-gray-100 active:bg-gray-200 
+                     flex items-center justify-center text-gray-700 font-bold text-xl
                      transition-colors duration-150 border-b border-gray-200 last:border-b-0
                      touch-manipulation select-none"
             aria-label="Zoom in"
@@ -98,8 +98,8 @@ function MapControls() {
           </button>
           <button
             onClick={handleZoomOut}
-            className="w-12 h-12 md:w-10 md:h-10 bg-white hover:bg-green-50 active:bg-green-100 
-                     flex items-center justify-center text-green-700 font-bold text-xl
+            className="w-12 h-12 md:w-10 md:h-10 bg-white hover:bg-gray-100 active:bg-gray-200 
+                     flex items-center justify-center text-gray-700 font-bold text-xl
                      transition-colors duration-150
                      touch-manipulation select-none"
             aria-label="Zoom out"
@@ -113,8 +113,8 @@ function MapControls() {
         <button
           onClick={handleLocateMe}
           disabled={isLocating}
-          className={`w-12 h-12 md:w-10 md:h-10 bg-white hover:bg-green-50 active:bg-green-100 
-                     rounded-lg shadow-lg flex items-center justify-center text-green-700
+          className={`w-12 h-12 md:w-10 md:h-10 bg-white hover:bg-gray-100 active:bg-gray-200 
+                     rounded-lg shadow-lg flex items-center justify-center text-gray-700
                      transition-colors duration-150 touch-manipulation select-none
                      ${isLocating ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'}
                      ${locationError ? 'bg-red-50 text-red-600' : ''}`}

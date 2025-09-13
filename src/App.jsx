@@ -60,9 +60,9 @@ function App() {
     if (!user) return null;
     
     return (
-      <footer className="fixed bottom-0 left-0 w-full bg-green-700 text-white py-4 flex justify-center gap-4 z-50">
+  <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-4 flex justify-center gap-4 z-50">
         <button
-          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
           onClick={() => {
             setShowMap(true);
             setShowListings(false);
@@ -72,7 +72,7 @@ function App() {
           View Map
         </button>
         <button
-          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
           onClick={() => {
             setShowListings(true);
             setShowMap(false);
@@ -82,7 +82,7 @@ function App() {
           My Listings
         </button>
         <button
-          className="bg-white text-green-700 font-bold px-6 py-2 rounded shadow hover:bg-green-100 transition"
+          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
           onClick={() => setShowSellerListings(user.uid)}
         >
           Stores
@@ -94,10 +94,10 @@ function App() {
 
   if (!showMap && !showListings) {
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-green-50">
+  <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
         <div className="flex-1 flex flex-col items-center justify-center pb-32">
-          <h1 className="text-4xl font-bold text-green-800 mb-4 mt-16">WELCOME TO ZEDLOCA MARKET PLACE</h1>
-          <p className="text-lg text-green-700 mb-8">Buy and sell locally with ease. Sign in to get started!</p>
+          <h1 className="text-4xl font-bold text-gray-800 mb-4 mt-16">WELCOME TO ZEDLOCA MARKET PLACE</h1>
+          <p className="text-lg text-gray-700 mb-8">Buy and sell locally with ease. Sign in to get started!</p>
           <div className="mb-8">
             <Auth />
           </div>
@@ -110,9 +110,9 @@ function App() {
   // Show listings panel/modal
   if (showListings && user) {
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-green-50">
+  <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
         <div className="flex-1 flex flex-col items-center justify-center pb-32">
-          <h1 className="text-4xl font-bold text-green-800 mb-4 mt-16">MY LISTINGS</h1>
+          <h1 className="text-4xl font-bold text-gray-800 mb-4 mt-16">MY LISTINGS</h1>
           <div className="mb-8 w-full max-w-2xl">
             <Listings userId={user.uid} />
           </div>
@@ -130,9 +130,9 @@ function App() {
   }
 
   return (
-    <div className="h-screen w-screen relative bg-green-50">
-      <header className="fixed top-0 left-0 w-full bg-green-700 z-30 shadow-lg">
-        <h1 className="text-3xl font-bold text-white text-center py-4">
+    <div className="h-screen w-screen relative bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+      <header className="fixed top-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 z-30 shadow-lg">
+        <h1 className="text-3xl font-bold text-white text-center py-4 drop-shadow">
           WELCOME TO ZEDLOCA MARKET PLACE
         </h1>
       </header>
@@ -150,11 +150,39 @@ function App() {
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
-        {/* Removed user marker and welcome text from map */}
         <MapSellers />
         <MapControls />
       </MapContainer>
-      {renderFooter()}
+      {/* Footer theme update */}
+      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-4 flex justify-center gap-4 z-50">
+        <button
+          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          onClick={() => {
+            setShowMap(true);
+            setShowListings(false);
+            setShowSellerListings(null);
+          }}
+        >
+          View Map
+        </button>
+        <button
+          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          onClick={() => {
+            setShowListings(true);
+            setShowMap(false);
+            setShowSellerListings(null);
+          }}
+        >
+          My Listings
+        </button>
+        <button
+          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          onClick={() => setShowSellerListings(user.uid)}
+        >
+          Stores
+        </button>
+        <DraggableSidebar />
+      </footer>
     </div>
   );
 }

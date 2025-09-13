@@ -70,7 +70,7 @@ function DraggableSidebar() {
     >
       {/* Drag handle */}
       <div
-        className="absolute top-0 left-0 h-full w-2 cursor-col-resize bg-green-700 hover:bg-green-600 flex items-center justify-center"
+  className="absolute top-0 left-0 h-full w-2 cursor-col-resize bg-gray-700 hover:bg-gray-600 flex items-center justify-center"
         onMouseDown={handleDragStart}
         onTouchStart={handleDragStart}
       >
@@ -80,7 +80,7 @@ function DraggableSidebar() {
       {/* Toggle button */}
       <button
         onClick={toggleSidebar}
-        className="absolute top-4 -left-8 w-8 h-12 bg-green-700 text-white flex items-center justify-center shadow-lg rounded-l-lg z-50"
+  className="absolute top-4 -left-8 w-8 h-12 bg-gray-700 text-white flex items-center justify-center shadow-lg rounded-l-lg z-50"
         aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
         {isOpen ? (
@@ -97,7 +97,7 @@ function DraggableSidebar() {
       {/* Sidebar content */}
       <div className={`h-full overflow-y-auto transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
         <div className="p-4 pt-16">
-          <h2 className="text-xl font-bold mb-4 text-green-800">Profile</h2>
+          <h2 className="text-xl font-bold mb-4 text-gray-800">Profile</h2>
           <UserProfile />
         </div>
       </div>

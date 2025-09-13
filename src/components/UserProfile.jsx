@@ -32,7 +32,7 @@ function UserProfile() {
         <img src={user.photoURL} alt="User" className="w-20 h-20 rounded-full mb-2" />
         <h2 className="text-xl font-bold mb-1">{user.displayName}</h2>
         <p className="mb-2 text-gray-600">{user.email}</p>
-        <button onClick={handleSignOut} className="bg-green-700 text-white px-4 py-2 rounded mt-2">Sign Out</button>
+  <button onClick={handleSignOut} className="bg-gray-700 text-white px-4 py-2 rounded mt-2">Sign Out</button>
       </div>
     </div>
   );
