@@ -30,10 +30,7 @@ function Auth() {
   return (
     <div className="flex flex-col items-center mt-8">
       {user ? (
-        <>
-          <img src={user.photoURL} alt="User" className="w-16 h-16 rounded-full mb-2" />
-          <p className="mb-2">Welcome, {user.displayName}</p>
-        </>
+        <></>
       ) : (
         <button onClick={handleSignIn} className="bg-green-700 text-white px-4 py-2 rounded">Sign in with Google</button>
       )}

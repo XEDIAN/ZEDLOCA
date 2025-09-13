@@ -131,9 +131,11 @@ function App() {
 
   return (
     <div className="h-screen w-screen relative bg-green-50">
-      <h1 className="text-3xl font-bold absolute top-0 left-0 p-4 text-white bg-green-700 z-20">
-        WELCOME TO ZEDLOCA MARKET PLACE
-      </h1>
+      <header className="fixed top-0 left-0 w-full bg-green-700 z-30 shadow-lg">
+        <h1 className="text-3xl font-bold text-white text-center py-4">
+          WELCOME TO ZEDLOCA MARKET PLACE
+        </h1>
+      </header>
       <div className="absolute top-20 left-0 w-full z-30 flex flex-col items-center pb-32">
         <Auth />
       </div>
@@ -148,6 +150,7 @@ function App() {
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
+        {/* Removed user marker and welcome text from map */}
         <MapSellers />
         <MapControls />
       </MapContainer>

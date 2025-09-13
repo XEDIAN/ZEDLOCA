@@ -36,13 +36,7 @@ function MapSellers() {
         <Marker key={seller.id} position={[seller.lat, seller.lng]} icon={sellerIcon}>
           <Popup>
             <div className="flex flex-col items-center">
-              {seller.photoURL && (
-                <img src={seller.photoURL} alt="Seller" className="w-16 h-16 rounded-full mb-2" />
-              )}
-              <strong>{seller.displayName}</strong><br />
-              <span className="text-xs text-gray-600">{seller.email}</span>
-              {/* You can add more details here, e.g., phone, description, etc. */}
-              {/* <a href={`/seller/${seller.uid}`} className="text-blue-600 underline mt-2">View Listings</a> */}
+              {/* Seller info removed as requested */}
             </div>
           </Popup>
         </Marker>
