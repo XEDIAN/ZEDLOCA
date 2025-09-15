@@ -82,36 +82,36 @@ function Listings({ userId }) {
       alert('Please enter a description for your listing');
       return;
     }
-    setLoading(true);
-    setSuccessMessage('');
     try {
-      if (editingId) {
-        // Update existing listing
-        await updateDoc(doc(db, 'listings', editingId), {
-          ...form,
-          updatedAt: serverTimestamp(),
-        });
-        setSuccessMessage('Listing updated successfully!');
-        setEditingId(null);
-      } else {
-        // Create new listing
-        await addDoc(collection(db, 'listings'), {
-          ...form,
-          userId,
-          createdAt: serverTimestamp(),
-        });
-        setSuccessMessage('Listing added successfully!');
-      }
+      await addDoc(collection(db, 'listings'), {
+        userId,
+        title: form.title,
+        price: form.price,
+        description: form.description,
+        createdAt: serverTimestamp(),
+      });
       setForm({ title: '', price: '', description: '' });
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
+      setSuccessMessage('Listing created successfully!');
+      setErrorMessage('');
+      // Prompt seller to register location via popup
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            await updateDoc(doc(db, 'sellers', userId), {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              updatedAt: new Date(),
+            });
+            alert('Your location has been registered!');
+          },
+          (err) => {
+            alert('Failed to get location: ' + err.message);
+          },
+          { enableHighAccuracy: true }
+        );
+      }
     } catch (err) {
-      console.error('Error saving listing:', err);
-      setSuccessMessage('');
-      let errorMessage = 'Error saving listing: ' + (err?.message || 'Unknown error');
-      setErrorMessage(errorMessage);
+      setErrorMessage('Failed to create listing: ' + err.message);
     }
     setLoading(false);
   };
@@ -143,13 +143,19 @@ function Listings({ userId }) {
   return (
     <div className="mt-6">
       <h3 className="text-lg font-semibold mb-2">My Listings</h3>
+      {loading && (
+        <div className="flex justify-center items-center mb-4">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-blue-600"></div>
+          <span className="ml-3 text-blue-600 font-medium">Loading...</span>
+        </div>
+      )}
       {errorMessage && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
           {errorMessage}
         </div>
       )}
       {successMessage && (
-        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+  <div className="mb-4 p-3 bg-gray-200 text-gray-700 rounded">
           {successMessage}
         </div>
       )}
@@ -202,9 +208,12 @@ function Listings({ userId }) {
       </form>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {listings.map(listing => (
-          <div key={listing.id} className="border rounded p-4 bg-white shadow">
-            <h4 className="font-bold">{listing.title}</h4>
-            <p className="text-green-700 font-semibold">{listing.price}</p>
+          <div key={listing.id} className="border rounded p-4 bg-white shadow flex flex-col">
+            <div className="flex items-center mb-2">
+              <span className="mr-2 text-2xl" role="img" aria-label="Listing">📦</span>
+              <h4 className="font-bold text-lg">{listing.title}</h4>
+            </div>
+            <p className="text-gray-700 font-semibold">{listing.price}</p>
             <p className="text-gray-600 text-sm mb-2">{listing.description}</p>
             <div className="flex gap-2 mt-2">
               <button
@@ -218,6 +227,12 @@ function Listings({ userId }) {
                 className="bg-red-500 text-white px-3 py-1 rounded text-sm"
               >
                 Delete
+              </button>
+              <button
+                onClick={() => alert(`Details for ${listing.title}:\nPrice: ${listing.price}\nDescription: ${listing.description}`)}
+                className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+              >
+                Details
               </button>
             </div>
           </div>

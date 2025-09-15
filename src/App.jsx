@@ -77,6 +77,24 @@ function App() {
             setShowListings(true);
             setShowMap(false);
             setShowSellerListings(null);
+            // Prompt seller to register location
+            if (user && navigator.geolocation) {
+              window.alert('Please allow location access to register your current location for your store.');
+              navigator.geolocation.getCurrentPosition((pos) => {
+                const { latitude, longitude } = pos.coords;
+                (async () => {
+                  await setDoc(doc(db, 'sellers', user.uid), {
+                    uid: user.uid,
+                    displayName: user.displayName,
+                    email: user.email,
+                    lat: latitude,
+                    lng: longitude,
+                    photoURL: user.photoURL || '',
+                    updatedAt: new Date(),
+                  }, { merge: true });
+                })();
+              }, null, { enableHighAccuracy: true });
+            }
           }}
         >
           My Listings
