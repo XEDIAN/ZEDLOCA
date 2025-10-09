@@ -2,10 +2,28 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
 
+/**
+ * Simple haversine implementation to compute distances in meters.
+ * Mirrors the helper used in MapSellers so promo radius checks are consistent.
+ */
+function haversine(lat1, lon1, lat2, lon2) {
+  if ([lat1, lon1, lat2, lon2].some(v => typeof v !== 'number')) return Infinity;
+  const toRad = (v) => (v * Math.PI) / 180;
+  const R = 6371000; // earth radius in meters
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 function SellerListings({ sellerId, onBack }) {
   const [seller, setSeller] = useState(null);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
     if (!sellerId) return;
@@ -30,7 +48,6 @@ function SellerListings({ sellerId, onBack }) {
     );
     
     const unsubListings = onSnapshot(q, (snapshot) => {
-      // With Firestore ordering, map directly
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setListings(docs);
       setLoading(false);
@@ -44,9 +61,30 @@ function SellerListings({ sellerId, onBack }) {
     return () => unsubListings();
   }, [sellerId]);
 
+  // Try to get a precise user location; if denied/fails we keep it null which disables promo visibility
+  useEffect(() => {
+    let cancelled = false;
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (cancelled) return;
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        (err) => {
+          console.warn('User location not available:', err.message);
+          setUserLocation(null);
+        },
+        { enableHighAccuracy: true, maximumAge: 1000 * 60 * 5 }
+      );
+    } else {
+      setUserLocation(null);
+    }
+    return () => { cancelled = true; };
+  }, []);
+
   if (loading) {
     return (
-  <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
         <div className="flex-1 flex flex-col items-center justify-center pb-32">
           <h1 className="text-4xl font-bold text-gray-800 mb-4 mt-16">Loading...</h1>
         </div>
@@ -54,8 +92,17 @@ function SellerListings({ sellerId, onBack }) {
     );
   }
 
+  // Compute distance to seller and whether promo is active for the current user
+  const distanceToSeller = (seller && userLocation && typeof seller.lat === 'number' && typeof seller.lng === 'number')
+    ? haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng)
+    : Infinity;
+
+  const promoActiveForUser = !!seller && !!seller.promo_active && typeof seller.promo_radius_meters === 'number'
+    ? distanceToSeller <= seller.promo_radius_meters
+    : false;
+
   return (
-  <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
       <div className="flex-1 flex flex-col items-center justify-center pb-32">
         {seller ? (
           <div className="w-full max-w-2xl mt-8">
@@ -63,9 +110,22 @@ function SellerListings({ sellerId, onBack }) {
               {seller.photoURL && (
                 <img src={seller.photoURL} alt={seller.displayName} className="w-16 h-16 rounded-full mr-4" />
               )}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">{seller.displayName}</h2>
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-bold text-gray-800">{seller.displayName}</h2>
+                  {/* Show store-wide promo status */}
+                  {seller.promo_active && promoActiveForUser && (
+                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">Promotion active</span>
+                  )}
+                  {seller.promo_active && !promoActiveForUser && (
+                    <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">Promotion (out of range)</span>
+                  )}
+                </div>
                 <p className="text-gray-700">{seller.email}</p>
+                {/* If promo is active and user is within radius, show promo text */}
+                {seller.promo_active && seller.promo_text && promoActiveForUser && (
+                  <p className="text-sm text-green-700 mt-1">Offer: {seller.promo_text} — within {seller.promo_radius_meters} m</p>
+                )}
               </div>
             </div>
             
@@ -74,7 +134,7 @@ function SellerListings({ sellerId, onBack }) {
             {listings.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {listings.map(listing => (
-                  <div key={listing.id} className="border rounded p-4 bg-white shadow">
+                  <div key={listing.id} className="border rounded p-4 bg-white shadow relative">
                     {listing.image && (
                       listing.mediaType === 'video' ? (
                         <video src={listing.image} controls className="w-full h-32 object-cover rounded mb-2" />
@@ -82,9 +142,22 @@ function SellerListings({ sellerId, onBack }) {
                         <img src={listing.image} alt={listing.title} className="w-full h-32 object-cover rounded mb-2" />
                       )
                     )}
-                    <h4 className="font-bold">{listing.title}</h4>
-                    <p className="text-gray-700 font-semibold">{listing.price}</p>
-                    <p className="text-gray-600 text-sm">{listing.description}</p>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold">{listing.title}</h4>
+                        <p className="text-gray-700 font-semibold">{listing.price}</p>
+                        <p className="text-gray-600 text-sm">{listing.description}</p>
+                      </div>
+                      {/* Per-listing promo badge (same as store-wide since promo is seller-scoped) */}
+                      {seller.promo_active && promoActiveForUser && (
+                        <div className="ml-2 text-right">
+                          <span className="inline-block bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">Promo</span>
+                          {seller.promo_text && (
+                            <div className="text-xs text-gray-700 mt-1 max-w-xs text-right">"{seller.promo_text}"</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -100,7 +173,7 @@ function SellerListings({ sellerId, onBack }) {
         )}
       </div>
       
-  <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-4 flex justify-center gap-4 z-50">
+      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-4 flex justify-center gap-4 z-50">
         <button
           className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
           onClick={onBack}

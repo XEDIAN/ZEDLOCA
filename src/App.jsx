@@ -62,7 +62,7 @@ function App() {
     return (
   <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-4 flex justify-center gap-4 z-50">
         <button
-          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
           onClick={() => {
             setShowMap(true);
             setShowListings(false);
@@ -72,7 +72,7 @@ function App() {
           View Map
         </button>
         <button
-          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
           onClick={() => {
             setShowListings(true);
             setShowMap(false);
@@ -100,7 +100,7 @@ function App() {
           My Listings
         </button>
         <button
-          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
           onClick={() => setShowSellerListings(user.uid)}
         >
           Stores
@@ -114,8 +114,8 @@ function App() {
     return (
   <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
         <div className="flex-1 flex flex-col items-center justify-center pb-32">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4 mt-16">WELCOME TO ZEDLOCA MARKET PLACE</h1>
-          <p className="text-lg text-gray-700 mb-8">Buy and sell locally with ease. Sign in to get started!</p>
+          <h1 className="welcome-title text-4xl font-bold text-gray-800 mb-4 mt-16">ZEDLOCA</h1>
+          <p className="welcome-subtitle">Your own digital network</p>
           <div className="mb-8">
             <Auth />
           </div>
@@ -150,8 +150,8 @@ function App() {
   return (
     <div className="h-screen w-screen relative bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
       <header className="fixed top-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 z-30 shadow-lg">
-        <h1 className="text-3xl font-bold text-white text-center py-4 drop-shadow">
-          WELCOME TO ZEDLOCA MARKET PLACE
+        <h1 className="welcome-title text-3xl font-bold text-white text-center py-4 drop-shadow">
+          ZEDLOCA
         </h1>
       </header>
       <div className="absolute top-20 left-0 w-full z-30 flex flex-col items-center pb-32">
@@ -174,7 +174,7 @@ function App() {
       {/* Footer theme update */}
       <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-4 flex justify-center gap-4 z-50">
         <button
-          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
           onClick={() => {
             setShowMap(true);
             setShowListings(false);
@@ -184,7 +184,7 @@ function App() {
           View Map
         </button>
         <button
-          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
           onClick={() => {
             setShowListings(true);
             setShowMap(false);
@@ -194,7 +194,7 @@ function App() {
           My Listings
         </button>
         <button
-          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
           onClick={() => setShowSellerListings(user.uid)}
         >
           Stores
