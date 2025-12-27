@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Marker, Popup, useMap } from 'react-leaflet';
 import { db, auth } from '../firebase';
 import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import MessageSellerModal from './MessageSellerModal';
 import L from 'leaflet';
 
 const isMobile = typeof window !== "undefined" && window.innerWidth <= 600;
@@ -42,6 +43,7 @@ function haversine(lat1, lon1, lat2, lon2) {
 function MapSellers() {
   const [sellers, setSellers] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
+  const [messageModal, setMessageModal] = useState({ open: false, seller: null });
   const loggedImpressionsRef = useRef(new Set());
   const map = useMap();
 
@@ -157,13 +159,20 @@ function MapSellers() {
                   )}
                   <button
                     className="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm shadow hover:bg-blue-700"
-                    onClick={() => handleContactClick(seller, distanceToUser)}
-                  >Contact Seller</button>
+                    onClick={() => setMessageModal({ open: true, seller })}
+                  >Message Seller</button>
                 </div>
               </Popup>
             </Marker>
           );
         })}
+      <MessageSellerModal
+        open={messageModal.open}
+        onClose={() => setMessageModal({ open: false, seller: null })}
+        sellerId={messageModal.seller?.id || ''}
+        sellerName={messageModal.seller?.displayName || ''}
+        buyerId={auth?.currentUser?.uid || ''}
+      />
     </>
   );
 }
