@@ -12,13 +12,16 @@ import DraggableSidebar from './components/DraggableSidebar';
 import Listings from './components/Listings';
 import RequireRole from './components/RequireRole';
 
-import SellerInbox from './components/SellerInbox';
 
-function App() {
+import SellerInbox from './components/SellerInbox';
+import BuyerMessages from './components/BuyerMessages';
+
+const App = () => {
   const [showMap, setShowMap] = useState(false);
   const [showListings, setShowListings] = useState(false);
   const [showSellerListings, setShowSellerListings] = useState(null);
   const [showInbox, setShowInbox] = useState(false);
+  const [showBuyerMessages, setShowBuyerMessages] = useState(false);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [roleLoading, setRoleLoading] = useState(false);
@@ -92,6 +95,18 @@ function App() {
     );
   }
 
+  // Show buyer messages page
+  if (showBuyerMessages && user && role === 'buyer') {
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+        <BuyerMessages buyerId={user.uid} />
+        <div className="flex justify-center mt-4">
+          <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => setShowBuyerMessages(false)}>Back</button>
+        </div>
+      </div>
+    );
+  }
+
   // Consistent footer component for authenticated users
   const renderFooter = () => {
     if (!user || !role) return null;
@@ -144,6 +159,15 @@ function App() {
               Inbox
             </button>
           </>
+        )}
+        {role === 'buyer' && (
+          <button
+            className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn"
+            onClick={() => setShowBuyerMessages(true)}
+            title="My Messages"
+          >
+            <span role="img" aria-label="Messages">💬</span>
+          </button>
         )}
         <button
           className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
@@ -215,7 +239,7 @@ function App() {
         center={[-15.417, 28.283]} // Lusaka coordinates
         zoom={13}
         style={{ height: '100%', width: '100%' }}
-        className="z-0"
+        className="z-0 map-container-with-footer"
         zoomControl={false} // Disable default zoom controls
       >
         <TileLayer
@@ -258,6 +282,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;

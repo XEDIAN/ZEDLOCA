@@ -22,6 +22,11 @@ body, #root {
 }
 
 /* Responsive styles for mobile devices */
+
+/* Add bottom padding to map container to prevent footer overlap */
+.map-container-with-footer {
+  padding-bottom: 90px; /* Adjust to match or slightly exceed footer height */
+}
 @media (max-width: 600px) {
   #root {
     max-width: 100vw;
