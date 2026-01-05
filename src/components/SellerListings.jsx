@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
+import MessageSellerModal from './MessageSellerModal';
 
 /**
  * Simple haversine implementation to compute distances in meters.
@@ -106,63 +107,104 @@ function SellerListings({ sellerId, onBack }) {
       <div className="flex-1 flex flex-col items-center justify-center pb-32">
         {seller ? (
           <div className="w-full max-w-2xl mt-8">
-            <div className="flex items-center mb-6 p-4 bg-white rounded shadow">
-              {seller.photoURL && (
-                <img src={seller.photoURL} alt={seller.displayName} className="w-16 h-16 rounded-full mr-4" />
-              )}
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-2xl font-bold text-gray-800">{seller.displayName}</h2>
-                  {/* Show store-wide promo status */}
-                  {seller.promo_active && promoActiveForUser && (
-                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">Promotion active</span>
-                  )}
-                  {seller.promo_active && !promoActiveForUser && (
-                    <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">Promotion (out of range)</span>
-                  )}
-                </div>
-                <p className="text-gray-700">{seller.email}</p>
-                {/* If promo is active and user is within radius, show promo text */}
-                {seller.promo_active && seller.promo_text && promoActiveForUser && (
-                  <p className="text-sm text-green-700 mt-1">Offer: {seller.promo_text} — within {seller.promo_radius_meters} m</p>
+            <div className="mb-6 p-6 bg-white rounded-lg shadow-lg">
+              <div className="flex items-start gap-4">
+                {seller.photoURL && (
+                  <img src={seller.photoURL} alt={seller.displayName} className="w-20 h-20 rounded-full border-4 border-gray-200" />
                 )}
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="text-3xl font-bold text-gray-800">{seller.displayName}</h2>
+                    {/* Show store-wide promo status */}
+                    {seller.promo_active && promoActiveForUser && (
+                      <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">Promotion active</span>
+                    )}
+                    {seller.promo_active && !promoActiveForUser && (
+                      <span className="bg-yellow-100 text-yellow-800 text-sm font-semibold px-3 py-1 rounded-full">Promotion (out of range)</span>
+                    )}
+                  </div>
+                  <p className="text-gray-600 mb-2">{seller.email}</p>
+                  {seller.bio && (
+                    <p className="text-gray-700 mb-3">{seller.bio}</p>
+                  )}
+                  {/* If promo is active and user is within radius, show promo text */}
+                  {seller.promo_active && seller.promo_text && promoActiveForUser && (
+                    <div className="bg-green-50 border border-green-200 rounded p-3 mb-3">
+                      <p className="text-green-800 font-semibold">Special Offer:</p>
+                      <p className="text-green-700">{seller.promo_text}</p>
+                      <p className="text-sm text-green-600 mt-1">Available within {seller.promo_radius_meters} meters</p>
+                    </div>
+                  )}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowMessageModal(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                    >
+                      <span className="text-lg">💬</span>
+                      Contact Seller
+                    </button>
+                    {seller.phone && (
+                      <a
+                        href={`tel:${seller.phone}`}
+                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                      >
+                        <span className="text-lg">📞</span>
+                        Call
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
             
             <h3 className="text-xl font-semibold mb-4 text-gray-800">Store Listings</h3>
             
             {listings.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {listings.map(listing => (
-                  <div key={listing.id} className="border rounded p-4 bg-white shadow relative">
-                    {listing.image && (
-                      listing.mediaType === 'video' ? (
-                        <video src={listing.image} controls className="w-full h-32 object-cover rounded mb-2" />
-                      ) : (
-                        <img src={listing.image} alt={listing.title} className="w-full h-32 object-cover rounded mb-2" />
-                      )
-                    )}
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h4 className="font-bold">{listing.title}</h4>
-                        <p className="text-gray-700 font-semibold">{listing.price}</p>
-                        <p className="text-gray-600 text-sm">{listing.description}</p>
+                  <div key={listing.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                    {listing.images && listing.images.length > 0 && (
+                      <div className="relative">
+                        <img src={listing.images[0]} alt={listing.title} className="w-full h-48 object-cover" />
+                        {listing.category && (
+                          <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                            {listing.category.charAt(0).toUpperCase() + listing.category.slice(1)}
+                          </span>
+                        )}
+                        {seller.promo_active && promoActiveForUser && (
+                          <span className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                            Promo
+                          </span>
+                        )}
                       </div>
-                      {/* Per-listing promo badge (same as store-wide since promo is seller-scoped) */}
-                      {seller.promo_active && promoActiveForUser && (
-                        <div className="ml-2 text-right">
-                          <span className="inline-block bg-green-500 text-white px-2 py-1 rounded text-xs font-semibold">Promo</span>
-                          {seller.promo_text && (
-                            <div className="text-xs text-gray-700 mt-1 max-w-xs text-right">"{seller.promo_text}"</div>
-                          )}
+                    )}
+                    <div className="p-4">
+                      <h4 className="font-bold text-lg mb-2">{listing.title}</h4>
+                      <p className="text-gray-700 font-semibold text-xl mb-2">{listing.price}</p>
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{listing.description}</p>
+                      {seller.promo_active && promoActiveForUser && seller.promo_text && (
+                        <div className="bg-green-50 border border-green-200 rounded p-2 mb-3">
+                          <p className="text-green-800 text-sm font-semibold">Special Offer:</p>
+                          <p className="text-green-700 text-sm">"{seller.promo_text}"</p>
                         </div>
                       )}
+                      <button
+                        onClick={() => setShowMessageModal(true)}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                      >
+                        <span>💬</span>
+                        Contact Seller
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-600">This seller has no listings yet.</p>
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📦</div>
+                <p className="text-gray-600 text-lg">This seller has no listings yet.</p>
+                <p className="text-gray-500 text-sm mt-2">Check back later for new products!</p>
+              </div>
             )}
           </div>
         ) : (
@@ -181,6 +223,14 @@ function SellerListings({ sellerId, onBack }) {
           Back to Map
         </button>
       </footer>
+
+      {showMessageModal && seller && (
+        <MessageSellerModal
+          sellerId={sellerId}
+          sellerName={seller.displayName}
+          onClose={() => setShowMessageModal(false)}
+        />
+      )}
     </div>
   );
 }
