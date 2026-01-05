@@ -40,7 +40,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function MapSellers() {
+function MapSellers({ onViewStore }) {
   const [sellers, setSellers] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [messageModal, setMessageModal] = useState({ open: false, seller: null });
@@ -157,10 +157,16 @@ function MapSellers() {
                   {promoActive && seller.promo_text && (
                     <p className="text-sm mt-2 px-2 text-center">{seller.promo_text}</p>
                   )}
-                  <button
-                    className="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm shadow hover:bg-blue-700"
-                    onClick={() => setMessageModal({ open: true, seller })}
-                  >Message Seller</button>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      className="bg-green-600 text-white px-3 py-1 rounded text-sm shadow hover:bg-green-700"
+                      onClick={() => onViewStore(seller.id)}
+                    >View Store</button>
+                    <button
+                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm shadow hover:bg-blue-700"
+                      onClick={() => setMessageModal({ open: true, seller })}
+                    >Message</button>
+                  </div>
                 </div>
               </Popup>
             </Marker>

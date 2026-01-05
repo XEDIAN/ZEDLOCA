@@ -25,6 +25,7 @@ function SellerListings({ sellerId, onBack }) {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
+  const [showMessageModal, setShowMessageModal] = useState(false);
 
   useEffect(() => {
     if (!sellerId) return;

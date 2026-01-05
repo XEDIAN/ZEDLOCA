@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
-import { collection, onSnapshot, query, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, getDoc, getDocs, where } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
 
 /**
@@ -28,6 +28,9 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
+  const [viewingSellerId, setViewingSellerId] = useState(null);
+  const [sellerListings, setSellerListings] = useState([]);
+  const [sellerLoading, setSellerLoading] = useState(false);
 
   // Filter and search states
   const [searchTerm, setSearchTerm] = useState('');
@@ -147,10 +150,33 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
     localStorage.setItem('recentlyViewed', JSON.stringify(updated));
   };
 
-  const handleViewSeller = (sellerId) => {
+  const handleViewSeller = async (sellerId) => {
     console.log('BuyerStores: handleViewSeller called with sellerId:', sellerId);
-    console.log('BuyerStores: onViewSeller function:', onViewSeller);
-    onViewSeller(sellerId);
+    setViewingSellerId(sellerId);
+    setSellerLoading(true);
+
+    try {
+      // Fetch seller's listings
+      const q = query(
+        collection(db, 'listings'),
+        where('userId', '==', sellerId),
+        orderBy('createdAt', 'desc')
+      );
+
+      const snapshot = await getDocs(q);
+      const sellerListingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setSellerListings(sellerListingsData);
+    } catch (error) {
+      console.error('Error fetching seller listings:', error);
+      setSellerListings([]);
+    } finally {
+      setSellerLoading(false);
+    }
+  };
+
+  const handleBackToStores = () => {
+    setViewingSellerId(null);
+    setSellerListings([]);
   };
 
   const handleMessageSeller = (seller) => {
@@ -263,6 +289,159 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
 
         <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white py-6 flex justify-center gap-4 z-50 shadow-2xl">
           <div className="h-12 bg-gray-600 rounded-lg w-48"></div>
+        </footer>
+      </div>
+    );
+  }
+
+  // Render seller store view if viewing a specific seller
+  if (viewingSellerId) {
+    const seller = sellers[viewingSellerId];
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-teal-400 via-blue-300 to-purple-500">
+        <div className="flex-1 flex flex-col items-center justify-center pb-32">
+          {/* Seller Header */}
+          <div className="w-full max-w-6xl mt-8 px-4 mb-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleBackToStores}
+                  className="bg-white text-gray-700 px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  <span className="text-lg">⬅️</span>
+                  Back to All Stores
+                </button>
+                <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-2">
+                  <span className="text-4xl">🏪</span>
+                  {seller?.displayName || 'Seller'}'s Store
+                </h1>
+              </div>
+              <div className="flex gap-4 text-white">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{sellerListings.length}</div>
+                  <div className="text-sm">Listings</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{favorites.size}</div>
+                  <div className="text-sm">Favorites</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Seller Info */}
+            {seller && (
+              <div className="bg-white rounded-xl p-6 shadow-xl mb-6 border border-gray-100">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    {seller.photoURL ? (
+                      <img
+                        src={seller.photoURL}
+                        alt={seller.displayName}
+                        className="w-16 h-16 rounded-full border-4 border-teal-400"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-r from-teal-400 to-purple-500 flex items-center justify-center">
+                        <span className="text-2xl text-white font-bold">
+                          {seller.displayName?.charAt(0)?.toUpperCase() || 'S'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-gray-800">{seller.displayName}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className="text-yellow-400 text-lg">⭐</span>
+                      ))}
+                      <span className="text-gray-600">(4.8)</span>
+                    </div>
+                    {seller.bio && (
+                      <p className="text-gray-600 mt-2">{seller.bio}</p>
+                    )}
+                  </div>
+                  {user && (
+                    <button
+                      onClick={() => handleMessageSeller({ id: seller.id, displayName: seller.displayName })}
+                      className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+                    >
+                      <span className="text-lg">💬</span>
+                      Contact Seller
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Seller Listings */}
+          {sellerLoading ? (
+            <div className="w-full max-w-6xl px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <LoadingSkeleton key={i} />
+                ))}
+              </div>
+            </div>
+          ) : sellerListings.length > 0 ? (
+            <div className="w-full max-w-6xl px-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sellerListings.map(listing => (
+                  <div key={listing.id} className="relative bg-white rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+                    {/* Favorite Button */}
+                    <button
+                      onClick={() => toggleFavorite(listing.id)}
+                      className="absolute top-4 right-4 p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-shadow"
+                      aria-label={favorites.has(listing.id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <span className="text-xl">{favorites.has(listing.id) ? '❤️' : '🤍'}</span>
+                    </button>
+
+                    {/* Images */}
+                    {listing.images && listing.images.length > 0 && (
+                      <div className="mb-4 flex gap-2 overflow-x-auto rounded-lg p-2 bg-gray-50">
+                        {listing.images.slice(0, 4).map((img, idx) => (
+                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-16 h-16 object-cover rounded-lg shadow-sm" />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Listing Details */}
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <span className="text-xl">🏷️</span>
+                        {listing.title}
+                      </h4>
+                      <p className="text-green-600 font-bold text-xl mb-2">{formatPrice(listing.price)}</p>
+                      <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-3">{listing.description}</p>
+
+                      {/* Category Badge */}
+                      {listing.category && (
+                        <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mb-3">
+                          {listing.category.charAt(0).toUpperCase() + listing.category.slice(1)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="w-full max-w-2xl text-center">
+              <span className="text-6xl mb-4 block">📦</span>
+              <p className="text-white text-lg mb-2">No listings available from this seller.</p>
+              <p className="text-white text-sm">Check back later for new items.</p>
+            </div>
+          )}
+        </div>
+
+        <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white py-6 flex justify-center gap-4 z-50 shadow-2xl">
+          <button
+            className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+            onClick={onBack}
+          >
+            <span className="text-xl">⬅️</span>
+            Back to Map
+          </button>
         </footer>
       </div>
     );

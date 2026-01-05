@@ -50,6 +50,7 @@ const App = () => {
         setRoleLoading(false);
       } else {
         setRole(null);
+        setShowMap(false);
       }
     });
     return () => unsubscribe();
@@ -281,7 +282,7 @@ const App = () => {
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
-        <MapSellers />
+        <MapSellers onViewStore={setShowSellerListings} />
         <MapControls />
       </MapContainer>
       {/* Footer theme update */}
