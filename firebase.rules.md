@@ -12,18 +12,16 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == uid;
     }
-    // Users: authenticated users can read/write their own profile
-    match /users/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null && request.auth.uid == uid;
+    // Users: allow each user to read/write their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    // Messages: authenticated users can create messages
+    // Messages: allow buyers and sellers to send and receive messages
     match /messages/{id} {
       allow read: if request.auth != null && (request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId);
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.buyerId;
+      allow create: if request.auth != null && (request.auth.uid == request.resource.data.buyerId || request.auth.uid == request.resource.data.sellerId);
       allow update: if request.auth != null && (request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId);
     }
-
     // Default reads for other public docs if needed
     match /{document=**} {
       allow read: if true;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import ImageUpload from './ImageUpload';
 
 function Listings({ userId }) {
   const [listings, setListings] = useState([]);
@@ -127,6 +128,7 @@ function Listings({ userId }) {
         price: form.price,
         description: form.description,
         category: form.category,
+        images: uploadedImages.map(img => img.url),
         createdAt: serverTimestamp(),
       });
       setForm({ title: '', price: '', description: '', category: '' });
@@ -337,6 +339,9 @@ function Listings({ userId }) {
             <option value="automotive">Automotive</option>
             <option value="other">Other</option>
           </select>
+        </div>
+        <div className="mb-2">
+          <ImageUpload onImagesUploaded={setUploadedImages} />
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <button type="submit" className="bg-blue-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded text-sm" disabled={loading}>
