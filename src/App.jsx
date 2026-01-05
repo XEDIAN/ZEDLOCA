@@ -15,6 +15,8 @@ import RequireRole from './components/RequireRole';
 
 import SellerInbox from './components/SellerInbox';
 import BuyerMessages from './components/BuyerMessages';
+import BuyerStores from './components/BuyerStores';
+import MessageSellerModal from './components/MessageSellerModal';
 
 const App = () => {
   const [showMap, setShowMap] = useState(false);
@@ -22,6 +24,9 @@ const App = () => {
   const [showSellerListings, setShowSellerListings] = useState(null);
   const [showInbox, setShowInbox] = useState(false);
   const [showBuyerMessages, setShowBuyerMessages] = useState(false);
+  const [showBuyerStores, setShowBuyerStores] = useState(false);
+  const [showMessageSellerModal, setShowMessageSellerModal] = useState(false);
+  const [messageSellerData, setMessageSellerData] = useState(null);
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [roleLoading, setRoleLoading] = useState(false);
@@ -72,6 +77,31 @@ const App = () => {
     });
     return () => unsubscribe();
   }, [showMap]);
+
+  // Show buyer stores page
+  if (showBuyerStores) {
+    return (
+      <>
+        <BuyerStores
+          onViewSeller={setShowSellerListings}
+          onBack={() => setShowBuyerStores(false)}
+          onMessageSeller={(sellerData) => {
+            setMessageSellerData(sellerData);
+            setShowMessageSellerModal(true);
+          }}
+          user={user}
+          role={role}
+        />
+        <MessageSellerModal
+          open={showMessageSellerModal}
+          onClose={() => setShowMessageSellerModal(false)}
+          sellerId={messageSellerData?.id}
+          sellerName={messageSellerData?.displayName}
+          buyerId={user?.uid}
+        />
+      </>
+    );
+  }
 
   // Show seller listings
   if (showSellerListings) {
@@ -171,7 +201,12 @@ const App = () => {
         )}
         <button
           className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
-          onClick={() => setShowSellerListings(user.uid)}
+          onClick={() => {
+            setShowBuyerStores(true);
+            setShowMap(false);
+            setShowListings(false);
+            setShowSellerListings(null);
+          }}
         >
           Stores
         </button>
@@ -273,7 +308,12 @@ const App = () => {
         </button>
         <button
           className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
-          onClick={() => setShowSellerListings(user.uid)}
+          onClick={() => {
+            setShowBuyerStores(true);
+            setShowMap(false);
+            setShowListings(false);
+            setShowSellerListings(null);
+          }}
         >
           Stores
         </button>

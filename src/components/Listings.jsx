@@ -4,7 +4,7 @@ import { collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc, 
 
 function Listings({ userId }) {
   const [listings, setListings] = useState([]);
-  const [form, setForm] = useState({ title: '', price: '', description: '' });
+  const [form, setForm] = useState({ title: '', price: '', description: '', category: '' });
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -126,9 +126,10 @@ function Listings({ userId }) {
         title: form.title,
         price: form.price,
         description: form.description,
+        category: form.category,
         createdAt: serverTimestamp(),
       });
-      setForm({ title: '', price: '', description: '' });
+      setForm({ title: '', price: '', description: '', category: '' });
       setSuccessMessage('Listing created successfully!');
       setErrorMessage('');
       // Prompt seller to register location via popup and optionally enable a promotion
@@ -186,6 +187,7 @@ function Listings({ userId }) {
       title: listing.title,
       price: listing.price,
       description: listing.description,
+      category: listing.category || '',
     });
     setEditingId(listing.id);
   };
@@ -202,7 +204,7 @@ function Listings({ userId }) {
 
   const cancelEdit = () => {
     setEditingId(null);
-    setForm({ title: '', price: '', description: '' });
+    setForm({ title: '', price: '', description: '', category: '' });
   };
 
   // Manage promotion actions available in listings UI
@@ -318,6 +320,23 @@ function Listings({ userId }) {
             className="border p-1 rounded w-full text-sm"
             required
           />
+        </div>
+        <div className="mb-2">
+          <select
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+            className="border p-1 rounded w-full text-sm"
+          >
+            <option value="">Select Category</option>
+            <option value="electronics">Electronics</option>
+            <option value="clothing">Clothing</option>
+            <option value="home">Home & Garden</option>
+            <option value="sports">Sports</option>
+            <option value="books">Books</option>
+            <option value="automotive">Automotive</option>
+            <option value="other">Other</option>
+          </select>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <button type="submit" className="bg-blue-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded text-sm" disabled={loading}>
