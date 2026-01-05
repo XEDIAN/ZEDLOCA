@@ -12,6 +12,18 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == uid;
     }
+    // Users: authenticated users can read/write their own profile
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+    // Messages: authenticated users can create messages
+    match /messages/{id} {
+      allow read: if request.auth != null && (request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId);
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.buyerId;
+      allow update: if request.auth != null && (request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId);
+    }
+
     // Default reads for other public docs if needed
     match /{document=**} {
       allow read: if true;
