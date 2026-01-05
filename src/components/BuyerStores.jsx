@@ -361,7 +361,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
                   </div>
                   {user && (
                     <button
-                      onClick={() => handleMessageSeller({ id: seller.id, displayName: seller.displayName })}
+                      onClick={() => handleMessageSeller({ id: seller.id, displayName: seller.displayName, seller, listing: null })}
                       className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
                     >
                       <span className="text-lg">💬</span>
@@ -707,7 +707,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
                       {user && (
                         <button
                           className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                          onClick={() => handleMessageSeller({ id: listing.userId, displayName: seller?.displayName || 'Seller' })}
+                          onClick={() => handleMessageSeller({ seller, listing, id: listing.userId, displayName: seller?.displayName || 'Seller' })}
                           aria-label={`Contact seller about ${listing.title}`}
                         >
                           <span className="text-lg">💬</span>

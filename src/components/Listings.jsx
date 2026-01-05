@@ -10,6 +10,7 @@ function Listings({ userId }) {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [uploadedImages, setUploadedImages] = useState([]);
 
   const [sellerPromo, setSellerPromo] = useState(null);
   const [loadingPromo, setLoadingPromo] = useState(false);
@@ -358,38 +359,45 @@ function Listings({ userId }) {
           )}
         </div>
       </form>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {listings.map(listing => (
-          <div key={listing.id} className="border rounded p-2 sm:p-3 bg-white shadow-sm flex flex-col listings-card">
-            <div className="flex items-center mb-2">
-              <span className="mr-2 text-lg sm:text-xl" role="img" aria-label="Listing">📦</span>
-              <h4 className="font-bold text-sm sm:text-base">{listing.title}</h4>
+      {listings.length === 0 ? (
+        <div className="text-center py-8">
+          <span className="text-4xl mb-4 block">📦</span>
+          <p className="text-gray-600">You have no listings yet. Create your first listing below!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          {listings.map(listing => (
+            <div key={listing.id} className="border rounded p-2 sm:p-3 bg-white shadow-sm flex flex-col listings-card">
+              <div className="flex items-center mb-2">
+                <span className="mr-2 text-lg sm:text-xl" role="img" aria-label="Listing">📦</span>
+                <h4 className="font-bold text-sm sm:text-base">{listing.title}</h4>
+              </div>
+              <p className="text-gray-700 font-semibold text-sm">{listing.price}</p>
+              <p className="text-gray-600 text-xs sm:text-sm mb-2">{listing.description}</p>
+              <div className="flex gap-1 sm:gap-2 mt-2">
+                <button
+                  onClick={() => handleEdit(listing)}
+                  className="bg-yellow-500 text-white px-2 py-1 sm:px-3 rounded text-xs sm:text-sm"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(listing.id)}
+                  className="bg-red-500 text-white px-2 py-1 sm:px-3 rounded text-xs sm:text-sm"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => alert(`Details for ${listing.title}:\nPrice: ${listing.price}\nDescription: ${listing.description}`)}
+                  className="bg-blue-500 text-white px-2 py-1 sm:px-3 rounded text-xs sm:text-sm"
+                >
+                  Details
+                </button>
+              </div>
             </div>
-            <p className="text-gray-700 font-semibold text-sm">{listing.price}</p>
-            <p className="text-gray-600 text-xs sm:text-sm mb-2">{listing.description}</p>
-            <div className="flex gap-1 sm:gap-2 mt-2">
-              <button
-                onClick={() => handleEdit(listing)}
-                className="bg-yellow-500 text-white px-2 py-1 sm:px-3 rounded text-xs sm:text-sm"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(listing.id)}
-                className="bg-red-500 text-white px-2 py-1 sm:px-3 rounded text-xs sm:text-sm"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => alert(`Details for ${listing.title}:\nPrice: ${listing.price}\nDescription: ${listing.description}`)}
-                className="bg-blue-500 text-white px-2 py-1 sm:px-3 rounded text-xs sm:text-sm"
-              >
-                Details
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

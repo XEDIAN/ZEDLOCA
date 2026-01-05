@@ -218,20 +218,148 @@ const App = () => {
 
   if (!showMap && !showListings) {
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
-        <div className="flex-1 flex flex-col items-center justify-center pb-32">
-          <h1 className="welcome-title text-4xl font-bold text-gray-800 mb-4 mt-16">ZEDLOCA</h1>
-          <p className="welcome-subtitle">Your own digital network</p>
-          <div className="mb-8">
-            <Auth />
-            {user && roleLoading && (
-              <div className="text-gray-600 mt-2">Loading role...</div>
-            )}
-            {user && !role && !roleLoading && (
-              <div className="text-red-600 mt-2">No role assigned. Please sign out and sign in again to select a role.</div>
-            )}
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+            <div className="text-center">
+              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+                Welcome to{' '}
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  ZEDLOCA
+                </span>
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                Connect with local sellers and buyers in your area. Discover unique products,
+                support local businesses, and build your community marketplace.
+              </p>
+
+              {/* User Type Selection */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-blue-100 hover:border-blue-300 transition-colors">
+                  <div className="text-4xl mb-3">🛍️</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">I'm a Buyer</h3>
+                  <p className="text-gray-600 text-sm mb-4">Discover local products and connect with sellers</p>
+                  <div className="text-xs text-blue-600 font-medium">Popular choice</div>
+                </div>
+                <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-purple-100 hover:border-purple-300 transition-colors">
+                  <div className="text-4xl mb-3">🏪</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">I'm a Seller</h3>
+                  <p className="text-gray-600 text-sm mb-4">Reach local customers and grow your business</p>
+                  <div className="text-xs text-purple-600 font-medium">Start selling today</div>
+                </div>
+              </div>
+
+              {/* Auth Section */}
+              <div className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Get Started</h2>
+                <Auth />
+                {user && roleLoading && (
+                  <div className="text-blue-600 mt-4 text-center">Loading your account...</div>
+                )}
+                {user && !role && !roleLoading && (
+                  <div className="text-red-600 mt-4 text-center text-sm">
+                    Please sign out and sign in again to select your role.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Background decoration */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full opacity-20"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-100 rounded-full opacity-20"></div>
           </div>
         </div>
+
+        {/* Features Section */}
+        <div className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose ZEDLOCA?</h2>
+              <p className="text-lg text-gray-600">Your local marketplace with modern features</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">📍</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Location-Based</h3>
+                <p className="text-gray-600">Find products and sellers in your local area with precise location matching</p>
+              </div>
+
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">💬</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Direct Communication</h3>
+                <p className="text-gray-600">Chat directly with sellers and buyers for seamless transactions</p>
+              </div>
+
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🆓</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Free to Use</h3>
+                <p className="text-gray-600">No hidden fees or commissions. Just pure local commerce</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* How It Works Section */}
+        <div className="py-16 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">How It Works</h2>
+              <p className="text-lg text-gray-600">Simple steps to start buying or selling</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Sign Up</h3>
+                <p className="text-gray-600">Create your account and choose whether you're buying or selling</p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Connect</h3>
+                <p className="text-gray-600">Browse listings or create your own products for sale</p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Transact</h3>
+                <p className="text-gray-600">Communicate directly and complete your local transactions</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Section */}
+        <div className="py-16 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl font-bold mb-8">Join Our Growing Community</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div>
+                <div className="text-4xl font-bold mb-2">100+</div>
+                <div className="text-blue-100">Active Sellers</div>
+              </div>
+              <div>
+                <div className="text-4xl font-bold mb-2">500+</div>
+                <div className="text-blue-100">Products Listed</div>
+              </div>
+              <div>
+                <div className="text-4xl font-bold mb-2">1000+</div>
+                <div className="text-blue-100">Happy Customers</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {renderFooter()}
       </div>
     );
@@ -240,17 +368,15 @@ const App = () => {
   // Show listings panel/modal
   if (showListings && user) {
     return (
-      <RequireRole role="seller" userRole={role} fallback={<div className="text-center mt-16 text-red-600">Access denied: Sellers only</div>}>
-        <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
-          <div className="flex-1 flex flex-col items-center justify-center pb-32">
-            <h1 className="text-4xl font-bold text-gray-800 mb-4 mt-16">MY LISTINGS</h1>
-            <div className="mb-8 w-full max-w-2xl">
-              <Listings userId={user.uid} />
-            </div>
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+        <div className="flex-1 flex flex-col items-center justify-center pb-32">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4 mt-16">MY LISTINGS</h1>
+          <div className="mb-8 w-full max-w-2xl">
+            <Listings userId={user.uid} />
           </div>
-          {renderFooter()}
         </div>
-      </RequireRole>
+        {renderFooter()}
+      </div>
     );
   }
 
