@@ -1,8 +1,7 @@
 
 import React, { useState } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
-import MapSellers from './components/MapSellers';
-import MapControls from './components/MapControls';
+import MapView from './components/MapView';
 import { auth, db } from './firebase';
 import { setDoc, getDoc, doc } from 'firebase/firestore';
 import 'leaflet/dist/leaflet.css';
@@ -388,65 +387,7 @@ const App = () => {
   }
 
   return (
-    <div className="h-screen w-screen relative bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
-      <header className="fixed top-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 z-30 shadow-lg">
-        <h1 className="welcome-title text-3xl font-bold text-white text-center py-4 drop-shadow">
-          ZEDLOCA
-        </h1>
-      </header>
-      <div className="absolute top-20 left-0 w-full z-30 flex flex-col items-center pb-32">
-        <Auth />
-      </div>
-      <MapContainer
-        center={[-15.417, 28.283]} // Lusaka coordinates
-        zoom={13}
-        style={{ height: '100%', width: '100%' }}
-        className="z-0 map-container-with-footer"
-        zoomControl={false} // Disable default zoom controls
-      >
-        <TileLayer
-          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-        />
-        <MapSellers onViewStore={setShowSellerListings} />
-        <MapControls />
-      </MapContainer>
-      {/* Footer theme update */}
-      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-4 flex justify-center gap-4 z-50">
-        <button
-          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
-          onClick={() => {
-            setShowMap(true);
-            setShowListings(false);
-            setShowSellerListings(null);
-          }}
-        >
-          View Map
-        </button>
-        <button
-          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
-          onClick={() => {
-            setShowListings(true);
-            setShowMap(false);
-            setShowSellerListings(null);
-          }}
-        >
-          My Listings
-        </button>
-        <button
-          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
-          onClick={() => {
-            setShowBuyerStores(true);
-            setShowMap(false);
-            setShowListings(false);
-            setShowSellerListings(null);
-          }}
-        >
-          Stores
-        </button>
-        <DraggableSidebar />
-      </footer>
-    </div>
+    <MapView onViewStore={setShowSellerListings} />
   );
 }
 
