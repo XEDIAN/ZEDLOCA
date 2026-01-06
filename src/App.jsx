@@ -210,7 +210,7 @@ const App = () => {
         >
           Stores
         </button>
-        <DraggableSidebar />
+        <DraggableSidebar role={role} />
       </footer>
     );
   };
@@ -387,7 +387,10 @@ const App = () => {
   }
 
   return (
-    <MapView onViewStore={setShowSellerListings} />
+    <MapView
+      onViewStore={setShowSellerListings}
+      onBack={() => setShowMap(false)}
+    />
   );
 }
 

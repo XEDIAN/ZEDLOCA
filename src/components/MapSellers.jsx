@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Marker, Popup, useMap } from 'react-leaflet';
 import { db, auth } from '../firebase';
-import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, where, orderBy } from 'firebase/firestore';
 import MessageSellerModal from './MessageSellerModal';
 import L from 'leaflet';
 

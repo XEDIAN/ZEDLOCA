@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import UserProfile from './UserProfile';
 import { db, auth } from '../firebase';
-import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, where, orderBy, limit } from 'firebase/firestore';
 
 function haversine(lat1, lon1, lat2, lon2) {
   if ([lat1, lon1, lat2, lon2].some(v => typeof v !== 'number')) return Infinity;
@@ -16,11 +16,19 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function DraggableSidebar() {
+function DraggableSidebar({ role }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [promotions, setPromotions] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [listingCount, setListingCount] = useState(0);
+  const [analytics, setAnalytics] = useState({ views: 0, messages: 0 });
+  const [buyerUnreadReplies, setBuyerUnreadReplies] = useState(0);
+  const [savedSellers, setSavedSellers] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [buyerLoading, setBuyerLoading] = useState(false);
+  const [buyerError, setBuyerError] = useState(null);
   const sidebarRef = useRef(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
@@ -107,6 +115,110 @@ function DraggableSidebar() {
     return () => { cancelled = true; };
   }, []);
 
+  // Fetch seller-specific data if user is a seller
+  useEffect(() => {
+    if (role !== 'seller' || !auth?.currentUser?.uid) return;
+
+    const userId = auth.currentUser.uid;
+
+    // Fetch unread messages count
+    const messagesQuery = query(
+      collection(db, 'messages'),
+      where('sellerId', '==', userId),
+      where('read', '==', false)
+    );
+    const unsubMessages = onSnapshot(messagesQuery, (snapshot) => {
+      setUnreadMessages(snapshot.size);
+    }, (err) => {
+      console.error('Failed to load unread messages:', err);
+      setUnreadMessages(0);
+    });
+
+    // Fetch listing count
+    const listingsQuery = query(
+      collection(db, 'listings'),
+      where('userId', '==', userId)
+    );
+    const unsubListings = onSnapshot(listingsQuery, (snapshot) => {
+      setListingCount(snapshot.size);
+    }, (err) => {
+      console.error('Failed to load listing count:', err);
+      setListingCount(0);
+    });
+
+    // Fetch analytics (views and messages from promoEvents)
+    const analyticsQuery = query(
+      collection(db, 'promoEvents'),
+      where('sellerId', '==', userId)
+    );
+    const unsubAnalytics = onSnapshot(analyticsQuery, (snapshot) => {
+      const events = snapshot.docs.map(d => d.data());
+      const views = events.filter(e => e.eventType === 'view').length;
+      const messages = events.filter(e => e.eventType === 'message').length;
+      setAnalytics({ views, messages });
+    }, (err) => {
+      console.error('Failed to load analytics:', err);
+      setAnalytics({ views: 0, messages: 0 });
+    });
+
+    return () => {
+      unsubMessages();
+      unsubListings();
+      unsubAnalytics();
+    };
+  }, [role]);
+
+  // Load saved sellers from local storage for buyers
+  useEffect(() => {
+    if (role === 'buyer' && auth?.currentUser?.uid) {
+      const userId = auth.currentUser.uid;
+      const savedKey = `savedSellers_${userId}`;
+      const saved = JSON.parse(localStorage.getItem(savedKey) || '[]');
+      setSavedSellers(saved);
+    }
+  }, [role, auth?.currentUser?.uid]);
+
+  // Fetch buyer-specific data if user is a buyer
+  useEffect(() => {
+    if (role !== 'buyer' || !auth?.currentUser?.uid) return;
+
+    const userId = auth.currentUser.uid;
+
+    // Fetch unread replies count (messages from sellers to this buyer)
+    const repliesQuery = query(
+      collection(db, 'messages'),
+      where('buyerId', '==', userId),
+      where('read', '==', false)
+    );
+    const unsubReplies = onSnapshot(repliesQuery, (snapshot) => {
+      setBuyerUnreadReplies(snapshot.size);
+    }, (err) => {
+      console.error('Failed to load unread replies:', err);
+      setBuyerUnreadReplies(0);
+    });
+
+    // Fetch recent activity (recent promoEvents where this buyer viewed promotions)
+    const activityQuery = query(
+      collection(db, 'promoEvents'),
+      where('userId', '==', userId),
+      where('eventType', '==', 'view'),
+      orderBy('timestamp', 'desc'),
+      limit(5)
+    );
+    const unsubActivity = onSnapshot(activityQuery, (snapshot) => {
+      const activities = snapshot.docs.map(d => d.data());
+      setRecentActivity(activities);
+    }, (err) => {
+      console.error('Failed to load recent activity:', err);
+      setRecentActivity([]);
+    });
+
+    return () => {
+      unsubReplies();
+      unsubActivity();
+    };
+  }, [role]);
+
   const nearbyPromos = (userLocation)
     ? promotions
         .map(p => ({ ...p, distance: haversine(userLocation.lat, userLocation.lng, p.lat, p.lng) }))
@@ -177,48 +289,307 @@ function DraggableSidebar() {
         {/* Sidebar content */}
         <div className={`h-full overflow-y-auto transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div className="p-2 pt-12 sm:p-4 sm:pt-16">
-            <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800">Nearby Promotions</h2>
-            {nearbyPromos.length === 0 ? (
-              <p className="text-sm text-gray-600 mb-3">No nearby promotions right now.</p>
-            ) : (
-              <div className="space-y-2 mb-3">
-                {nearbyPromos.map(promo => (
-                  <div key={promo.id} className="p-2 bg-gray-50 rounded shadow-sm">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-semibold text-sm">{promo.displayName || 'Seller'}</h3>
-                        <p className="text-xs text-gray-600">{promo.promo_text}</p>
-                        <p className="text-xs text-gray-400 mt-1">{Math.round(promo.distance)} m away</p>
+            {role === 'seller' ? (
+              <>
+                {/* Seller-specific sections */}
+                <div className="mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Inbox Overview</h2>
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">📬</span>
+                        <div>
+                          <p className="font-semibold text-sm">Unread Messages</p>
+                          <p className="text-xs text-gray-600">From buyers</p>
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={async () => {
-                            try {
-                              await addDoc(collection(db, 'promoEvents'), {
-                                sellerId: promo.id,
-                                userId: auth?.currentUser?.uid || null,
-                                eventType: 'view',
-                                distance: Math.round(promo.distance),
-                                timestamp: serverTimestamp(),
-                              });
-                            } catch (err) {
-                              console.error('Failed to log promo view:', err);
-                            }
-                            alert(`Viewing promotion from ${promo.displayName || 'Seller'}: ${promo.promo_text}`);
-                          }}
-                          className="bg-blue-600 text-white px-2 py-1 rounded text-xs"
-                        >
-                          View
-                        </button>
+                      <div className="text-right">
+                        <span className={`text-lg font-bold ${unreadMessages > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {unreadMessages}
+                        </span>
+                        {unreadMessages > 0 && (
+                          <div className="w-2 h-2 bg-red-500 rounded-full mx-auto mt-1"></div>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
 
-            <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800">Profile</h2>
-            <UserProfile />
+                <div className="mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">My Listings</h2>
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">🏪</span>
+                        <div>
+                          <p className="font-semibold text-sm">Active Listings</p>
+                          <p className="text-xs text-gray-600">Total products</p>
+                        </div>
+                      </div>
+                      <span className="text-lg font-bold text-green-600">{listingCount}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Analytics</h2>
+                  <div className="space-y-2">
+                    <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">👁️</span>
+                          <p className="font-semibold text-sm">Promotion Views</p>
+                        </div>
+                        <span className="text-lg font-bold text-purple-600">{analytics.views}</span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">💬</span>
+                          <p className="font-semibold text-sm">Messages Received</p>
+                        </div>
+                        <span className="text-lg font-bold text-orange-600">{analytics.messages}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Seller Tools</h2>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => alert('Edit Promotion feature coming soon!')}
+                      className="w-full p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">✏️</span>
+                        <div>
+                          <p className="font-semibold text-sm">Edit Promotion</p>
+                          <p className="text-xs text-gray-600">Update your current offer</p>
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => alert('Manage Location feature coming soon!')}
+                      className="w-full p-3 bg-indigo-50 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">📍</span>
+                        <div>
+                          <p className="font-semibold text-sm">Manage Location</p>
+                          <p className="text-xs text-gray-600">Update store location</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800">Nearby Promotions</h2>
+                {nearbyPromos.length === 0 ? (
+                  <p className="text-sm text-gray-600 mb-3">No nearby promotions right now.</p>
+                ) : (
+                  <div className="space-y-2 mb-3">
+                    {nearbyPromos.map(promo => (
+                      <div key={promo.id} className="p-2 bg-gray-50 rounded shadow-sm">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-semibold text-sm">{promo.displayName || 'Seller'}</h3>
+                            <p className="text-xs text-gray-600">{promo.promo_text}</p>
+                            <p className="text-xs text-gray-400 mt-1">{Math.round(promo.distance)} m away</p>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await addDoc(collection(db, 'promoEvents'), {
+                                    sellerId: promo.id,
+                                    userId: auth?.currentUser?.uid || null,
+                                    eventType: 'view',
+                                    distance: Math.round(promo.distance),
+                                    timestamp: serverTimestamp(),
+                                  });
+                                } catch (err) {
+                                  console.error('Failed to log promo view:', err);
+                                }
+                                alert(`Viewing promotion from ${promo.displayName || 'Seller'}: ${promo.promo_text}`);
+                              }}
+                              className="bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                            >
+                              View
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800">Profile</h2>
+                <UserProfile />
+              </>
+            ) : (
+              <>
+                {/* Buyer-specific sections */}
+                <div className="mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Messages</h2>
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">💬</span>
+                        <div>
+                          <p className="font-semibold text-sm">Unread Replies</p>
+                          <p className="text-xs text-gray-600">From sellers</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-lg font-bold ${buyerUnreadReplies > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {buyerUnreadReplies}
+                        </span>
+                        {buyerUnreadReplies > 0 && (
+                          <div className="w-2 h-2 bg-red-500 rounded-full mx-auto mt-1"></div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Saved Sellers</h2>
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">⭐</span>
+                      <div>
+                        <p className="font-semibold text-sm">Favorite Stores</p>
+                        <p className="text-xs text-gray-600">Quick access to preferred sellers</p>
+                      </div>
+                    </div>
+                    {savedSellers.length === 0 ? (
+                      <p className="text-xs text-gray-500 mt-2">No saved sellers yet</p>
+                    ) : (
+                      <div className="mt-2 space-y-1">
+                        {savedSellers.slice(0, 3).map(seller => (
+                          <div key={seller.id} className="text-xs bg-white p-2 rounded">
+                            {seller.displayName}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Recent Activity</h2>
+                  <div className="space-y-2">
+                    {recentActivity.length === 0 ? (
+                      <p className="text-sm text-gray-600">No recent activity</p>
+                    ) : (
+                      recentActivity.map((activity, index) => (
+                        <div key={index} className="p-2 bg-gray-50 rounded text-xs">
+                          <p className="font-medium">Viewed promotion</p>
+                          <p className="text-gray-600">{Math.round(activity.distance)}m away</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Buyer Tools</h2>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => alert('Currency settings coming soon!')}
+                      className="w-full p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">💱</span>
+                        <div>
+                          <p className="font-semibold text-sm">Currency Settings</p>
+                          <p className="text-xs text-gray-600">Change display currency</p>
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => alert('Location preferences coming soon!')}
+                      className="w-full p-3 bg-indigo-50 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">📍</span>
+                        <div>
+                          <p className="font-semibold text-sm">Location Settings</p>
+                          <p className="text-xs text-gray-600">Update search preferences</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800">Nearby Promotions</h2>
+                {nearbyPromos.length === 0 ? (
+                  <p className="text-sm text-gray-600 mb-3">No nearby promotions right now.</p>
+                ) : (
+                  <div className="space-y-2 mb-3">
+                    {nearbyPromos.map(promo => (
+                      <div key={promo.id} className="p-2 bg-gray-50 rounded shadow-sm">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-semibold text-sm">{promo.displayName || 'Seller'}</h3>
+                            <p className="text-xs text-gray-600">{promo.promo_text}</p>
+                            <p className="text-xs text-gray-400 mt-1">{Math.round(promo.distance)} m away</p>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await addDoc(collection(db, 'promoEvents'), {
+                                    sellerId: promo.id,
+                                    userId: auth?.currentUser?.uid || null,
+                                    eventType: 'view',
+                                    distance: Math.round(promo.distance),
+                                    timestamp: serverTimestamp(),
+                                  });
+                                } catch (err) {
+                                  console.error('Failed to log promo view:', err);
+                                }
+                                alert(`Viewing promotion from ${promo.displayName || 'Seller'}: ${promo.promo_text}`);
+                              }}
+                              className="bg-blue-600 text-white px-2 py-1 rounded text-xs"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={() => {
+                                // Add to saved sellers (local storage for now)
+                                const userId = auth?.currentUser?.uid;
+                                if (userId) {
+                                  const savedKey = `savedSellers_${userId}`;
+                                  const currentSaved = JSON.parse(localStorage.getItem(savedKey) || '[]');
+                                  if (!currentSaved.find(s => s.id === promo.id)) {
+                                    const newSeller = { id: promo.id, displayName: promo.displayName || 'Seller' };
+                                    currentSaved.push(newSeller);
+                                    localStorage.setItem(savedKey, JSON.stringify(currentSaved));
+                                    setSavedSellers(currentSaved); // Update state immediately
+                                    alert('Seller saved!');
+                                  } else {
+                                    alert('Seller already saved!');
+                                  }
+                                }
+                              }}
+                              className="bg-gray-600 text-white px-2 py-1 rounded text-xs"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-800">Profile</h2>
+                <UserProfile />
+              </>
+            )}
           </div>
         </div>
       </div>
