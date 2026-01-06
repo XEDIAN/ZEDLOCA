@@ -183,6 +183,26 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
     onMessageSeller(seller);
   };
 
+  const handleNavigateToSeller = (seller) => {
+    if (!userLocation) {
+      alert('Unable to get your location. Please enable location services and try again.');
+      return;
+    }
+
+    if (!seller || !seller.lat || !seller.lng) {
+      alert('Seller location not available.');
+      return;
+    }
+
+    // Create Google Maps URL with directions
+    const origin = `${userLocation.lat},${userLocation.lng}`;
+    const destination = `${seller.lat},${seller.lng}`;
+    const googleMapsUrl = `https://www.google.com/maps/dir/${origin}/${destination}`;
+
+    // Open in new tab/window
+    window.open(googleMapsUrl, '_blank');
+  };
+
   // Categories available
   const categories = ['electronics', 'clothing', 'home', 'sports', 'books', 'other'];
 
@@ -359,15 +379,25 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
                       <p className="text-gray-600 mt-2">{seller.bio}</p>
                     )}
                   </div>
-                  {user && (
+                  <div className="flex flex-col gap-2">
+                    {user && (
+                      <button
+                        onClick={() => handleMessageSeller({ id: seller.id, displayName: seller.displayName, seller, listing: null })}
+                        className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+                      >
+                        <span className="text-lg">💬</span>
+                        Contact Seller
+                      </button>
+                    )}
                     <button
-                      onClick={() => handleMessageSeller({ id: seller.id, displayName: seller.displayName, seller, listing: null })}
-                      className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+                      onClick={() => handleNavigateToSeller(seller)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+                      title="Get directions to this seller"
                     >
-                      <span className="text-lg">💬</span>
-                      Contact Seller
+                      <span className="text-lg">🗺️</span>
+                      Navigate
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             )}

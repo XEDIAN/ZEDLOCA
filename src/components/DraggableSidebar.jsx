@@ -33,6 +33,49 @@ function DraggableSidebar({ role }) {
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
 
+  // Fetch seller data if role is seller
+  useEffect(() => {
+    if (role !== 'seller' || !auth.currentUser) return;
+
+    // Fetch unread messages
+    const messagesQuery = query(
+      collection(db, 'messages'),
+      where('sellerId', '==', auth.currentUser.uid),
+      where('read', '==', false),
+      where('fromSeller', '==', false)
+    );
+    const unsubMessages = onSnapshot(messagesQuery, (snapshot) => {
+      setUnreadMessages(snapshot.size);
+    });
+
+    // Fetch listing count
+    const listingsQuery = query(
+      collection(db, 'listings'),
+      where('userId', '==', auth.currentUser.uid)
+    );
+    const unsubListings = onSnapshot(listingsQuery, (snapshot) => {
+      setListingCount(snapshot.size);
+    });
+
+    // Fetch analytics (views and messages)
+    const analyticsQuery = query(
+      collection(db, 'promoEvents'),
+      where('sellerId', '==', auth.currentUser.uid)
+    );
+    const unsubAnalytics = onSnapshot(analyticsQuery, (snapshot) => {
+      const events = snapshot.docs.map(doc => doc.data());
+      const views = events.filter(e => e.eventType === 'view').length;
+      const messages = events.filter(e => e.eventType === 'message').length;
+      setAnalytics({ views, messages });
+    });
+
+    return () => {
+      unsubMessages();
+      unsubListings();
+      unsubAnalytics();
+    };
+  }, [role]);
+
   const handleDragStart = (e) => {
     setIsDragging(true);
     startXRef.current = e.clientX || e.touches?.[0].clientX || 0;

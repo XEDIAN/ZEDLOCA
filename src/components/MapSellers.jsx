@@ -139,6 +139,21 @@ function MapSellers({ onViewStore }) {
     alert('Contact seller feature coming soon!');
   };
 
+  const handleNavigateToSeller = (seller) => {
+    if (!userLocation) {
+      alert('Unable to get your location. Please enable location services and try again.');
+      return;
+    }
+
+    // Create Google Maps URL with directions
+    const origin = `${userLocation.lat},${userLocation.lng}`;
+    const destination = `${seller.lat},${seller.lng}`;
+    const googleMapsUrl = `https://www.google.com/maps/dir/${origin}/${destination}`;
+
+    // Open in new tab/window
+    window.open(googleMapsUrl, '_blank');
+  };
+
   return (
     <>
       {sellers
@@ -157,15 +172,24 @@ function MapSellers({ onViewStore }) {
                   {promoActive && seller.promo_text && (
                     <p className="text-sm mt-2 px-2 text-center">{seller.promo_text}</p>
                   )}
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex gap-2">
+                      <button
+                        className="bg-green-600 text-white px-3 py-1 rounded text-sm shadow hover:bg-green-700"
+                        onClick={() => onViewStore(seller.id)}
+                      >View Store</button>
+                      <button
+                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm shadow hover:bg-blue-700"
+                        onClick={() => setMessageModal({ open: true, seller })}
+                      >Message</button>
+                    </div>
                     <button
-                      className="bg-green-600 text-white px-3 py-1 rounded text-sm shadow hover:bg-green-700"
-                      onClick={() => onViewStore(seller.id)}
-                    >View Store</button>
-                    <button
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm shadow hover:bg-blue-700"
-                      onClick={() => setMessageModal({ open: true, seller })}
-                    >Message</button>
+                      className="bg-red-600 text-white px-3 py-1 rounded text-sm shadow hover:bg-red-700 w-full"
+                      onClick={() => handleNavigateToSeller(seller)}
+                      title="Get directions to this seller"
+                    >
+                      🗺️ Navigate
+                    </button>
                   </div>
                 </div>
               </Popup>

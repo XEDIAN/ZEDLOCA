@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import MapView from './components/MapView';
+import MapBuyers from './components/MapBuyers';
+import MapControls from './components/MapControls';
 import { auth, db } from './firebase';
 import { setDoc, getDoc, doc } from 'firebase/firestore';
 import 'leaflet/dist/leaflet.css';
@@ -24,6 +26,7 @@ const App = () => {
   const [showInbox, setShowInbox] = useState(false);
   const [showBuyerMessages, setShowBuyerMessages] = useState(false);
   const [showBuyerStores, setShowBuyerStores] = useState(false);
+  const [showBuyerMap, setShowBuyerMap] = useState(false);
   const [showMessageSellerModal, setShowMessageSellerModal] = useState(false);
   const [messageSellerData, setMessageSellerData] = useState(null);
   const [user, setUser] = useState(null);
@@ -137,6 +140,18 @@ const App = () => {
     );
   }
 
+  // Show buyer map for sellers
+  if (showBuyerMap && user && role === 'seller') {
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+        <MapBuyers sellerId={user.uid} />
+        <div className="flex justify-center mt-4">
+          <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => setShowBuyerMap(false)}>Back</button>
+        </div>
+      </div>
+    );
+  }
+
   // Consistent footer component for authenticated users
   const renderFooter = () => {
     if (!user || !role) return null;
@@ -187,6 +202,12 @@ const App = () => {
               onClick={() => setShowInbox(true)}
             >
               Inbox
+            </button>
+            <button
+              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-red-200 transition footer-btn"
+              onClick={() => setShowBuyerMap(true)}
+            >
+              🗺️ Buyers
             </button>
           </>
         )}

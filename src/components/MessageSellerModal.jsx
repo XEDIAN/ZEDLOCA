@@ -33,6 +33,8 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [recentMessages, setRecentMessages] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [buyerLocation, setBuyerLocation] = useState(null);
+  const [locationError, setLocationError] = useState('');
 
   // Load recent message history
   useEffect(() => {
@@ -77,6 +79,23 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
     setMessage(MESSAGE_TEMPLATES[templateKey]);
   };
 
+  const handleLocationCapture = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setLocationError('');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setBuyerLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      (err) => {
+        setLocationError('Unable to get location: ' + err.message);
+      },
+      { enableHighAccuracy: true, maximumAge: 1000 * 60 * 5 }
+    );
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
 
@@ -111,6 +130,8 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
         message: message.trim(),
         listingId: listing?.id || null,
         listingTitle: listing?.title || null,
+        buyerLat: buyerLocation?.lat || null,
+        buyerLng: buyerLocation?.lng || null,
         timestamp: serverTimestamp(),
         read: false,
       });
@@ -218,6 +239,29 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Location Capture */}
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-800 mb-2">Share Your Location (Optional)</h3>
+              <p className="text-sm text-gray-600 mb-2">Allow the seller to see your location for easier navigation.</p>
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+                <button
+                  type="button"
+                  onClick={handleLocationCapture}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                >
+                  📍 Share Location
+                </button>
+                {buyerLocation && (
+                  <span className="text-sm text-green-600">
+                    ✓ Location captured: {buyerLocation.lat.toFixed(4)}, {buyerLocation.lng.toFixed(4)}
+                  </span>
+                )}
+              </div>
+              {locationError && (
+                <p className="text-red-600 text-sm mt-1">{locationError}</p>
+              )}
             </div>
 
             {/* Form */}

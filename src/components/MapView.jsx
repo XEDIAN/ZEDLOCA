@@ -79,18 +79,27 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
                     </p>
                   )}
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <button
+                        className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-blue-700 transition-colors"
+                        onClick={() => onViewStore(seller.id)}
+                      >
+                        View Store
+                      </button>
+                      <button
+                        className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-green-700 transition-colors"
+                        onClick={() => setMessageModal({ open: true, seller })}
+                      >
+                        Message
+                      </button>
+                    </div>
                     <button
-                      className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-blue-700 transition-colors"
-                      onClick={() => onViewStore(seller.id)}
+                      className="w-full bg-red-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-red-700 transition-colors"
+                      onClick={() => handleNavigateToSeller(seller)}
+                      title="Get directions to this seller"
                     >
-                      View Store
-                    </button>
-                    <button
-                      className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-green-700 transition-colors"
-                      onClick={() => setMessageModal({ open: true, seller })}
-                    >
-                      Message
+                      🗺️ Navigate
                     </button>
                   </div>
                 </div>
@@ -171,6 +180,21 @@ function MapView({ onViewStore, onBack }) {
     const cats = new Set(sellers.map(s => s.category).filter(Boolean));
     return ['all', ...Array.from(cats)];
   }, [sellers]);
+
+  const handleNavigateToSeller = (seller) => {
+    if (!userLocation) {
+      alert('Unable to get your location. Please enable location services and try again.');
+      return;
+    }
+
+    // Create Google Maps URL with directions
+    const origin = `${userLocation.lat},${userLocation.lng}`;
+    const destination = `${seller.lat},${seller.lng}`;
+    const googleMapsUrl = `https://www.google.com/maps/dir/${origin}/${destination}`;
+
+    // Open in new tab/window
+    window.open(googleMapsUrl, '_blank');
+  };
 
   if (loading) {
     return (
@@ -331,18 +355,27 @@ function MapView({ onViewStore, onBack }) {
                         </div>
                       </div>
 
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex flex-col gap-2 ml-4">
+                        <div className="flex gap-2">
+                          <button
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                            onClick={() => onViewStore(seller.id)}
+                          >
+                            View Store
+                          </button>
+                          <button
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                            onClick={() => setMessageModal({ open: true, seller })}
+                          >
+                            Message
+                          </button>
+                        </div>
                         <button
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                          onClick={() => onViewStore(seller.id)}
+                          className="w-full bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                          onClick={() => handleNavigateToSeller(seller)}
+                          title="Get directions to this seller"
                         >
-                          View Store
-                        </button>
-                        <button
-                          className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
-                          onClick={() => setMessageModal({ open: true, seller })}
-                        >
-                          Message
+                          🗺️ Navigate
                         </button>
                       </div>
                     </div>

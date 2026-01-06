@@ -1,26 +1,20 @@
-# Task: Implement comprehensive buyer sidebar enhancements
+# Enable Navigation Between Sellers and Buyers via Google Maps
 
-## Completed Tasks
-- [x] Updated App.jsx to pass role prop to DraggableSidebar
-- [x] Modified DraggableSidebar.jsx to accept role prop
-- [x] Added seller-specific state variables (unreadMessages, listingCount, analytics)
-- [x] Implemented useEffect hooks to fetch seller data from Firestore
-- [x] Added conditional rendering based on user role
-- [x] Created Inbox Overview section showing unread messages count
-- [x] Created My Listings section showing active listing count
-- [x] Created Analytics section showing promotion views and messages received
-- [x] Created Seller Tools section with placeholder buttons for future features
-- [x] Maintained existing Nearby Promotions and Profile sections for sellers
+## Current Status
+- Buyers can navigate to sellers using MapSellers.jsx (already implemented)
+- Sellers cannot navigate to buyers because buyer locations are not stored
 
-## Buyer Sidebar Enhancement Tasks
-- [ ] Add Messages section with unread replies count from sellers
-- [ ] Implement Saved Sellers functionality with local storage
-- [ ] Add Recent Activity tracking for viewed promotions
-- [ ] Create Buyer Tools section with currency and location settings
-- [ ] Add Search & Filter shortcuts
-- [ ] Implement Quick Actions for promotions
-- [ ] Add proper error handling and loading states
-- [ ] Test all buyer features thoroughly
+## Plan
+1. Modify messaging components to capture and store buyer locations
+2. Create MapBuyers component for sellers to view buyers on map
+3. Add navigation buttons for sellers to navigate to buyers
+4. Update SellerInbox to include navigation to buyers
+5. Test the implementation
 
-## Summary
-The sidebar now displays different content based on user role. Sellers see additional sections including inbox overview, listing count, analytics, and seller tools. Now implementing comprehensive buyer sidebar enhancements with messages, saved sellers, recent activity, and buyer tools.
+## Steps
+- [x] Update MessageSellerModal to capture buyer location when sending message
+- [x] Store buyer location in messages or create buyers collection
+- [x] Create MapBuyers.jsx component similar to MapSellers.jsx
+- [x] Integrate MapBuyers into seller interface
+- [x] Add navigation buttons in SellerInbox for buyers
+- [x] Update Firebase rules if needed (No changes required - existing rules allow access)
