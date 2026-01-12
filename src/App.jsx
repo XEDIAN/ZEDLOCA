@@ -212,13 +212,40 @@ const App = () => {
           </>
         )}
         {role === 'buyer' && (
-          <button
-            className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn"
-            onClick={() => setShowBuyerMessages(true)}
-            title="My Messages"
-          >
-            <span role="img" aria-label="Messages">💬</span>
-          </button>
+          <>
+            <button
+              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn"
+              onClick={() => setShowBuyerMessages(true)}
+              title="My Messages"
+            >
+              <span role="img" aria-label="Messages">💬</span>
+            </button>
+            <button
+              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn"
+              onClick={() => {
+                if (user && navigator.geolocation) {
+                  window.alert('Please allow location access to update your location.');
+                  navigator.geolocation.getCurrentPosition((pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    (async () => {
+                      await setDoc(doc(db, 'buyers', user.uid), {
+                        uid: user.uid,
+                        displayName: user.displayName,
+                        email: user.email,
+                        lat: latitude,
+                        lng: longitude,
+                        photoURL: user.photoURL || '',
+                        updatedAt: new Date(),
+                      }, { merge: true });
+                    })();
+                  }, null, { enableHighAccuracy: true });
+                }
+              }}
+              title="Update Location"
+            >
+              📍
+            </button>
+          </>
         )}
         <button
           className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
