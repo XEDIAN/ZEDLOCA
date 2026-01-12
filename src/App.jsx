@@ -18,6 +18,7 @@ import SellerInbox from './components/SellerInbox';
 import BuyerMessages from './components/BuyerMessages';
 import BuyerStores from './components/BuyerStores';
 import MessageSellerModal from './components/MessageSellerModal';
+import PlaceOrderPage from './pages/PlaceOrderPage';
 
 const App = () => {
   const [showMap, setShowMap] = useState(false);
@@ -27,6 +28,8 @@ const App = () => {
   const [showBuyerMessages, setShowBuyerMessages] = useState(false);
   const [showBuyerStores, setShowBuyerStores] = useState(false);
   const [showBuyerMap, setShowBuyerMap] = useState(false);
+  const [showPlaceOrderPage, setShowPlaceOrderPage] = useState(false);
+  const [placeOrderData, setPlaceOrderData] = useState(null);
   const [showMessageSellerModal, setShowMessageSellerModal] = useState(false);
   const [messageSellerData, setMessageSellerData] = useState(null);
   const [user, setUser] = useState(null);
@@ -81,6 +84,21 @@ const App = () => {
     return () => unsubscribe();
   }, [showMap]);
 
+  // Show place order page
+  if (showPlaceOrderPage && placeOrderData) {
+    return (
+      <PlaceOrderPage
+        listing={placeOrderData.listing}
+        seller={placeOrderData.seller}
+        onBack={() => {
+          setShowPlaceOrderPage(false);
+          setPlaceOrderData(null);
+        }}
+        user={user}
+      />
+    );
+  }
+
   // Show buyer stores page
   if (showBuyerStores) {
     return (
@@ -91,6 +109,10 @@ const App = () => {
           onMessageSeller={(sellerData) => {
             setMessageSellerData(sellerData);
             setShowMessageSellerModal(true);
+          }}
+          onNavigateToPlaceOrder={(data) => {
+            setPlaceOrderData(data);
+            setShowPlaceOrderPage(true);
           }}
           user={user}
           role={role}

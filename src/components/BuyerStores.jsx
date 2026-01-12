@@ -19,7 +19,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
+function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNavigateToPlaceOrder, user, role }) {
   console.log('BuyerStores: Component rendering');
   const { formatPrice } = useCurrency();
   console.log('BuyerStores: Currency context loaded');
@@ -462,20 +462,22 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
               <p className="text-white text-sm">Check back later for new items.</p>
             </div>
           )}
-        </div>
-
-        <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white py-6 flex justify-center gap-4 z-50 shadow-2xl">
-          <button
-            className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-            onClick={onBack}
-          >
-            <span className="text-xl">⬅️</span>
-            Back to Map
-          </button>
-        </footer>
       </div>
-    );
-  }
+
+      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white py-6 flex justify-center gap-4 z-50 shadow-2xl">
+        <button
+          className="bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+          onClick={onBack}
+        >
+          <span className="text-xl">⬅️</span>
+          Back to Map
+        </button>
+      </footer>
+
+
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-teal-400 via-blue-300 to-purple-500">
@@ -735,14 +737,24 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, user, role }) {
                       </button>
 
                       {user && (
-                        <button
-                          className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                          onClick={() => handleMessageSeller({ seller, listing, id: listing.userId, displayName: seller?.displayName || 'Seller' })}
-                          aria-label={`Contact seller about ${listing.title}`}
-                        >
-                          <span className="text-lg">💬</span>
-                          Contact Seller
-                        </button>
+                        <>
+                          <button
+                            className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                            onClick={() => onNavigateToPlaceOrder({ listing, seller })}
+                            aria-label={`Place order for ${listing.title}`}
+                          >
+                            <span className="text-lg">🛒</span>
+                            Place Order
+                          </button>
+                          <button
+                            className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                            onClick={() => handleMessageSeller({ seller, listing, id: listing.userId, displayName: seller?.displayName || 'Seller' })}
+                            aria-label={`Contact seller about ${listing.title}`}
+                          >
+                            <span className="text-lg">💬</span>
+                            Contact Seller
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
