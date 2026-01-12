@@ -1,8 +1,8 @@
 
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -13,7 +13,6 @@ const firebaseConfig = {
   messagingSenderId: "977523495380",
   appId: "1:977523495380:web:e75b89fa7601fc9e9ac641"
 };
-
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);

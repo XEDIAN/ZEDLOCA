@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useCurrency } from '../components/CurrencyContext';
@@ -16,6 +16,60 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [location, setLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState('');
+
+  // Automatically prompt for location when page opens
+  useEffect(() => {
+    if (!location && !locationError) {
+      setLocationLoading(true);
+      getLocation()
+        .then((userLocation) => {
+          setLocation(userLocation);
+          setLocationLoading(false);
+        })
+        .catch((err) => {
+          console.error('Error getting location:', err);
+          if (err.isGeolocationError) {
+            setLocationError('Location access is required to place an order. Please enable location services and try again.');
+          } else {
+            setLocationError('Unable to access your location. Please enable location services.');
+          }
+          setLocationLoading(false);
+        });
+    }
+  }, [location, locationError]);
+
+  const getLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser.'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+        },
+        (error) => {
+          // Create a custom error with geolocation flag
+          const geoError = new Error(`Geolocation error: ${error.message}`);
+          geoError.isGeolocationError = true;
+          reject(geoError);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    });
+  };
 
   // Constants for calculations
   const taxRate = 0.08; // 8% tax
@@ -41,6 +95,11 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
     e.preventDefault();
     if (!deliveryAddress.trim()) {
       setError('Please provide a delivery address');
+      return;
+    }
+
+    if (!location) {
+      setError('Location access is required to place an order. Please enable location services.');
       return;
     }
 
@@ -218,6 +277,15 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
                     <div className="flex items-center gap-2">
                       <span className="text-red-500">⚠️</span>
                       <div className="text-red-700 text-sm font-medium">{error}</div>
+                    </div>
+                  </div>
+                )}
+
+                {locationError && (
+                  <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="text-orange-500">📍</span>
+                      <div className="text-orange-700 text-sm font-medium">{locationError}</div>
                     </div>
                   </div>
                 )}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
@@ -19,11 +19,70 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [location, setLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState('');
+
+  // Automatically prompt for location when modal opens
+  useEffect(() => {
+    if (open && !location && !locationError) {
+      setLocationLoading(true);
+      getLocation()
+        .then((userLocation) => {
+          setLocation(userLocation);
+          setLocationLoading(false);
+        })
+        .catch((err) => {
+          console.error('Error getting location:', err);
+          if (err.isGeolocationError) {
+            setLocationError('Location access is required to place an order. Please enable location services and try again.');
+          } else {
+            setLocationError('Unable to access your location. Please enable location services.');
+          }
+          setLocationLoading(false);
+        });
+    }
+  }, [open, location, locationError]);
+
+  const getLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser.'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+        },
+        (error) => {
+          // Create a custom error with geolocation flag
+          const geoError = new Error(`Geolocation error: ${error.message}`);
+          geoError.isGeolocationError = true;
+          reject(geoError);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    });
+  };
 
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
     if (!deliveryAddress.trim()) {
       setError('Please provide a delivery address');
+      return;
+    }
+
+    if (!location) {
+      setError('Location is required to place an order. Please enable location services.');
       return;
     }
 
@@ -41,6 +100,7 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
         totalPrice: parseFloat(listing.price.replace(/[^0-9.-]+/g, '')) * quantity,
         deliveryAddress: deliveryAddress.trim(),
         specialInstructions: specialInstructions.trim(),
+        buyerLocation: location, // Use the location captured when modal opened
         status: 'pending',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -53,6 +113,7 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
       setQuantity(1);
       setDeliveryAddress('');
       setSpecialInstructions('');
+      setLocation(null);
     } catch (err) {
       console.error('Error placing order:', err);
       setError('Failed to place order. Please try again.');
@@ -64,9 +125,11 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
   const handleClose = () => {
     setSuccess(false);
     setError('');
+    setLocationError('');
     setQuantity(1);
     setDeliveryAddress('');
     setSpecialInstructions('');
+    setLocation(null);
     onClose();
   };
 
@@ -171,6 +234,12 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
                 </div>
               )}
 
+              {locationError && (
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="text-orange-700 text-sm">{locationError}</div>
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -198,6 +267,9 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    📍 Your location will be automatically captured when placing the order for delivery coordination.
+                  </p>
                 </div>
 
                 <div>
@@ -246,7 +318,7 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !location}
                   className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {loading ? (

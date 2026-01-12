@@ -380,7 +380,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
-                    {user && (
+                    {user && role === 'buyer' && (
                       <button
                         onClick={() => handleMessageSeller({ id: seller.id, displayName: seller.displayName, seller, listing: null })}
                         className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
@@ -736,25 +736,25 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                         View Store
                       </button>
 
-                      {user && (
-                        <>
-                          <button
-                            className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                            onClick={() => onNavigateToPlaceOrder({ listing, seller })}
-                            aria-label={`Place order for ${listing.title}`}
-                          >
-                            <span className="text-lg">🛒</span>
-                            Place Order
-                          </button>
-                          <button
-                            className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                            onClick={() => handleMessageSeller({ seller, listing, id: listing.userId, displayName: seller?.displayName || 'Seller' })}
-                            aria-label={`Contact seller about ${listing.title}`}
-                          >
-                            <span className="text-lg">💬</span>
-                            Contact Seller
-                          </button>
-                        </>
+                      {user && role === 'buyer' && (
+                        <button
+                          className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                          onClick={() => onNavigateToPlaceOrder({ listing, seller })}
+                          aria-label={`Place order for ${listing.title}`}
+                        >
+                          <span className="text-lg">🛒</span>
+                          Place Order
+                        </button>
+                      )}
+                      {user && role === 'buyer' && (
+                        <button
+                          className="w-full bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                          onClick={() => handleMessageSeller({ seller, listing, id: listing.userId, displayName: seller?.displayName || 'Seller' })}
+                          aria-label={`Contact seller about ${listing.title}`}
+                        >
+                          <span className="text-lg">💬</span>
+                          Contact Seller
+                        </button>
                       )}
                     </div>
                   </div>

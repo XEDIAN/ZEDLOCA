@@ -18,9 +18,9 @@ service cloud.firestore {
     }
     // Messages: allow buyers and sellers to send and receive messages
     match /messages/{id} {
-      allow read: if request.auth != null && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || request.auth.uid in resource.data.participants);
-      allow create: if request.auth != null && (request.auth.uid == request.resource.data.senderId || request.auth.uid == request.resource.data.receiverId);
-      allow update: if request.auth != null && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || request.auth.uid in resource.data.participants);
+      allow read: if request.auth != null && (request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId);
+      allow create: if request.auth != null && (request.auth.uid == request.resource.data.buyerId || request.auth.uid == request.resource.data.sellerId);
+      allow update: if request.auth != null && (request.auth.uid == resource.data.buyerId || request.auth.uid == resource.data.sellerId);
     }
     // Orders: allow buyers to create orders, sellers and buyers to read/update their orders
     match /orders/{id} {
