@@ -19,6 +19,7 @@ import BuyerMessages from './components/BuyerMessages';
 import BuyerStores from './components/BuyerStores';
 import MessageSellerModal from './components/MessageSellerModal';
 import PlaceOrderPage from './pages/PlaceOrderPage';
+import SellerOrders from './components/SellerOrders';
 
 const App = () => {
   const [showMap, setShowMap] = useState(false);
@@ -180,13 +181,8 @@ const App = () => {
     return (
       <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
         <div className="flex-1 flex flex-col items-center justify-center pb-32">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4 mt-16">MY ORDERS</h1>
-          <div className="mb-8 w-full max-w-4xl">
-            {/* TODO: Add SellerOrders component here */}
-            <div className="text-center text-gray-600">
-              <p className="text-lg mb-4">📦 Orders management coming soon!</p>
-              <p className="text-sm">This feature will allow you to view and manage all orders placed for your products.</p>
-            </div>
+          <div className="mb-8 w-full max-w-6xl mt-16">
+            <SellerOrders sellerId={user.uid} />
           </div>
         </div>
         <div className="flex justify-center mt-4">
