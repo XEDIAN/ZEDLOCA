@@ -35,8 +35,8 @@ class SellerOrdersErrorBoundary extends React.Component {
               Technical Details (click to expand)
             </summary>
             <pre className="text-xs text-red-600 whitespace-pre-wrap">
-              {this.state.error && this.state.error.toString()}
-              {this.state.errorInfo?.componentStack}
+              {this.state.error ? this.state.error.toString() : 'No error details available'}
+              {this.state.errorInfo?.componentStack || 'No component stack available'}
             </pre>
           </details>
           <button
@@ -56,6 +56,16 @@ class SellerOrdersErrorBoundary extends React.Component {
 const SellerOrders = ({ sellerId }) => {
   console.log('SellerOrders: Component starting to render');
   console.log('SellerOrders: sellerId prop:', sellerId);
+
+  // Check if sellerId is provided
+  if (!sellerId) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-500 mb-4">⚠️ Seller ID not provided</div>
+        <div className="text-gray-600 text-sm">Please log in as a seller to view your orders.</div>
+      </div>
+    );
+  }
 
   let formatPrice;
   try {
@@ -95,12 +105,13 @@ const SellerOrders = ({ sellerId }) => {
           id: doc.id,
           ...doc.data()
         }));
+        console.log(`SellerOrders: Found ${ordersData.length} orders for seller ${sellerId}`);
         setOrders(ordersData);
         setLoading(false);
       },
       (error) => {
         console.error('Error fetching orders:', error);
-        setError('Failed to load orders');
+        setError('Failed to load orders. Please check your connection and try again.');
         setLoading(false);
       }
     );
@@ -248,15 +259,15 @@ const SellerOrders = ({ sellerId }) => {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Price per item:</span>
-                        <span className="font-medium">{formatPrice(order.price)}</span>
+                        <span className="font-medium">{formatPrice(order.price || 0)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Quantity:</span>
-                        <span className="font-medium">{order.quantity}</span>
+                        <span className="font-medium">{order.quantity || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Total Price:</span>
-                        <span className="font-semibold text-green-600">{formatPrice(order.totalPrice || 0)}</span>
+                        <span className="font-semibold text-green-600">{formatPrice(order.totalPrice || (order.price * order.quantity) || 0)}</span>
                       </div>
                     </div>
                   </div>
