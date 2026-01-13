@@ -4,14 +4,30 @@ import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'f
 import { useCurrency } from './CurrencyContext';
 
 const SellerOrders = ({ sellerId }) => {
-  const { formatPrice } = useCurrency();
+  console.log('SellerOrders: Component starting to render');
+  console.log('SellerOrders: sellerId prop:', sellerId);
+
+  let formatPrice;
+  try {
+    const currencyContext = useCurrency();
+    formatPrice = currencyContext.formatPrice;
+    console.log('SellerOrders: Currency context loaded successfully');
+  } catch (error) {
+    console.error('SellerOrders: Currency context error:', error);
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-500 mb-4">⚠️ Currency context not available</div>
+        <div className="text-gray-600 text-sm">Please refresh the page and try again.</div>
+      </div>
+    );
+  }
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all'); // all, pending, completed, cancelled
 
-  // Debug logging
-  console.log('SellerOrders component rendered with sellerId:', sellerId);
+  console.log('SellerOrders: Component state initialized');
 
   useEffect(() => {
     if (!sellerId) return;
