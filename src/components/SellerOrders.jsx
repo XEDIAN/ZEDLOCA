@@ -10,6 +10,9 @@ const SellerOrders = ({ sellerId }) => {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all'); // all, pending, completed, cancelled
 
+  // Debug logging
+  console.log('SellerOrders component rendered with sellerId:', sellerId);
+
   useEffect(() => {
     if (!sellerId) return;
 
@@ -187,7 +190,7 @@ const SellerOrders = ({ sellerId }) => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Total Price:</span>
-                        <span className="font-semibold text-green-600">{formatPrice(order.totalPrice?.toString() || '0')}</span>
+                        <span className="font-semibold text-green-600">{formatPrice(order.totalPrice || 0)}</span>
                       </div>
                     </div>
                   </div>
