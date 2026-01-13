@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
@@ -20,69 +20,12 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [location, setLocation] = useState(null);
-  const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
-
-  // Automatically prompt for location when modal opens
-  useEffect(() => {
-    if (open && !location && !locationError) {
-      setLocationLoading(true);
-      getLocation()
-        .then((userLocation) => {
-          setLocation(userLocation);
-          setLocationLoading(false);
-        })
-        .catch((err) => {
-          console.error('Error getting location:', err);
-          if (err.isGeolocationError) {
-            setLocationError('Location access is required to place an order. Please enable location services and try again.');
-          } else {
-            setLocationError('Unable to access your location. Please enable location services.');
-          }
-          setLocationLoading(false);
-        });
-    }
-  }, [open, location, locationError]);
-
-  const getLocation = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation is not supported by this browser.'));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          });
-        },
-        (error) => {
-          // Create a custom error with geolocation flag
-          const geoError = new Error(`Geolocation error: ${error.message}`);
-          geoError.isGeolocationError = true;
-          reject(geoError);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000 // 5 minutes
-        }
-      );
-    });
-  };
 
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
     if (!deliveryAddress.trim()) {
       setError('Please provide a delivery address');
-      return;
-    }
-
-    if (!location) {
-      setError('Location is required to place an order. Please enable location services.');
       return;
     }
 
@@ -100,7 +43,7 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
         totalPrice: parseFloat(listing.price.replace(/[^0-9.-]+/g, '')) * quantity,
         deliveryAddress: deliveryAddress.trim(),
         specialInstructions: specialInstructions.trim(),
-        buyerLocation: location, // Use the location captured when modal opened
+        buyerLocation: location, // Optional location for delivery coordination
         status: 'pending',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -268,7 +211,7 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    📍 Your location will be automatically captured when placing the order for delivery coordination.
+                    📍 Your location may be captured for delivery coordination (optional).
                   </p>
                 </div>
 
@@ -318,7 +261,7 @@ function PlaceOrderModal({ open, onClose, listing, seller, buyer }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || !location}
+                  disabled={loading}
                   className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {loading ? (

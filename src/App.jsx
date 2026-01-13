@@ -90,11 +90,11 @@ const App = () => {
       <PlaceOrderPage
         listing={placeOrderData.listing}
         seller={placeOrderData.seller}
+        buyer={user}
         onBack={() => {
           setShowPlaceOrderPage(false);
           setPlaceOrderData(null);
         }}
-        user={user}
       />
     );
   }

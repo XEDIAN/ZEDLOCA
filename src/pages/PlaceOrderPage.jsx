@@ -20,9 +20,9 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
 
-  // Automatically prompt for location when page opens
+  // Automatically prompt for location when page opens (optional for pickup)
   useEffect(() => {
-    if (!location && !locationError) {
+    if (!location && !locationError && deliveryOption !== 'pickup') {
       setLocationLoading(true);
       getLocation()
         .then((userLocation) => {
@@ -32,14 +32,14 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
         .catch((err) => {
           console.error('Error getting location:', err);
           if (err.isGeolocationError) {
-            setLocationError('Location access is required to place an order. Please enable location services and try again.');
+            setLocationError('Location access would help with delivery coordination, but you can still place your order.');
           } else {
-            setLocationError('Unable to access your location. Please enable location services.');
+            setLocationError('Unable to access your location. You can still place your order.');
           }
           setLocationLoading(false);
         });
     }
-  }, [location, locationError]);
+  }, [location, locationError, deliveryOption]);
 
   const getLocation = () => {
     return new Promise((resolve, reject) => {
@@ -98,11 +98,6 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
       return;
     }
 
-    if (!location) {
-      setError('Location access is required to place an order. Please enable location services.');
-      return;
-    }
-
     setLoading(true);
     setError('');
 
@@ -117,6 +112,7 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
         totalPrice: parseFloat(listing.price.replace(/[^0-9.-]+/g, '')) * quantity,
         deliveryAddress: deliveryAddress.trim(),
         specialInstructions: specialInstructions.trim(),
+        buyerLocation: location, // Optional location for delivery coordination
         status: 'pending',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -129,6 +125,7 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
       setQuantity(1);
       setDeliveryAddress('');
       setSpecialInstructions('');
+      setLocation(null);
     } catch (err) {
       console.error('Error placing order:', err);
       setError('Failed to place order. Please try again.');
