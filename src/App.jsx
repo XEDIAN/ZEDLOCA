@@ -28,6 +28,7 @@ const App = () => {
   const [showBuyerMessages, setShowBuyerMessages] = useState(false);
   const [showBuyerStores, setShowBuyerStores] = useState(false);
   const [showBuyerMap, setShowBuyerMap] = useState(false);
+  const [showSellerOrders, setShowSellerOrders] = useState(false);
   const [showPlaceOrderPage, setShowPlaceOrderPage] = useState(false);
   const [placeOrderData, setPlaceOrderData] = useState(null);
   const [showMessageSellerModal, setShowMessageSellerModal] = useState(false);
@@ -174,6 +175,27 @@ const App = () => {
     );
   }
 
+  // Show seller orders page
+  if (showSellerOrders && user && role === 'seller') {
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+        <div className="flex-1 flex flex-col items-center justify-center pb-32">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4 mt-16">MY ORDERS</h1>
+          <div className="mb-8 w-full max-w-4xl">
+            {/* TODO: Add SellerOrders component here */}
+            <div className="text-center text-gray-600">
+              <p className="text-lg mb-4">📦 Orders management coming soon!</p>
+              <p className="text-sm">This feature will allow you to view and manage all orders placed for your products.</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-center mt-4">
+          <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => setShowSellerOrders(false)}>Back</button>
+        </div>
+      </div>
+    );
+  }
+
   // Consistent footer component for authenticated users
   const renderFooter = () => {
     if (!user || !role) return null;
@@ -224,6 +246,12 @@ const App = () => {
               onClick={() => setShowInbox(true)}
             >
               Inbox
+            </button>
+            <button
+              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn"
+              onClick={() => setShowSellerOrders(true)}
+            >
+              📦 Orders
             </button>
             <button
               className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-red-200 transition footer-btn"
