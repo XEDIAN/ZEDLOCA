@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { useCurrency } from '../components/CurrencyContext';
 
 function PlaceOrderPage({ listing, seller, buyer, onBack }) {
@@ -40,6 +40,27 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
         });
     }
   }, [location, locationError, deliveryOption]);
+
+  // Automatically fill delivery address from buyer's location
+  useEffect(() => {
+    const fetchBuyerLocation = async () => {
+      if (buyer && buyer.uid && !deliveryAddress) {
+        try {
+          const buyerDoc = await getDoc(doc(db, 'users', buyer.uid));
+          if (buyerDoc.exists()) {
+            const buyerData = buyerDoc.data();
+            if (buyerData.location) {
+              setDeliveryAddress(buyerData.location);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching buyer location:', error);
+        }
+      }
+    };
+
+    fetchBuyerLocation();
+  }, [buyer, deliveryAddress]);
 
   const getLocation = () => {
     return new Promise((resolve, reject) => {
