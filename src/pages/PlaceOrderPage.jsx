@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useCurrency } from '../components/CurrencyContext';
 
 function PlaceOrderPage({ listing, seller, buyer, onBack }) {
@@ -113,10 +113,59 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
       // Update delivery address with current coordinates
       setDeliveryAddress(`GPS Location: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} (Precise coordinates for accurate delivery)`);
 
+      // Update buyer's stored location in Firestore for future orders (mobility support)
+      if (buyer && buyer.uid) {
+        try {
+          const buyerRef = doc(db, 'users', buyer.uid);
+          await updateDoc(buyerRef, {
+            location: currentLocation,
+            locationUpdatedAt: serverTimestamp()
+          });
+        } catch (firestoreError) {
+          console.error('Error updating buyer location in Firestore:', firestoreError);
+          // Don't show error to user as this is not critical for the order
+        }
+      }
+
       // Clear any previous location errors
       setLocationError('');
     } catch (err) {
       console.error('Error updating location:', err);
+      if (err.isGeolocationError) {
+        setLocationError('Unable to access your location. Please check your browser permissions and try again.');
+      } else {
+        setLocationError('Failed to get your current location. Please try again.');
+      }
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  const handleUpdateStoredLocation = async () => {
+    setLocationLoading(true);
+    setLocationError('');
+
+    try {
+      const currentLocation = await getLocation();
+
+      // Update buyer's stored location in Firestore for future orders (mobility support)
+      if (buyer && buyer.uid) {
+        try {
+          const buyerRef = doc(db, 'users', buyer.uid);
+          await updateDoc(buyerRef, {
+            location: currentLocation,
+            locationUpdatedAt: serverTimestamp()
+          });
+          setLocationError('Location updated successfully for future orders!');
+        } catch (firestoreError) {
+          console.error('Error updating buyer location in Firestore:', firestoreError);
+          setLocationError('Failed to update stored location. Please try again.');
+        }
+      } else {
+        setLocationError('Unable to update location. Please log in and try again.');
+      }
+    } catch (err) {
+      console.error('Error getting location for update:', err);
       if (err.isGeolocationError) {
         setLocationError('Unable to access your location. Please check your browser permissions and try again.');
       } else {
@@ -455,6 +504,24 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
                         <>
                           <span className="text-lg">📍</span>
                           Use Current Location
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleUpdateStoredLocation}
+                      disabled={locationLoading}
+                      className="mt-2 w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                    >
+                      {locationLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Updating Location...
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-lg">🔄</span>
+                          Update Location
                         </>
                       )}
                     </button>
