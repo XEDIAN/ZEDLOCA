@@ -20,6 +20,8 @@ import BuyerStores from './components/BuyerStores';
 import MessageSellerModal from './components/MessageSellerModal';
 import PlaceOrderPage from './pages/PlaceOrderPage';
 import SellerOrders from './components/SellerOrders';
+import SellerProfile from './components/SellerProfile';
+
 
 const App = () => {
   const [showMap, setShowMap] = useState(false);
@@ -30,6 +32,7 @@ const App = () => {
   const [showBuyerStores, setShowBuyerStores] = useState(false);
   const [showBuyerMap, setShowBuyerMap] = useState(false);
   const [showSellerOrders, setShowSellerOrders] = useState(false);
+  const [showSellerProfile, setShowSellerProfile] = useState(false);
   const [showPlaceOrderPage, setShowPlaceOrderPage] = useState(false);
   const [placeOrderData, setPlaceOrderData] = useState(null);
   const [showMessageSellerModal, setShowMessageSellerModal] = useState(false);
@@ -192,6 +195,24 @@ const App = () => {
     );
   }
 
+  // Show seller profile page
+  if (showSellerProfile && user && role === 'seller') {
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+        <div className="flex-1 flex flex-col items-center justify-center pb-32">
+          <div className="mb-8 w-full max-w-4xl mt-16">
+            <SellerProfile sellerId={user.uid} />
+          </div>
+        </div>
+        <div className="flex justify-center mt-4">
+          <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => setShowSellerProfile(false)}>Back</button>
+        </div>
+      </div>
+    );
+  }
+
+
+
   // Consistent footer component for authenticated users
   const renderFooter = () => {
     if (!user || !role) return null;
@@ -248,6 +269,12 @@ const App = () => {
               onClick={() => setShowSellerOrders(true)}
             >
               📦 Orders
+            </button>
+            <button
+              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-purple-200 transition footer-btn"
+              onClick={() => setShowSellerProfile(true)}
+            >
+              👤 Profile
             </button>
             <button
               className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-red-200 transition footer-btn"
