@@ -41,16 +41,26 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
     }
   }, [location, locationError, deliveryOption]);
 
-  // Automatically fill delivery address from buyer's location
+  // Automatically fill delivery address from buyer's stored location coordinates
   useEffect(() => {
     const fetchBuyerLocation = async () => {
-      if (buyer && buyer.uid && !deliveryAddress) {
+      if (buyer && buyer.uid && !deliveryAddress && !location) {
         try {
           const buyerDoc = await getDoc(doc(db, 'users', buyer.uid));
           if (buyerDoc.exists()) {
             const buyerData = buyerDoc.data();
-            if (buyerData.location) {
-              setDeliveryAddress(buyerData.location);
+            if (buyerData.location && buyerData.location.lat && buyerData.location.lng) {
+              // Use stored coordinates from buyer's profile
+              const coordinates = {
+                lat: buyerData.location.lat,
+                lng: buyerData.location.lng,
+                accuracy: buyerData.location.accuracy || 10
+              };
+              setLocation(coordinates);
+
+              // Use coordinates for accurate delivery navigation
+              // Display coordinates with a note about GPS-based delivery
+              setDeliveryAddress(`GPS Location: ${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)} (Precise coordinates for accurate delivery)`);
             }
           }
         } catch (error) {
@@ -60,7 +70,7 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
     };
 
     fetchBuyerLocation();
-  }, [buyer, deliveryAddress]);
+  }, [buyer, deliveryAddress, location]);
 
   const getLocation = () => {
     return new Promise((resolve, reject) => {
@@ -90,6 +100,31 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
         }
       );
     });
+  };
+
+  const handleUpdateLocation = async () => {
+    setLocationLoading(true);
+    setLocationError('');
+
+    try {
+      const currentLocation = await getLocation();
+      setLocation(currentLocation);
+
+      // Update delivery address with current coordinates
+      setDeliveryAddress(`GPS Location: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} (Precise coordinates for accurate delivery)`);
+
+      // Clear any previous location errors
+      setLocationError('');
+    } catch (err) {
+      console.error('Error updating location:', err);
+      if (err.isGeolocationError) {
+        setLocationError('Unable to access your location. Please check your browser permissions and try again.');
+      } else {
+        setLocationError('Failed to get your current location. Please try again.');
+      }
+    } finally {
+      setLocationLoading(false);
+    }
   };
 
   // Constants for calculations
@@ -405,6 +440,24 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={handleUpdateLocation}
+                      disabled={locationLoading}
+                      className="mt-3 w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                    >
+                      {locationLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Getting Location...
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-lg">📍</span>
+                          Use Current Location
+                        </>
+                      )}
+                    </button>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
