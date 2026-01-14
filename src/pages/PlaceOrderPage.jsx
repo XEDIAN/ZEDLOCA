@@ -507,24 +507,6 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
                         </>
                       )}
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleUpdateStoredLocation}
-                      disabled={locationLoading}
-                      className="mt-2 w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                    >
-                      {locationLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Updating Location...
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-lg">🔄</span>
-                          Update Location
-                        </>
-                      )}
-                    </button>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
