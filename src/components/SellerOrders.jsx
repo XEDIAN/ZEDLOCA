@@ -363,24 +363,44 @@ const SellerOrders = ({ sellerId }) => {
                                   onClick={() => {
                                     const address = order.deliveryAddress.trim();
                                     if (address) {
-                                      // Try to open in Google Maps first, fallback to Apple Maps or generic maps
-                                      const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
-                                      const appleMapsUrl = `http://maps.apple.com/?daddr=${encodeURIComponent(address)}`;
+                                      // Check if address contains GPS coordinates
+                                      const gpsMatch = address.match(/GPS Location:\s*([-\d.]+),\s*([-\d.]+)/);
+                                      let destination;
+
+                                      if (gpsMatch) {
+                                        // Use coordinates directly for precise navigation
+                                        const lat = parseFloat(gpsMatch[1]);
+                                        const lng = parseFloat(gpsMatch[2]);
+                                        destination = `${lat},${lng}`;
+                                      } else {
+                                        // Use address as-is for text-based locations
+                                        destination = address;
+                                      }
+
+                                      // Create navigation URLs
+                                      const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+                                      const appleMapsUrl = `http://maps.apple.com/?daddr=${encodeURIComponent(destination)}`;
 
                                       // Check if user is on iOS
                                       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-                                      if (isIOS) {
-                                        window.open(appleMapsUrl, '_blank');
-                                      } else {
-                                        window.open(googleMapsUrl, '_blank');
+                                      try {
+                                        if (isIOS) {
+                                          window.open(appleMapsUrl, '_blank');
+                                        } else {
+                                          window.open(googleMapsUrl, '_blank');
+                                        }
+                                      } catch (error) {
+                                        console.error('Error opening navigation:', error);
+                                        // Fallback: try to open in new tab with basic URL
+                                        window.open(`https://maps.google.com/maps?q=${encodeURIComponent(destination)}`, '_blank');
                                       }
                                     }
                                   }}
                                   className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
                                 >
                                   <span className="text-base">🗺️</span>
-                                  Navigate to Delivery Address
+                                  Navigate to Delivery Location
                                 </button>
                               </div>
                             ) : (
