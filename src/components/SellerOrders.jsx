@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
 
 // Error Boundary Component
@@ -83,6 +83,7 @@ const SellerOrders = ({ sellerId }) => {
   }
 
   const [orders, setOrders] = useState([]);
+  const [buyers, setBuyers] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all'); // all, pending, completed, cancelled
@@ -118,6 +119,30 @@ const SellerOrders = ({ sellerId }) => {
 
     return () => unsubscribe();
   }, [sellerId]);
+
+  // Fetch buyer information for all orders
+  useEffect(() => {
+    if (orders.length === 0) return;
+
+    const uniqueBuyerIds = [...new Set(orders.map(order => order.buyerId).filter(Boolean))];
+
+    const fetchBuyers = async () => {
+      const buyersData = {};
+      for (const buyerId of uniqueBuyerIds) {
+        try {
+          const buyerDoc = await getDoc(doc(db, 'users', buyerId));
+          if (buyerDoc.exists()) {
+            buyersData[buyerId] = buyerDoc.data();
+          }
+        } catch (error) {
+          console.error(`Error fetching buyer ${buyerId}:`, error);
+        }
+      }
+      setBuyers(buyersData);
+    };
+
+    fetchBuyers();
+  }, [orders]);
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -195,7 +220,7 @@ const SellerOrders = ({ sellerId }) => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-3 mb-8">
         {[
           { key: 'all', label: 'All Orders', count: orders.length },
           { key: 'pending', label: 'Pending', count: orders.filter(o => o.status === 'pending').length },
@@ -208,13 +233,15 @@ const SellerOrders = ({ sellerId }) => {
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
               filter === key
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
+                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md'
             }`}
           >
-            {label} ({count})
+            {label} <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+              filter === key ? 'bg-white/20' : 'bg-gray-100'
+            }`}>{count}</span>
           </button>
         ))}
       </div>
@@ -232,27 +259,27 @@ const SellerOrders = ({ sellerId }) => {
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {filteredOrders.map((order) => (
-            <div key={order.id} className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div key={order.id} className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
               {/* Order Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
+              <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-semibold">{order.title}</h3>
-                    <p className="text-blue-100 text-sm">
+                    <h3 className="text-xl font-bold">{order.title}</h3>
+                    <p className="text-blue-100 text-sm mt-1">
                       Order #{order.id.slice(-8)} • {order.createdAt?.toDate?.()?.toLocaleDateString() || 'Date not available'}
                     </p>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                  <div className={`px-4 py-2 rounded-full text-xs font-semibold border-2 ${getStatusColor(order.status)} shadow-sm`}>
                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </div>
                 </div>
               </div>
 
               {/* Order Details */}
-              <div className="p-6">
-                <div className="grid md:grid-cols-2 gap-6">
+              <div className="p-8">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {/* Product & Pricing */}
                   <div>
                     <h4 className="font-semibold text-gray-800 mb-3">📦 Order Details</h4>
@@ -284,6 +311,52 @@ const SellerOrders = ({ sellerId }) => {
                         <div>
                           <span className="text-gray-600">Special Instructions:</span>
                           <p className="font-medium text-gray-800 mt-1">{order.specialInstructions}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Buyer Information */}
+                  <div>
+                    <h4 className="font-semibold text-gray-800 mb-3">👤 Buyer Information</h4>
+                    <div className="space-y-2 text-sm">
+                      {buyers[order.buyerId] ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            {buyers[order.buyerId].photoURL ? (
+                              <img
+                                src={buyers[order.buyerId].photoURL}
+                                alt={buyers[order.buyerId].displayName || 'Buyer'}
+                                className="w-8 h-8 rounded-full border border-gray-200"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
+                                <span className="text-xs text-white font-bold">
+                                  {(buyers[order.buyerId].displayName || 'B').charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {buyers[order.buyerId].displayName || 'Anonymous Buyer'}
+                              </div>
+                              {buyers[order.buyerId].email && (
+                                <div className="text-gray-600 text-xs">
+                                  {buyers[order.buyerId].email}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {buyers[order.buyerId].phone && (
+                            <div>
+                              <span className="text-gray-600">Phone:</span>
+                              <span className="font-medium text-gray-800 ml-1">{buyers[order.buyerId].phone}</span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-gray-500 text-sm">
+                          Buyer information loading...
                         </div>
                       )}
                     </div>
