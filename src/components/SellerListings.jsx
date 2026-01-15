@@ -129,7 +129,15 @@ function SellerListings({ sellerId, onBack }) {
                     <p className="text-gray-700 mb-3">{seller.description}</p>
                   )}
                   {seller.phone && (
-                    <p className="text-gray-700 mb-3">📞 {seller.phone}</p>
+                    <a
+                      href={`https://wa.me/${seller.phone.replace(/\D/g, '')}?text=Hi, I'm interested in your products`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-green-600 hover:text-green-700 font-medium mb-3 inline-flex items-center gap-2"
+                    >
+                      <span className="text-lg">💬</span>
+                      WhatsApp: {seller.phone}
+                    </a>
                   )}
                   {/* If promo is active and user is within radius, show promo text */}
                   {seller.promo_active && seller.promo_text && promoActiveForUser && (

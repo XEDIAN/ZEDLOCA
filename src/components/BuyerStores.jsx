@@ -702,10 +702,15 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                             <div className="text-xs text-gray-600 mt-1">{seller.description}</div>
                           )}
                           {seller.phone && (
-                            <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
-                              <span className="text-sm">📞</span>
-                              {seller.phone}
-                            </div>
+                            <a
+                              href={`https://wa.me/${seller.phone.replace(/\D/g, '')}?text=Hi, I'm interested in your products`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1 mt-1"
+                            >
+                              <span className="text-sm">💬</span>
+                              WhatsApp: {seller.phone}
+                            </a>
                           )}
                           {distance && (
                             <div className="text-xs text-gray-600 flex items-center gap-1">
