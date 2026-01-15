@@ -258,141 +258,246 @@ function Listings({ userId }) {
   };
 
   return (
-    <div className="listings-container mt-4 sm:mt-6">
-      <h3 className="text-sm sm:text-base font-semibold mb-2">My Listings</h3>
+    <div className="w-full max-w-7xl mx-auto px-4">
+      {/* Header */}
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">📦 My Listings</h2>
+        <p className="text-gray-600">Manage your product listings and promotions</p>
+      </div>
 
       {/* Promotion management UI for sellers */}
       {userId && (
-        <div className="mb-3 p-2 bg-gray-50 rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-          <div>
-            <p className="text-xs text-gray-700">
-              {loadingPromo ? 'Loading promotion...' : sellerPromo?.promo_active ? `Active promotion: "${sellerPromo.promo_text}" — ${sellerPromo.promo_radius_meters} m` : 'No active promotion'}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={handleEditPromo} className="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Edit Promotion</button>
-            <button onClick={handleClearPromo} className="bg-red-500 text-white px-2 py-1 rounded text-xs">Clear Promotion</button>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Promotion Management</h3>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-gray-700">
+                {loadingPromo ? (
+                  <span className="text-blue-600">Loading promotion...</span>
+                ) : sellerPromo?.promo_active ? (
+                  <span className="text-green-600 font-medium">
+                    Active: "{sellerPromo.promo_text}" — {sellerPromo.promo_radius_meters}m radius
+                  </span>
+                ) : (
+                  <span className="text-gray-500">No active promotion</span>
+                )}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleEditPromo}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+              >
+                Edit Promotion
+              </button>
+              <button
+                onClick={handleClearPromo}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+              >
+                Clear Promotion
+              </button>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Status Messages */}
       {loading && (
-        <div className="flex justify-center items-center mb-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-b-4 border-blue-600"></div>
-          <span className="ml-3 text-blue-600 font-medium">Loading...</span>
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-gray-600 text-lg">Loading listings...</span>
         </div>
       )}
+
       {errorMessage && (
-        <div className="mb-3 p-2 bg-red-100 text-red-700 rounded">
-          {errorMessage}
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+          <div className="flex items-center">
+            <div className="text-red-500 mr-3">⚠️</div>
+            <p className="text-red-700">{errorMessage}</p>
+          </div>
         </div>
       )}
+
       {successMessage && (
-        <div className="mb-3 p-2 bg-gray-200 text-gray-700 rounded">
-          {successMessage}
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+          <div className="flex items-center">
+            <div className="text-green-500 mr-3">✅</div>
+            <p className="text-green-700">{successMessage}</p>
+          </div>
         </div>
       )}
-      <form onSubmit={handleSubmit} className="mb-3 p-1 sm:p-2 border rounded bg-gray-50">
-        <h4 className="font-semibold mb-2 text-base sm:text-lg">{editingId ? 'Edit Listing' : 'Add New Listing'}</h4>
-        <div className="mb-2">
-          <input
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            placeholder="Title"
-            className="border p-1 rounded w-full text-sm"
-            required
-          />
+
+      {/* Add/Edit Form */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
+        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-6">
+          <h3 className="text-xl font-bold">{editingId ? 'Edit Listing' : 'Create New Listing'}</h3>
+          <p className="text-blue-100 mt-1">{editingId ? 'Update your listing details' : 'Add a new product to your store'}</p>
         </div>
-        <div className="mb-2">
-          <input
-            name="price"
-            value={form.price}
-            onChange={handleChange}
-            placeholder="Price"
-            className="border p-1 rounded w-full text-sm"
-            required
-          />
-        </div>
-        <div className="mb-2">
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Description"
-            className="border p-1 rounded w-full text-sm"
-            required
-          />
-        </div>
-        <div className="mb-2">
-          <select
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            className="border p-1 rounded w-full text-sm"
-          >
-            <option value="">Select Category</option>
-            <option value="electronics">Electronics</option>
-            <option value="clothing">Clothing</option>
-            <option value="home">Home & Garden</option>
-            <option value="sports">Sports</option>
-            <option value="books">Books</option>
-            <option value="automotive">Automotive</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div className="mb-2">
-          <ImageUpload onImagesUploaded={setUploadedImages} />
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button type="submit" className="bg-blue-600 text-white px-2 py-1 sm:px-3 sm:py-1 rounded text-sm" disabled={loading}>
-            {loading ? 'Saving...' : editingId ? 'Update Listing' : 'Add Listing'}
-          </button>
-          {editingId && (
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="bg-gray-500 text-white px-2 py-1 sm:px-3 sm:py-1 rounded text-sm"
+
+        <form onSubmit={handleSubmit} className="p-8">
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <input
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Enter listing title"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+              <input
+                name="price"
+                value={form.price}
+                onChange={handleChange}
+                placeholder="Enter price"
+                type="number"
+                step="0.01"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              Cancel
+              <option value="">Select Category</option>
+              <option value="electronics">Electronics</option>
+              <option value="clothing">Clothing</option>
+              <option value="home">Home & Garden</option>
+              <option value="sports">Sports</option>
+              <option value="books">Books</option>
+              <option value="automotive">Automotive</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Describe your product in detail"
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Images</label>
+            <ImageUpload onImagesUploaded={setUploadedImages} />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="submit"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : editingId ? 'Update Listing' : 'Create Listing'}
             </button>
-          )}
-        </div>
-      </form>
+
+            {editingId && (
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                Cancel Edit
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      {/* Listings Grid */}
       {listings.length === 0 ? (
-        <div className="text-center py-8">
-          <span className="text-4xl mb-4 block">📦</span>
-          <p className="text-gray-600">You have no listings yet. Create your first listing below!</p>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-12 text-center">
+          <div className="text-6xl mb-4">📦</div>
+          <h3 className="text-xl font-semibold text-gray-600 mb-2">No listings yet</h3>
+          <p className="text-gray-500">Create your first listing to get started selling!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {listings.map(listing => (
-            <div key={listing.id} className="border rounded p-2 sm:p-3 bg-white shadow-sm flex flex-col listings-card">
-              <div className="flex items-center mb-2">
-                <span className="mr-2 text-lg sm:text-xl" role="img" aria-label="Listing">📦</span>
-                <h4 className="font-bold text-sm sm:text-base">{listing.title}</h4>
+            <div key={listing.id} className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+              {/* Listing Header */}
+              <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-6">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold mb-1">{listing.title}</h3>
+                    <p className="text-blue-100 text-sm">
+                      {listing.category && `${listing.category.charAt(0).toUpperCase() + listing.category.slice(1)} • `}
+                      Created {listing.createdAt?.toDate?.()?.toLocaleDateString() || 'Recently'}
+                    </p>
+                  </div>
+                  <div className="text-2xl ml-3">📦</div>
+                </div>
               </div>
-              <p className="text-gray-700 font-semibold text-sm">{listing.price}</p>
-              <p className="text-gray-600 text-xs sm:text-sm mb-2">{listing.description}</p>
-              <div className="flex gap-1 sm:gap-2 mt-2">
-                <button
-                  onClick={() => handleEdit(listing)}
-                  className="bg-yellow-500 text-white px-2 py-1 sm:px-3 rounded text-xs sm:text-sm"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(listing.id)}
-                  className="bg-red-500 text-white px-2 py-1 sm:px-3 rounded text-xs sm:text-sm"
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={() => alert(`Details for ${listing.title}:\nPrice: ${listing.price}\nDescription: ${listing.description}`)}
-                  className="bg-blue-500 text-white px-2 py-1 sm:px-3 rounded text-xs sm:text-sm"
-                >
-                  Details
-                </button>
+
+              {/* Listing Details */}
+              <div className="p-6">
+                <div className="mb-4">
+                  <div className="text-2xl font-bold text-green-600 mb-1">${listing.price}</div>
+                  <p className="text-gray-600 text-sm line-clamp-3">{listing.description}</p>
+                </div>
+
+                {/* Images Preview */}
+                {listing.images && listing.images.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex gap-2 overflow-x-auto">
+                      {listing.images.slice(0, 3).map((image, index) => (
+                        <img
+                          key={index}
+                          src={image}
+                          alt={`${listing.title} ${index + 1}`}
+                          className="w-16 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                        />
+                      ))}
+                      {listing.images.length > 3 && (
+                        <div className="w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
+                          +{listing.images.length - 3}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(listing)}
+                      className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(listing.id)}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => alert(`Details for ${listing.title}:\nPrice: $${listing.price}\nDescription: ${listing.description}\nCategory: ${listing.category || 'Not specified'}`)}
+                    className="w-full bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors font-medium"
+                  >
+                    View Details
+                  </button>
+                </div>
               </div>
             </div>
           ))}

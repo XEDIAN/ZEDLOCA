@@ -318,14 +318,14 @@ function BuyersPage({ sellerId, onBack }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">My Buyers</h1>
-              <p className="text-white/80">Manage and analyze your customer base</p>
+              <h1 className="text-3xl font-bold">My Buyers</h1>
+              <p className="text-blue-100 mt-1">Manage and analyze your customer base</p>
             </div>
             <button
               onClick={onBack}
@@ -339,46 +339,46 @@ function BuyersPage({ sellerId, onBack }) {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Analytics Dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-            <div className="text-white/60 text-sm">Total Buyers</div>
-            <div className="text-2xl font-bold text-white">{analytics.totalBuyers}</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+            <div className="text-gray-600 text-sm font-medium mb-2">Total Buyers</div>
+            <div className="text-3xl font-bold text-gray-800">{analytics.totalBuyers}</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-            <div className="text-white/60 text-sm">Active (30d)</div>
-            <div className="text-2xl font-bold text-green-300">{analytics.activeBuyers}</div>
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+            <div className="text-gray-600 text-sm font-medium mb-2">Active (30d)</div>
+            <div className="text-3xl font-bold text-green-600">{analytics.activeBuyers}</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-            <div className="text-white/60 text-sm">Total Messages</div>
-            <div className="text-2xl font-bold text-blue-300">{analytics.totalMessages}</div>
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+            <div className="text-gray-600 text-sm font-medium mb-2">Total Messages</div>
+            <div className="text-3xl font-bold text-blue-600">{analytics.totalMessages}</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20">
-            <div className="text-white/60 text-sm">Total Orders</div>
-            <div className="text-2xl font-bold text-purple-300">{analytics.totalOrders}</div>
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+            <div className="text-gray-600 text-sm font-medium mb-2">Total Orders</div>
+            <div className="text-3xl font-bold text-purple-600">{analytics.totalOrders}</div>
           </div>
         </div>
 
         {/* View Toggle and Filters */}
-        <div className="bg-white/10 backdrop-blur-md rounded-lg p-4 border border-white/20 mb-6">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             {/* View Mode Toggle */}
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={() => setViewMode('map')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
                   viewMode === 'map'
-                    ? 'bg-white text-gray-800'
-                    : 'bg-white/20 text-white hover:bg-white/30'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md'
                 }`}
               >
                 🗺️ Map View
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
                   viewMode === 'list'
-                    ? 'bg-white text-gray-800'
-                    : 'bg-white/20 text-white hover:bg-white/30'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md'
                 }`}
               >
                 📋 List View
@@ -392,13 +392,13 @@ function BuyersPage({ sellerId, onBack }) {
                 placeholder="Search buyers..."
                 value={filters.search}
                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="px-4 py-2 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
 
               <select
                 value={filters.activityLevel}
                 onChange={(e) => setFilters(prev => ({ ...prev, activityLevel: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="px-4 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Buyers</option>
                 <option value="active">Active Only</option>
@@ -408,7 +408,7 @@ function BuyersPage({ sellerId, onBack }) {
               <select
                 value={filters.sortBy}
                 onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
-                className="px-3 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="px-4 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="recent">Sort by Recent</option>
                 <option value="distance">Sort by Distance</option>
