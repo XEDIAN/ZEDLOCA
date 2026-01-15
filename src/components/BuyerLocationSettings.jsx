@@ -38,6 +38,36 @@ const BuyerLocationSettings = ({ userId }) => {
         'location.trackingEnabled': false
       });
     } else {
+      // Force a fresh location update when enabling
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0 // Force fresh location
+          });
+        });
+
+        // Update Firebase with current location immediately
+        const locationData = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: position.coords.timestamp || Date.now(),
+          updatedAt: serverTimestamp(),
+          batteryLevel: 100,
+          trackingEnabled: true
+        };
+
+        await updateDoc(doc(db, 'users', userId), {
+          location: locationData
+        });
+
+        console.log('Manual location update:', locationData);
+      } catch (error) {
+        console.warn('Failed to get initial location:', error);
+      }
+
       const started = await locationService.startTracking();
       setIsTracking(started);
       if (started) {

@@ -12,7 +12,7 @@ import UserProfile from './components/UserProfile';
 import DraggableSidebar from './components/DraggableSidebar';
 import Listings from './components/Listings';
 import RequireRole from './components/RequireRole';
-
+import SplashScreen from './components/SplashScreen';
 
 import SellerInbox from './components/SellerInbox';
 import BuyerMessages from './components/BuyerMessages';
@@ -24,6 +24,7 @@ import SellerProfile from './components/SellerProfile';
 
 
 const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
   const [showMap, setShowMap] = useState(false);
   const [showListings, setShowListings] = useState(false);
   const [showSellerListings, setShowSellerListings] = useState(null);
@@ -41,6 +42,13 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [roleLoading, setRoleLoading] = useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3000); // 3 seconds
+    return () => clearTimeout(timer);
+  }, []);
 
   React.useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
@@ -89,6 +97,11 @@ const App = () => {
     });
     return () => unsubscribe();
   }, [showMap]);
+
+  // Show splash screen
+  if (showSplash) {
+    return <SplashScreen />;
+  }
 
   // Show place order page
   if (showPlaceOrderPage && placeOrderData) {
