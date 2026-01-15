@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import MapView from './components/MapView';
-import MapBuyers from './components/MapBuyers';
+import BuyersPage from './components/BuyersPage';
 import MapControls from './components/MapControls';
 import { auth, db } from './firebase';
 import { setDoc, getDoc, doc } from 'firebase/firestore';
@@ -181,15 +181,13 @@ const App = () => {
     );
   }
 
-  // Show buyer map for sellers
+  // Show buyers page for sellers
   if (showBuyerMap && user && role === 'seller') {
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
-        <MapBuyers sellerId={user.uid} />
-        <div className="flex justify-center mt-4">
-          <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => setShowBuyerMap(false)}>Back</button>
-        </div>
-      </div>
+      <BuyersPage
+        sellerId={user.uid}
+        onBack={() => setShowBuyerMap(false)}
+      />
     );
   }
 
