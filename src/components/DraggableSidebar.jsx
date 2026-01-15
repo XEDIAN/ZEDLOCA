@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import UserProfile from './UserProfile';
+import EditPromotionModal from './EditPromotionModal';
 import { db, auth } from '../firebase';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, where, orderBy, limit, doc, updateDoc } from 'firebase/firestore';
 
 function haversine(lat1, lon1, lat2, lon2) {
   if ([lat1, lon1, lat2, lon2].some(v => typeof v !== 'number')) return Infinity;
@@ -29,6 +30,7 @@ function DraggableSidebar({ role }) {
   const [recentActivity, setRecentActivity] = useState([]);
   const [buyerLoading, setBuyerLoading] = useState(false);
   const [buyerError, setBuyerError] = useState(null);
+  const [showEditPromotionModal, setShowEditPromotionModal] = useState(false);
   const sidebarRef = useRef(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
@@ -402,7 +404,7 @@ function DraggableSidebar({ role }) {
                   <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Seller Tools</h2>
                   <div className="space-y-2">
                     <button
-                      onClick={() => alert('Edit Promotion feature coming soon!')}
+                      onClick={() => setShowEditPromotionModal(true)}
                       className="w-full p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition text-left"
                     >
                       <div className="flex items-center gap-2">
@@ -414,14 +416,56 @@ function DraggableSidebar({ role }) {
                       </div>
                     </button>
                     <button
-                      onClick={() => alert('Manage Location feature coming soon!')}
+                      onClick={async () => {
+                        if (!auth?.currentUser?.uid) {
+                          alert('Please log in to update your location.');
+                          return;
+                        }
+
+                        if (!navigator.geolocation) {
+                          alert('Geolocation is not supported by this browser.');
+                          return;
+                        }
+
+                        try {
+                          const position = await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                              enableHighAccuracy: true,
+                              timeout: 10000,
+                              maximumAge: 0
+                            });
+                          });
+
+                          const { latitude, longitude } = position.coords;
+                          const sellerRef = doc(db, 'sellers', auth.currentUser.uid);
+
+                          await updateDoc(sellerRef, {
+                            lat: latitude,
+                            lng: longitude,
+                            updatedAt: serverTimestamp()
+                          });
+
+                          alert(`Location updated successfully!\nLatitude: ${latitude.toFixed(6)}\nLongitude: ${longitude.toFixed(6)}`);
+                        } catch (error) {
+                          console.error('Error updating location:', error);
+                          if (error.code === error.PERMISSION_DENIED) {
+                            alert('Location access denied. Please enable location permissions and try again.');
+                          } else if (error.code === error.POSITION_UNAVAILABLE) {
+                            alert('Location information is unavailable. Please try again.');
+                          } else if (error.code === error.TIMEOUT) {
+                            alert('Location request timed out. Please try again.');
+                          } else {
+                            alert('Failed to update location. Please try again.');
+                          }
+                        }
+                      }}
                       className="w-full p-3 bg-indigo-50 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition text-left"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-xl">📍</span>
                         <div>
-                          <p className="font-semibold text-sm">Manage Location</p>
-                          <p className="text-xs text-gray-600">Update store location</p>
+                          <p className="font-semibold text-sm">Update Store Location</p>
+                          <p className="text-xs text-gray-600">Fetch real-time location</p>
                         </div>
                       </div>
                     </button>
