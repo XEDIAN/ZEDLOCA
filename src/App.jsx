@@ -33,6 +33,7 @@ const App = () => {
   const [showBuyerMap, setShowBuyerMap] = useState(false);
   const [showSellerOrders, setShowSellerOrders] = useState(false);
   const [showSellerProfile, setShowSellerProfile] = useState(false);
+  const [showBuyerProfile, setShowBuyerProfile] = useState(false);
   const [showPlaceOrderPage, setShowPlaceOrderPage] = useState(false);
   const [placeOrderData, setPlaceOrderData] = useState(null);
   const [showMessageSellerModal, setShowMessageSellerModal] = useState(false);
@@ -213,6 +214,8 @@ const App = () => {
 
 
 
+
+
   // Consistent footer component for authenticated users
   const renderFooter = () => {
     if (!user || !role) return null;
@@ -318,6 +321,7 @@ const App = () => {
             >
               📍
             </button>
+
           </>
         )}
         <button

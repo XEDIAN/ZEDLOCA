@@ -115,7 +115,7 @@ function SellerListings({ sellerId, onBack }) {
                 )}
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-3xl font-bold text-gray-800">{seller.displayName}</h2>
+                  <h2 className="text-3xl font-bold text-gray-800">{seller.storeName || seller.displayName}</h2>
                     {/* Show store-wide promo status */}
                     {seller.promo_active && promoActiveForUser && (
                       <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">Promotion active</span>
@@ -125,8 +125,11 @@ function SellerListings({ sellerId, onBack }) {
                     )}
                   </div>
                   <p className="text-gray-600 mb-2">{seller.email}</p>
-                  {seller.bio && (
-                    <p className="text-gray-700 mb-3">{seller.bio}</p>
+                  {seller.description && (
+                    <p className="text-gray-700 mb-3">{seller.description}</p>
+                  )}
+                  {seller.phone && (
+                    <p className="text-gray-700 mb-3">📞 {seller.phone}</p>
                   )}
                   {/* If promo is active and user is within radius, show promo text */}
                   {seller.promo_active && seller.promo_text && promoActiveForUser && (

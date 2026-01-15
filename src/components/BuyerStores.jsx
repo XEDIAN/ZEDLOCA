@@ -215,7 +215,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
     const matchesSearch = searchTerm === '' ||
       listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       listing.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (seller && seller.displayName.toLowerCase().includes(searchTerm.toLowerCase()));
+      (seller && (seller.storeName || seller.displayName).toLowerCase().includes(searchTerm.toLowerCase()));
 
     // Category filter (only apply if user has selected categories)
     const matchesCategory = selectedCategories.size === 0 || selectedCategories.has(listing.category);
@@ -333,7 +333,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                 </button>
                 <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-2">
                   <span className="text-4xl">🏪</span>
-                  {seller?.displayName || 'Seller'}'s Store
+                  {seller?.storeName || seller?.displayName || 'Seller'}'s Store
                 </h1>
               </div>
               <div className="flex gap-4 text-white">
@@ -368,15 +368,18 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                     )}
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-2xl font-bold text-gray-800">{seller.displayName}</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">{seller.storeName || seller.displayName}</h2>
                     <div className="flex items-center gap-2 mt-1">
                       {[...Array(5)].map((_, i) => (
                         <span key={i} className="text-yellow-400 text-lg">⭐</span>
                       ))}
                       <span className="text-gray-600">(4.8)</span>
                     </div>
-                    {seller.bio && (
-                      <p className="text-gray-600 mt-2">{seller.bio}</p>
+                    {seller.description && (
+                      <p className="text-gray-600 mt-2">{seller.description}</p>
+                    )}
+                    {seller.phone && (
+                      <p className="text-gray-600 mt-1">📞 {seller.phone}</p>
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
@@ -687,7 +690,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-800">{seller.displayName}</span>
+                            <span className="font-medium text-gray-800">{seller.storeName || seller.displayName}</span>
                             <div className="flex items-center gap-1">
                               {[...Array(5)].map((_, i) => (
                                 <span key={i} className="text-yellow-400 text-xs">⭐</span>
@@ -695,6 +698,15 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                               <span className="text-xs text-gray-600">(4.8)</span>
                             </div>
                           </div>
+                          {seller.description && (
+                            <div className="text-xs text-gray-600 mt-1">{seller.description}</div>
+                          )}
+                          {seller.phone && (
+                            <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                              <span className="text-sm">📞</span>
+                              {seller.phone}
+                            </div>
+                          )}
                           {distance && (
                             <div className="text-xs text-gray-600 flex items-center gap-1">
                               <span className="text-lg">📍</span>
