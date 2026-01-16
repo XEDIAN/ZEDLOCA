@@ -361,7 +361,7 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
             </div>
 
             {/* Order Form Cards */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 lg:space-y-6 order-1 lg:order-2">
               {/* Quantity & Payment Card with Glassmorphism */}
               <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 shadow-2xl hover:bg-white/15 transition-all duration-300 hover:shadow-green-500/25 hover:border-white/30">
                 <div className="flex items-center gap-3 mb-6">

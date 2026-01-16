@@ -231,121 +231,131 @@ const App = () => {
   const renderFooter = () => {
     if (!user || !role) return null;
     return (
-      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-4 flex justify-center gap-4 z-50">
-        <button
-          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
-          onClick={() => {
-            setShowMap(true);
-            setShowListings(false);
-            setShowSellerListings(null);
-          }}
-        >
-          View Map
-        </button>
-        {role === 'seller' && (
-          <>
-            <button
-              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
-              onClick={() => {
-                setShowListings(true);
-                setShowMap(false);
-                setShowSellerListings(null);
-                // Prompt seller to register location
-                if (user && navigator.geolocation) {
-                  window.alert('Please allow location access to register your current location for your store.');
-                  navigator.geolocation.getCurrentPosition((pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    (async () => {
-                      await setDoc(doc(db, 'sellers', user.uid), {
-                        uid: user.uid,
-                        displayName: user.displayName,
-                        email: user.email,
-                        lat: latitude,
-                        lng: longitude,
-                        photoURL: user.photoURL || '',
-                        updatedAt: new Date(),
-                      }, { merge: true });
-                    })();
-                  }, null, { enableHighAccuracy: true });
-                }
-              }}
-            >
-              My Listings
-            </button>
-            <button
-              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn"
-              onClick={() => setShowInbox(true)}
-            >
-              Inbox
-            </button>
-            <button
-              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn"
-              onClick={() => setShowSellerOrders(true)}
-            >
-              📦 Orders
-            </button>
-            <button
-              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-purple-200 transition footer-btn"
-              onClick={() => setShowSellerProfile(true)}
-            >
-              👤 Profile
-            </button>
-            <button
-              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-red-200 transition footer-btn"
-              onClick={() => setShowBuyerMap(true)}
-            >
-              🗺️ Buyers
-            </button>
-          </>
-        )}
-        {role === 'buyer' && (
-          <>
-            <button
-              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn"
-              onClick={() => setShowBuyerMessages(true)}
-              title="My Messages"
-            >
-              <span role="img" aria-label="Messages">💬</span>
-            </button>
-            <button
-              className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn"
-              onClick={() => {
-                if (user && navigator.geolocation) {
-                  window.alert('Please allow location access to update your location.');
-                  navigator.geolocation.getCurrentPosition((pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    (async () => {
-                      await setDoc(doc(db, 'buyers', user.uid), {
-                        uid: user.uid,
-                        displayName: user.displayName,
-                        email: user.email,
-                        lat: latitude,
-                        lng: longitude,
-                        photoURL: user.photoURL || '',
-                        updatedAt: new Date(),
-                      }, { merge: true });
-                    })();
-                  }, null, { enableHighAccuracy: true });
-                }
-              }}
-              title="Update Location"
-            >
-              📍
-            </button>
-
-          </>
-        )}
-        <button
-          className="bg-white text-gray-800 font-bold px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn"
-          onClick={() => {
-            setShowBuyerStores(true);
-            setShowMap(false);
-            setShowListings(false);
-            setShowSellerListings(null);
-          }}
-        >
-          Stores
-        </button>
+      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-2 sm:py-4 flex justify-center gap-1 sm:gap-2 md:gap-4 z-50 overflow-x-auto">
+        <div className="flex gap-1 sm:gap-2 md:gap-4 px-2 sm:px-4 min-w-max">
+          <button
+            className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+            onClick={() => {
+              setShowMap(true);
+              setShowListings(false);
+              setShowSellerListings(null);
+            }}
+          >
+            <span className="hidden sm:inline">View Map</span>
+            <span className="sm:hidden">🗺️</span>
+          </button>
+          {role === 'seller' && (
+            <>
+              <button
+                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                onClick={() => {
+                  setShowListings(true);
+                  setShowMap(false);
+                  setShowSellerListings(null);
+                  // Prompt seller to register location
+                  if (user && navigator.geolocation) {
+                    window.alert('Please allow location access to register your current location for your store.');
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                      const { latitude, longitude } = pos.coords;
+                      (async () => {
+                        await setDoc(doc(db, 'sellers', user.uid), {
+                          uid: user.uid,
+                          displayName: user.displayName,
+                          email: user.email,
+                          lat: latitude,
+                          lng: longitude,
+                          photoURL: user.photoURL || '',
+                          updatedAt: new Date(),
+                        }, { merge: true });
+                      })();
+                    }, null, { enableHighAccuracy: true });
+                  }
+                }}
+              >
+                <span className="hidden sm:inline">My Listings</span>
+                <span className="sm:hidden">📦</span>
+              </button>
+              <button
+                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                onClick={() => setShowInbox(true)}
+              >
+                <span className="hidden sm:inline">Inbox</span>
+                <span className="sm:hidden">📬</span>
+              </button>
+              <button
+                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                onClick={() => setShowSellerOrders(true)}
+              >
+                <span className="hidden sm:inline">📦 Orders</span>
+                <span className="sm:hidden">📦</span>
+              </button>
+              <button
+                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-purple-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                onClick={() => setShowSellerProfile(true)}
+              >
+                <span className="hidden sm:inline">👤 Profile</span>
+                <span className="sm:hidden">👤</span>
+              </button>
+              <button
+                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-red-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                onClick={() => setShowBuyerMap(true)}
+              >
+                <span className="hidden sm:inline">🗺️ Buyers</span>
+                <span className="sm:hidden">🗺️</span>
+              </button>
+            </>
+          )}
+          {role === 'buyer' && (
+            <>
+              <button
+                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                onClick={() => setShowBuyerMessages(true)}
+                title="My Messages"
+              >
+                <span className="hidden sm:inline">💬 Messages</span>
+                <span className="sm:hidden">💬</span>
+              </button>
+              <button
+                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                onClick={() => {
+                  if (user && navigator.geolocation) {
+                    window.alert('Please allow location access to update your location.');
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                      const { latitude, longitude } = pos.coords;
+                      (async () => {
+                        await setDoc(doc(db, 'buyers', user.uid), {
+                          uid: user.uid,
+                          displayName: user.displayName,
+                          email: user.email,
+                          lat: latitude,
+                          lng: longitude,
+                          photoURL: user.photoURL || '',
+                          updatedAt: new Date(),
+                        }, { merge: true });
+                      })();
+                    }, null, { enableHighAccuracy: true });
+                  }
+                }}
+                title="Update Location"
+              >
+                <span className="hidden sm:inline">📍 Location</span>
+                <span className="sm:hidden">📍</span>
+              </button>
+            </>
+          )}
+          <button
+            className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+            onClick={() => {
+              setShowBuyerStores(true);
+              setShowMap(false);
+              setShowListings(false);
+              setShowSellerListings(null);
+            }}
+          >
+            <span className="hidden sm:inline">Stores</span>
+            <span className="sm:hidden">🏪</span>
+          </button>
+        </div>
         <DraggableSidebar role={role} />
       </footer>
     );

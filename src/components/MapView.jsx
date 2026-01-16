@@ -35,7 +35,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessageModal }) {
+function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessageModal, onNavigate }) {
   const map = useMap();
 
   useEffect(() => {
@@ -96,7 +96,7 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
                     </div>
                     <button
                       className="w-full bg-red-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-red-700 transition-colors"
-                      onClick={() => handleNavigateToSeller(seller)}
+                      onClick={() => onNavigate(seller)}
                       title="Get directions to this seller"
                     >
                       🗺️ Navigate
@@ -314,6 +314,7 @@ function MapView({ onViewStore, onBack }) {
               onViewStore={onViewStore}
               messageModal={messageModal}
               setMessageModal={setMessageModal}
+              onNavigate={handleNavigateToSeller}
             />
             <MapControls />
           </MapContainer>
