@@ -273,31 +273,24 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-900 via-purple-900 to-indigo-900">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-white/10"></div>
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.3),transparent_50%)]"></div>
-        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.2),transparent_50%)]"></div>
-      </div>
-
-      <div className="relative flex-1 flex flex-col items-center justify-center pb-32">
+    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+      <div className="flex-1 flex flex-col items-center justify-center pb-32">
         <div className="w-full max-w-6xl px-4">
-          {/* Header Section with Glass Effect */}
+          {/* Header Section */}
           <div className="text-center mb-8">
-            <div className="inline-block backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl">
-              <h1 className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-3 drop-shadow-lg">
+            <div className="bg-white rounded-xl p-8 shadow-xl">
+              <h1 className="text-4xl font-bold text-gray-800 mb-2 flex items-center justify-center gap-3">
                 <span className="text-3xl">🛒</span>
                 Place Your Order
               </h1>
-              <p className="text-white/80">Complete your purchase securely and easily</p>
+              <p className="text-gray-600">Complete your purchase securely and easily</p>
             </div>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Product Summary Card with Glassmorphism */}
+            {/* Product Summary Card */}
             <div className="lg:col-span-1">
-              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 shadow-2xl hover:bg-white/15 transition-all duration-300 hover:shadow-purple-500/25 hover:border-white/30">
+              <div className="bg-white rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                     <span className="text-white text-xl">📦</span>
@@ -362,15 +355,15 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
 
             {/* Order Form Cards */}
             <div className="lg:col-span-2 space-y-4 lg:space-y-6 order-1 lg:order-2">
-              {/* Quantity & Payment Card with Glassmorphism */}
-              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 shadow-2xl hover:bg-white/15 transition-all duration-300 hover:shadow-green-500/25 hover:border-white/30">
+              {/* Quantity & Payment Card */}
+              <div className="bg-white rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
                     <span className="text-white text-xl">⚙️</span>
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-white">Order Configuration</h2>
-                    <p className="text-sm text-white/80">Set your preferences</p>
+                    <h2 className="text-lg font-semibold text-gray-900">Order Configuration</h2>
+                    <p className="text-sm text-gray-600">Set your preferences</p>
                   </div>
                 </div>
 
@@ -427,15 +420,15 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
                 </form>
               </div>
 
-              {/* Delivery Options Card with Glassmorphism */}
-              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 shadow-2xl hover:bg-white/15 transition-all duration-300 hover:shadow-orange-500/25 hover:border-white/30">
+              {/* Delivery Options Card */}
+              <div className="bg-white rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
                     <span className="text-white text-xl">🚚</span>
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-white">Delivery Options</h2>
-                    <p className="text-sm text-white/80">Choose your delivery method</p>
+                    <h2 className="text-lg font-semibold text-gray-900">Delivery Options</h2>
+                    <p className="text-sm text-gray-600">Choose your delivery method</p>
                   </div>
                 </div>
 
@@ -464,15 +457,15 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
                 </div>
               </div>
 
-              {/* Delivery Details Card with Glassmorphism */}
-              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 shadow-2xl hover:bg-white/15 transition-all duration-300 hover:shadow-purple-500/25 hover:border-white/30">
+              {/* Delivery Details Card */}
+              <div className="bg-white rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
                     <span className="text-white text-xl">📍</span>
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-white">Delivery Details</h2>
-                    <p className="text-sm text-white/80">Where should we deliver?</p>
+                    <h2 className="text-lg font-semibold text-gray-900">Delivery Details</h2>
+                    <p className="text-sm text-gray-600">Where should we deliver?</p>
                   </div>
                 </div>
 

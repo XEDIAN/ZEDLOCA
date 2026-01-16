@@ -312,7 +312,7 @@ function DraggableSidebar({ role }) {
         {/* Toggle button */}
         <button
           onClick={toggleSidebar}
-          className="absolute top-4 -left-8 w-7 h-10 sm:w-8 sm:h-12 bg-gray-700/80 text-white flex items-center justify-center shadow rounded-l-lg z-50 hover:bg-gray-800/90 transition"
+          className="absolute top-4 -left-4 w-6 h-8 sm:w-7 sm:h-10 bg-gray-700/80 text-white flex items-center justify-center shadow rounded-l-lg z-50 hover:bg-gray-800/90 transition"
           aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
           style={{
             opacity: isOpen ? 0.7 : 0.5,
