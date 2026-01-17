@@ -430,44 +430,44 @@ function Listings({ userId }) {
           <p className="text-sm sm:text-base text-gray-500">Create your first listing to get started selling!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {listings.map(listing => (
-            <div key={listing.id} className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div key={listing.id} className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               {/* Listing Header */}
-              <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-4 sm:p-6">
+              <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white p-3 sm:p-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="text-lg sm:text-xl font-bold mb-1">{listing.title}</h3>
-                    <p className="text-blue-100 text-xs sm:text-sm">
+                    <h3 className="text-base sm:text-lg font-bold mb-1">{listing.title}</h3>
+                    <p className="text-blue-100 text-xs">
                       {listing.category && `${listing.category.charAt(0).toUpperCase() + listing.category.slice(1)} • `}
                       Created {listing.createdAt?.toDate?.()?.toLocaleDateString() || 'Recently'}
                     </p>
                   </div>
-                  <div className="text-xl sm:text-2xl ml-3">📦</div>
+                  <div className="text-lg sm:text-xl ml-2">📦</div>
                 </div>
               </div>
 
               {/* Listing Details */}
-              <div className="p-4 sm:p-6">
-                <div className="mb-4">
-                  <div className="text-xl sm:text-2xl font-bold text-green-600 mb-1">${listing.price}</div>
-                  <p className="text-gray-600 text-sm line-clamp-3">{listing.description}</p>
+              <div className="p-3 sm:p-4">
+                <div className="mb-3">
+                  <div className="text-lg sm:text-xl font-bold text-green-600 mb-1">${listing.price}</div>
+                  <p className="text-gray-600 text-xs sm:text-sm line-clamp-3">{listing.description}</p>
                 </div>
 
                 {/* Images Preview */}
                 {listing.images && listing.images.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex gap-2 overflow-x-auto">
+                  <div className="mb-3">
+                    <div className="flex gap-1 overflow-x-auto">
                       {listing.images.slice(0, 3).map((image, index) => (
                         <img
                           key={index}
                           src={image}
                           alt={`${listing.title} ${index + 1}`}
-                          className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                          className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded border border-gray-200 flex-shrink-0"
                         />
                       ))}
                       {listing.images.length > 3 && (
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
                           +{listing.images.length - 3}
                         </div>
                       )}
@@ -476,24 +476,24 @@ function Listings({ userId }) {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex flex-col gap-1">
+                  <div className="flex flex-col sm:flex-row gap-1">
                     <button
                       onClick={() => handleEdit(listing)}
-                      className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-sm sm:text-base min-h-[44px]"
+                      className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-2 sm:px-3 py-1.5 rounded transition-colors font-medium text-xs sm:text-sm min-h-[36px]"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(listing.id)}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-sm sm:text-base min-h-[44px]"
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-2 sm:px-3 py-1.5 rounded transition-colors font-medium text-xs sm:text-sm min-h-[36px]"
                     >
                       Delete
                     </button>
                   </div>
                   <button
                     onClick={() => alert(`Details for ${listing.title}:\nPrice: $${listing.price}\nDescription: ${listing.description}\nCategory: ${listing.category || 'Not specified'}`)}
-                    className="w-full bg-blue-100 text-blue-700 px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm sm:text-base min-h-[44px]"
+                    className="w-full bg-blue-100 text-blue-700 px-2 sm:px-3 py-1.5 rounded hover:bg-blue-200 transition-colors font-medium text-xs sm:text-sm min-h-[36px]"
                   >
                     View Details
                   </button>

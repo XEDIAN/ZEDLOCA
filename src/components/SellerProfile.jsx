@@ -163,33 +163,27 @@ const SellerProfile = ({ sellerId, onBack }) => {
     <div className="w-full max-w-4xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">🏪 Store Profile</h1>
-        <p className="text-gray-600">Manage your store information and settings</p>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">Store Profile</h1>
+        <p className="text-gray-600 text-sm">Manage your store information and settings</p>
       </div>
 
       {/* Success/Error Messages */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <span className="text-red-500">⚠️</span>
-            <div className="text-red-700 text-sm font-medium">{error}</div>
-          </div>
+          <div className="text-red-700 text-sm font-medium">{error}</div>
         </div>
       )}
 
       {success && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <span className="text-green-500">✅</span>
-            <div className="text-green-700 text-sm font-medium">{success}</div>
-          </div>
+          <div className="text-green-700 text-sm font-medium">{success}</div>
         </div>
       )}
 
       <div className="space-y-8">
         {/* Basic Information */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">📋 Basic Information</h2>
+        <div className="bg-white rounded-xl shadow-lg p-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Basic Information</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -273,8 +267,8 @@ const SellerProfile = ({ sellerId, onBack }) => {
         </div>
 
         {/* Address & Location */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">📍 Address & Location</h2>
+        <div className="bg-white rounded-xl shadow-lg p-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Address & Location</h2>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
@@ -359,7 +353,6 @@ const SellerProfile = ({ sellerId, onBack }) => {
                   </>
                 ) : (
                   <>
-                    <span className="text-lg">📍</span>
                     Update Location
                   </>
                 )}
@@ -369,8 +362,8 @@ const SellerProfile = ({ sellerId, onBack }) => {
         </div>
 
         {/* Business Hours */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">🕐 Business Hours</h2>
+        <div className="bg-white rounded-xl shadow-lg p-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Business Hours</h2>
           <div className="space-y-4">
             {Object.entries(profile.businessHours).map(([day, hours]) => (
               <div key={day} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
@@ -417,8 +410,8 @@ const SellerProfile = ({ sellerId, onBack }) => {
         </div>
 
         {/* Payment & Delivery Options */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">💳 Payment & Delivery</h2>
+        <div className="bg-white rounded-xl shadow-lg p-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Payment & Delivery</h2>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div>

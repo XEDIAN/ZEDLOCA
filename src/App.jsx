@@ -241,8 +241,7 @@ const App = () => {
               setShowSellerListings(null);
             }}
           >
-            <span className="hidden sm:inline">View Map</span>
-            <span className="sm:hidden">🗺️</span>
+            Map
           </button>
           {role === 'seller' && (
             <>
@@ -272,36 +271,31 @@ const App = () => {
                   }
                 }}
               >
-                <span className="hidden sm:inline">My Listings</span>
-                <span className="sm:hidden">📦</span>
+                Listings
               </button>
               <button
                 className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
                 onClick={() => setShowInbox(true)}
               >
-                <span className="hidden sm:inline">Inbox</span>
-                <span className="sm:hidden">📬</span>
+                Inbox
               </button>
               <button
                 className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
                 onClick={() => setShowSellerOrders(true)}
               >
-                <span className="hidden sm:inline">📦 Orders</span>
-                <span className="sm:hidden">📦</span>
+                Orders
               </button>
               <button
                 className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-purple-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
                 onClick={() => setShowSellerProfile(true)}
               >
-                <span className="hidden sm:inline">👤 Profile</span>
-                <span className="sm:hidden">👤</span>
+                Profile
               </button>
               <button
                 className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-red-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
                 onClick={() => setShowBuyerMap(true)}
               >
-                <span className="hidden sm:inline">🗺️ Buyers</span>
-                <span className="sm:hidden">🗺️</span>
+                Buyers
               </button>
             </>
           )}
@@ -312,8 +306,7 @@ const App = () => {
                 onClick={() => setShowBuyerMessages(true)}
                 title="My Messages"
               >
-                <span className="hidden sm:inline">💬 Messages</span>
-                <span className="sm:hidden">💬</span>
+                Messages
               </button>
               <button
                 className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
@@ -338,8 +331,7 @@ const App = () => {
                 }}
                 title="Update Location"
               >
-                <span className="hidden sm:inline">📍 Location</span>
-                <span className="sm:hidden">📍</span>
+                Location
               </button>
             </>
           )}
@@ -352,8 +344,7 @@ const App = () => {
               setShowSellerListings(null);
             }}
           >
-            <span className="hidden sm:inline">Stores</span>
-            <span className="sm:hidden">🏪</span>
+            Stores
           </button>
         </div>
         <DraggableSidebar role={role} />
@@ -380,17 +371,17 @@ const App = () => {
               </p>
 
               {/* User Type Selection */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-blue-100 hover:border-blue-300 transition-colors">
-                  <div className="text-4xl mb-3">🛍️</div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">I'm a Buyer</h3>
-                  <p className="text-gray-600 text-sm mb-4">Discover local products and connect with sellers</p>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center mb-6 sm:mb-12">
+                <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl shadow-lg border-2 border-blue-100 hover:border-blue-300 transition-colors">
+                  <div className="text-xl sm:text-3xl mb-1 sm:mb-2">🛍️</div>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">I'm a Buyer</h3>
+                  <p className="text-gray-600 text-xs mb-2">Discover local products and connect with sellers</p>
                   <div className="text-xs text-blue-600 font-medium">Popular choice</div>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-purple-100 hover:border-purple-300 transition-colors">
-                  <div className="text-4xl mb-3">🏪</div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">I'm a Seller</h3>
-                  <p className="text-gray-600 text-sm mb-4">Reach local customers and grow your business</p>
+                <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl shadow-lg border-2 border-purple-100 hover:border-purple-300 transition-colors">
+                  <div className="text-xl sm:text-3xl mb-1 sm:mb-2">🏪</div>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">I'm a Seller</h3>
+                  <p className="text-gray-600 text-xs mb-2">Reach local customers and grow your business</p>
                   <div className="text-xs text-purple-600 font-medium">Start selling today</div>
                 </div>
               </div>

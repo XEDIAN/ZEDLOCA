@@ -163,18 +163,18 @@ body, #root {
     
     /* Footer button compact style */
     .footer-btn {
-      padding: 0.35rem 0.5rem !important;
-      font-size: 0.8rem !important;
-      min-width: 60px !important;
-      border-radius: 0.5rem !important;
+      padding: 0.15rem 0.25rem !important;
+      font-size: 0.6rem !important;
+      min-width: 40px !important;
+      border-radius: 0.3rem !important;
     }
-    
+
     /* Even more compact on narrow screens */
     @media (max-width: 480px) {
       .footer-btn {
-        padding: 0.28rem 0.4rem !important;
-        font-size: 0.75rem !important;
-        min-width: 54px !important;
+        padding: 0.1rem 0.2rem !important;
+        font-size: 0.55rem !important;
+        min-width: 35px !important;
       }
     }
     /* Font sizes */

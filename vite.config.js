@@ -13,6 +13,7 @@ export default defineConfig({
       '6029258da1bf.ngrok-free.app',
       '94035653dfa8.ngrok-free.app',
       '71ac22027af7.ngrok-free.app',
+      'unmethodizing-precongressional-hudson.ngrok-free.dev',
       /\.ngrok-free\.app$/ // allow any ngrok-free.app subdomain for convenience
     ],
   },
