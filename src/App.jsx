@@ -231,10 +231,10 @@ const App = () => {
   const renderFooter = () => {
     if (!user || !role) return null;
     return (
-      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-2 sm:py-4 flex justify-center gap-1 sm:gap-2 md:gap-4 z-50 overflow-x-auto">
-        <div className="flex gap-1 sm:gap-2 md:gap-4 px-2 sm:px-4 min-w-max">
+      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-1 sm:py-2 md:py-4 flex justify-center gap-0.5 sm:gap-1 md:gap-4 z-50 overflow-x-auto">
+        <div className="flex gap-0.5 sm:gap-1 md:gap-4 px-1 sm:px-2 md:px-4 min-w-max">
           <button
-            className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+            className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
             onClick={() => {
               setShowMap(true);
               setShowListings(false);
@@ -246,7 +246,7 @@ const App = () => {
           {role === 'seller' && (
             <>
               <button
-                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
                 onClick={() => {
                   setShowListings(true);
                   setShowMap(false);
@@ -274,13 +274,13 @@ const App = () => {
                 Listings
               </button>
               <button
-                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-blue-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
                 onClick={() => setShowInbox(true)}
               >
                 Inbox
               </button>
               <button
-                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
                 onClick={() => setShowSellerOrders(true)}
               >
                 Orders
@@ -292,7 +292,7 @@ const App = () => {
                 Profile
               </button>
               <button
-                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-red-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-red-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
                 onClick={() => setShowBuyerMap(true)}
               >
                 Buyers
@@ -302,14 +302,14 @@ const App = () => {
           {role === 'buyer' && (
             <>
               <button
-                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-blue-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-blue-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
                 onClick={() => setShowBuyerMessages(true)}
                 title="My Messages"
               >
                 Messages
               </button>
               <button
-                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
                 onClick={() => {
                   if (user && navigator.geolocation) {
                     window.alert('Please allow location access to update your location.');
@@ -336,7 +336,7 @@ const App = () => {
             </>
           )}
           <button
-            className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+            className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
             onClick={() => {
               setShowBuyerStores(true);
               setShowMap(false);

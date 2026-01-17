@@ -20,6 +20,7 @@ function haversine(lat1, lon1, lat2, lon2) {
 function DraggableSidebar({ role }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSwipeDragging, setIsSwipeDragging] = useState(false);
   const [promotions, setPromotions] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
@@ -34,6 +35,8 @@ function DraggableSidebar({ role }) {
   const sidebarRef = useRef(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
+  const swipeStartXRef = useRef(0);
+  const swipeStartYRef = useRef(0);
 
   // Fetch seller data if role is seller
   useEffect(() => {
@@ -275,6 +278,45 @@ function DraggableSidebar({ role }) {
     setIsOpen(!isOpen);
   };
 
+  // Swipe gesture handlers
+  const handleSwipeStart = (e) => {
+    const clientX = e.touches?.[0].clientX || e.clientX;
+    const clientY = e.touches?.[0].clientY || e.clientY;
+
+    swipeStartXRef.current = clientX;
+    swipeStartYRef.current = clientY;
+    setIsSwipeDragging(true);
+  };
+
+  const handleSwipeMove = (e) => {
+    if (!isSwipeDragging) return;
+
+    const clientX = e.touches?.[0].clientX || e.clientX;
+    const clientY = e.touches?.[0].clientY || e.clientY;
+
+    const deltaX = clientX - swipeStartXRef.current;
+    const deltaY = clientY - swipeStartYRef.current;
+
+    // Check if it's a horizontal swipe (more horizontal than vertical)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      e.preventDefault(); // Prevent scrolling
+
+      if (!isOpen && deltaX < -50) {
+        // Swipe left from right edge to open
+        setIsOpen(true);
+        setIsSwipeDragging(false);
+      } else if (isOpen && deltaX > 50) {
+        // Swipe right to close
+        setIsOpen(false);
+        setIsSwipeDragging(false);
+      }
+    }
+  };
+
+  const handleSwipeEnd = () => {
+    setIsSwipeDragging(false);
+  };
+
   return (
     <>
       {/* Backdrop overlay */}
@@ -299,6 +341,12 @@ function DraggableSidebar({ role }) {
           boxShadow: isOpen ? 'rgba(0,0,0,0.18) -8px 0 24px' : 'rgba(0,0,0,0.08) -2px 0 8px',
           transition: 'all 0.3s cubic-bezier(.4,0,.2,1)'
         }}
+        onTouchStart={handleSwipeStart}
+        onTouchMove={handleSwipeMove}
+        onTouchEnd={handleSwipeEnd}
+        onMouseDown={handleSwipeStart}
+        onMouseMove={handleSwipeMove}
+        onMouseUp={handleSwipeEnd}
       >
         {/* Drag handle */}
         <div

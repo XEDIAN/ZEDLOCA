@@ -227,9 +227,9 @@ function SellerListings({ sellerId, onBack }) {
         )}
       </div>
       
-      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-4 flex justify-center gap-4 z-50">
+      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-2 sm:py-4 flex justify-center gap-2 sm:gap-4 z-50">
         <button
-          className="bg-white text-gray-800 font-bold px-6 py-2 rounded shadow hover:bg-gray-200 transition"
+          className="bg-white text-gray-800 font-bold px-3 sm:px-6 py-1.5 sm:py-2 rounded text-sm sm:text-base shadow hover:bg-gray-200 transition"
           onClick={onBack}
         >
           Back to Map
