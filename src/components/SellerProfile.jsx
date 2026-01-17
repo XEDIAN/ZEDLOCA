@@ -20,15 +20,6 @@ const SellerProfile = ({ sellerId, onBack }) => {
     state: '',
     zipCode: '',
     website: '',
-    businessHours: {
-      monday: { open: '09:00', close: '17:00', closed: false },
-      tuesday: { open: '09:00', close: '17:00', closed: false },
-      wednesday: { open: '09:00', close: '17:00', closed: false },
-      thursday: { open: '09:00', close: '17:00', closed: false },
-      friday: { open: '09:00', close: '17:00', closed: false },
-      saturday: { open: '09:00', close: '17:00', closed: false },
-      sunday: { open: '09:00', close: '17:00', closed: true }
-    },
     categories: [],
     paymentMethods: ['cash'],
     deliveryOptions: ['pickup'],
@@ -52,11 +43,7 @@ const SellerProfile = ({ sellerId, onBack }) => {
         const data = sellerDoc.data();
         setProfile(prev => ({
           ...prev,
-          ...data,
-          businessHours: {
-            ...prev.businessHours,
-            ...data.businessHours
-          }
+          ...data
         }));
       }
     } catch (error) {
@@ -124,31 +111,7 @@ const SellerProfile = ({ sellerId, onBack }) => {
     }
   };
 
-  const updateBusinessHours = (day, field, value) => {
-    setProfile(prev => ({
-      ...prev,
-      businessHours: {
-        ...prev.businessHours,
-        [day]: {
-          ...prev.businessHours[day],
-          [field]: value
-        }
-      }
-    }));
-  };
 
-  const toggleDayClosed = (day) => {
-    setProfile(prev => ({
-      ...prev,
-      businessHours: {
-        ...prev.businessHours,
-        [day]: {
-          ...prev.businessHours[day],
-          closed: !prev.businessHours[day].closed
-        }
-      }
-    }));
-  };
 
   if (loading) {
     return (
@@ -182,8 +145,8 @@ const SellerProfile = ({ sellerId, onBack }) => {
 
       <div className="space-y-8">
         {/* Basic Information */}
-        <div className="bg-white rounded-xl shadow-lg p-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Basic Information</h2>
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Basic Information</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -267,8 +230,8 @@ const SellerProfile = ({ sellerId, onBack }) => {
         </div>
 
         {/* Address & Location */}
-        <div className="bg-white rounded-xl shadow-lg p-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Address & Location</h2>
+        <div className="bg-white rounded-lg sm:rounded-xl shadow-lg p-3 sm:p-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Address & Location</h2>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
@@ -361,53 +324,7 @@ const SellerProfile = ({ sellerId, onBack }) => {
           </div>
         </div>
 
-        {/* Business Hours */}
-        <div className="bg-white rounded-xl shadow-lg p-4">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Business Hours</h2>
-          <div className="space-y-4">
-            {Object.entries(profile.businessHours).map(([day, hours]) => (
-              <div key={day} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
-                <div className="w-24 font-medium text-gray-700 capitalize">
-                  {day}
-                </div>
 
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={hours.closed}
-                    onChange={() => toggleDayClosed(day)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-600">Closed</span>
-                </label>
-
-                {!hours.closed && (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-gray-600">Open:</label>
-                      <input
-                        type="time"
-                        value={hours.open}
-                        onChange={(e) => updateBusinessHours(day, 'open', e.target.value)}
-                        className="px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-gray-600">Close:</label>
-                      <input
-                        type="time"
-                        value={hours.close}
-                        onChange={(e) => updateBusinessHours(day, 'close', e.target.value)}
-                        className="px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Payment & Delivery Options */}
         <div className="bg-white rounded-xl shadow-lg p-4">

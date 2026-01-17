@@ -290,7 +290,7 @@ function DraggableSidebar({ role }) {
         className={`fixed top-0 right-0 h-full z-40 transition-all duration-300 ease-in-out
           ${isOpen
             ? 'bg-white shadow-2xl w-64 sm:w-80 opacity-100'
-            : 'bg-white/40 backdrop-blur-md shadow-md w-8 sm:w-12 opacity-70'
+            : 'bg-white/40 backdrop-blur-md shadow-md w-4 sm:w-8 md:w-12 opacity-70'
           }
         `}
         style={{
@@ -312,10 +312,10 @@ function DraggableSidebar({ role }) {
         {/* Toggle button */}
         <button
           onClick={toggleSidebar}
-          className="absolute top-4 -left-4 w-6 h-8 sm:w-7 sm:h-10 bg-gray-700/80 text-white flex items-center justify-center shadow rounded-l-lg z-50 hover:bg-gray-800/90 transition"
+          className="absolute top-4 -left-3 sm:-left-4 w-5 h-6 sm:w-7 sm:h-10 bg-gray-700/80 text-white flex items-center justify-center shadow rounded-l-lg z-50 hover:bg-gray-800/90 transition"
           aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
           style={{
-            opacity: isOpen ? 0.7 : 0.5,
+            opacity: isOpen ? 0.7 : 0.8,
             borderTopLeftRadius: '1em',
             borderBottomLeftRadius: '1em'
           }}
