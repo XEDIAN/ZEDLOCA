@@ -224,19 +224,25 @@ function BuyersPage({ sellerId, onBack }) {
             const userData = userSnap.data();
             profiles[buyerId] = {
               displayName: userData.displayName || userData.name || userData.email || buyerId,
-              email: userData.email || ''
+              email: userData.email || '',
+              lat: userData.lat || null,
+              lng: userData.lng || null
             };
           } else {
             profiles[buyerId] = {
               displayName: buyerId,
-              email: ''
+              email: '',
+              lat: null,
+              lng: null
             };
           }
         } catch (error) {
           console.error('Error loading user profile for', buyerId, error);
           profiles[buyerId] = {
             displayName: buyerId,
-            email: ''
+            email: '',
+            lat: null,
+            lng: null
           };
         }
       }
@@ -246,7 +252,7 @@ function BuyersPage({ sellerId, onBack }) {
     loadUserProfiles();
   }, [buyerIds]);
 
-  // Update buyers with real names
+  // Update buyers with real names and location data
   useEffect(() => {
     if (Object.keys(userProfiles).length === 0) return;
 
@@ -256,7 +262,10 @@ function BuyersPage({ sellerId, onBack }) {
         return {
           ...buyer,
           displayName: profile.displayName,
-          email: profile.email
+          email: profile.email,
+          // Merge location data: prefer profile location, fallback to message location
+          lat: profile.lat || buyer.lat,
+          lng: profile.lng || buyer.lng
         };
       }
       return buyer;
@@ -507,7 +516,7 @@ function BuyersPage({ sellerId, onBack }) {
                 )}
 
                 {/* Buyer markers */}
-                {filteredBuyers.map(buyer => (
+                {buyers.map(buyer => (
                   buyer.lat && buyer.lng && (
                     <Marker
                       key={buyer.id}
