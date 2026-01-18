@@ -80,20 +80,18 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
                   )}
 
                   <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <button
-                        className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-blue-700 transition-colors"
-                        onClick={() => onViewStore(seller.id)}
-                      >
-                        View Store
-                      </button>
-                      <button
-                        className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-green-700 transition-colors"
-                        onClick={() => setMessageModal({ open: true, seller })}
-                      >
-                        Message
-                      </button>
-                    </div>
+                    <button
+                      className="w-full bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-blue-700 transition-colors"
+                      onClick={() => onViewStore(seller.id)}
+                    >
+                      View Store
+                    </button>
+                    <button
+                      className="w-full bg-green-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-green-700 transition-colors"
+                      onClick={() => setMessageModal({ open: true, seller })}
+                    >
+                      Message
+                    </button>
                     <button
                       className="w-full bg-red-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-red-700 transition-colors"
                       onClick={() => onNavigate(seller)}

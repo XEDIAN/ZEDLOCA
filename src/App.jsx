@@ -21,6 +21,7 @@ import MessageSellerModal from './components/MessageSellerModal';
 import PlaceOrderPage from './pages/PlaceOrderPage';
 import SellerOrders from './components/SellerOrders';
 import SellerProfile from './components/SellerProfile';
+import SellerListings from './components/SellerListings';
 
 
 const App = () => {
