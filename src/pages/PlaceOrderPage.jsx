@@ -108,6 +108,14 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
 
     try {
       const currentLocation = await getLocation();
+
+      // Check if location accuracy is greater than 10 meters
+      if (currentLocation.accuracy > 10) {
+        setLocationError(`Location accuracy is ${currentLocation.accuracy.toFixed(1)}m, which is too low for accurate delivery. Please move to an open space with better GPS signal and try again.`);
+        setLocationLoading(false);
+        return;
+      }
+
       setLocation(currentLocation);
 
       // Update delivery address with current coordinates
@@ -376,14 +384,7 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
                   </div>
                 )}
 
-                {locationError && (
-                  <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-xl">
-                    <div className="flex items-center gap-2">
-                      <span className="text-orange-500">📍</span>
-                      <div className="text-orange-700 text-sm font-medium">{locationError}</div>
-                    </div>
-                  </div>
-                )}
+
 
                 <form onSubmit={handleSubmitOrder} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
@@ -500,6 +501,15 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
                         </>
                       )}
                     </button>
+
+                    {locationError && (
+                      <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-orange-500">📍</span>
+                          <div className="text-orange-700 text-sm font-medium">{locationError}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
