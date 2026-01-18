@@ -154,6 +154,7 @@ const App = () => {
       <SellerListings
         sellerId={showSellerListings}
         onBack={() => setShowSellerListings(null)}
+        user={user}
       />
     );
   }

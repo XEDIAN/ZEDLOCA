@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
-import MessageSellerModal from './MessageSellerModal';
 
 /**
  * Simple haversine implementation to compute distances in meters.
@@ -20,12 +19,26 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function SellerListings({ sellerId, onBack }) {
+function SellerListings({ sellerId, onBack, user }) {
   const [seller, setSeller] = useState(null);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
-  const [showMessageModal, setShowMessageModal] = useState(false);
+
+  const handleNavigateToSeller = (seller) => {
+    if (!userLocation) {
+      alert('Unable to get your location. Please enable location services and try again.');
+      return;
+    }
+
+    // Create Google Maps URL with directions
+    const origin = `${userLocation.lat},${userLocation.lng}`;
+    const destination = `${seller.lat},${seller.lng}`;
+    const googleMapsUrl = `https://www.google.com/maps/dir/${origin}/${destination}`;
+
+    // Open in new tab/window
+    window.open(googleMapsUrl, '_blank');
+  };
 
   useEffect(() => {
     if (!sellerId) return;
@@ -48,7 +61,7 @@ function SellerListings({ sellerId, onBack }) {
       where('userId', '==', sellerId),
       orderBy('createdAt', 'desc')
     );
-    
+
     const unsubListings = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setListings(docs);
@@ -147,14 +160,17 @@ function SellerListings({ sellerId, onBack }) {
                       <p className="text-sm text-green-600 mt-1">Available within {seller.promo_radius_meters} meters</p>
                     </div>
                   )}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => setShowMessageModal(true)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-                    >
-                      <span className="text-lg">💬</span>
-                      Contact Seller
-                    </button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleNavigateToSeller(seller)}
+                        className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                        title="Get directions to this seller"
+                      >
+                        <span className="text-lg">🗺️</span>
+                        Navigate
+                      </button>
+                    </div>
                     {seller.phone && (
                       <a
                         href={`tel:${seller.phone}`}
@@ -168,9 +184,9 @@ function SellerListings({ sellerId, onBack }) {
                 </div>
               </div>
             </div>
-            
+
             <h3 className="text-xl font-semibold mb-4 text-gray-800">Store Listings</h3>
-            
+
             {listings.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {listings.map(listing => (
@@ -200,13 +216,6 @@ function SellerListings({ sellerId, onBack }) {
                           <p className="text-green-700 text-sm">"{seller.promo_text}"</p>
                         </div>
                       )}
-                      <button
-                        onClick={() => setShowMessageModal(true)}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                      >
-                        <span>💬</span>
-                        Contact Seller
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -226,7 +235,7 @@ function SellerListings({ sellerId, onBack }) {
           </div>
         )}
       </div>
-      
+
       <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-2 sm:py-4 flex justify-center gap-2 sm:gap-4 z-50">
         <button
           className="bg-white text-gray-800 font-bold px-3 sm:px-6 py-1.5 sm:py-2 rounded text-sm sm:text-base shadow hover:bg-gray-200 transition"
@@ -235,14 +244,6 @@ function SellerListings({ sellerId, onBack }) {
           Back to Map
         </button>
       </footer>
-
-      {showMessageModal && seller && (
-        <MessageSellerModal
-          sellerId={sellerId}
-          sellerName={seller.displayName}
-          onClose={() => setShowMessageModal(false)}
-        />
-      )}
     </div>
   );
 }
