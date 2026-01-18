@@ -92,6 +92,14 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
                     >
                       Message
                     </button>
+                    {seller.phone && (
+                      <a
+                        href={`tel:${seller.phone}`}
+                        className="w-full bg-purple-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-purple-700 transition-colors text-center block"
+                      >
+                        📞 Call
+                      </a>
+                    )}
                     <button
                       className="w-full bg-red-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-red-700 transition-colors"
                       onClick={() => onNavigate(seller)}
@@ -371,13 +379,23 @@ function MapView({ onViewStore, onBack }) {
                             Message
                           </button>
                         </div>
-                        <button
-                          className="w-full bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
-                          onClick={() => handleNavigateToSeller(seller)}
-                          title="Get directions to this seller"
-                        >
-                          🗺️ Navigate
-                        </button>
+                        <div className="flex flex-col gap-2">
+                          {seller.phone && (
+                            <a
+                              href={`tel:${seller.phone}`}
+                              className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors text-center block"
+                            >
+                              📞 Call
+                            </a>
+                          )}
+                          <button
+                            className="w-full bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                            onClick={() => handleNavigateToSeller(seller)}
+                            title="Get directions to this seller"
+                          >
+                            🗺️ Navigate
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
