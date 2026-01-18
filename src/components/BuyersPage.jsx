@@ -65,6 +65,8 @@ function BuyersPage({ sellerId, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [sellerLocation, setSellerLocation] = useState(null);
+  const [buyerIds, setBuyerIds] = useState([]);
+  const [userProfiles, setUserProfiles] = useState({});
   const [analytics, setAnalytics] = useState({
     totalBuyers: 0,
     activeBuyers: 0,
@@ -129,16 +131,18 @@ function BuyersPage({ sellerId, onBack }) {
 
     const unsubMessages = onSnapshot(messagesQuery, (snapshot) => {
       const buyerData = {};
+      const uniqueBuyerIds = new Set();
       let totalMessages = 0;
 
       snapshot.docs.forEach(doc => {
         const msg = doc.data();
         totalMessages++;
+        uniqueBuyerIds.add(msg.buyerId);
 
         if (!buyerData[msg.buyerId]) {
           buyerData[msg.buyerId] = {
             id: msg.buyerId,
-            displayName: msg.buyerId, // Could be enhanced with user profile
+            displayName: msg.buyerId, // Will be updated with real name
             lat: msg.buyerLat || null,
             lng: msg.buyerLng || null,
             messages: [],
@@ -161,6 +165,9 @@ function BuyersPage({ sellerId, onBack }) {
           buyerData[msg.buyerId].isActive = true;
         }
       });
+
+      // Set buyer IDs for profile loading
+      setBuyerIds(Array.from(uniqueBuyerIds));
 
       // Convert to array and calculate analytics
       const buyersArray = Object.values(buyerData);
@@ -202,6 +209,59 @@ function BuyersPage({ sellerId, onBack }) {
       unsubOrders();
     };
   }, [sellerId]);
+
+  // Load user profiles for real names
+  useEffect(() => {
+    if (buyerIds.length === 0) return;
+
+    const loadUserProfiles = async () => {
+      const profiles = {};
+      for (const buyerId of buyerIds) {
+        try {
+          const userRef = doc(db, 'users', buyerId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            profiles[buyerId] = {
+              displayName: userData.displayName || userData.name || userData.email || buyerId,
+              email: userData.email || ''
+            };
+          } else {
+            profiles[buyerId] = {
+              displayName: buyerId,
+              email: ''
+            };
+          }
+        } catch (error) {
+          console.error('Error loading user profile for', buyerId, error);
+          profiles[buyerId] = {
+            displayName: buyerId,
+            email: ''
+          };
+        }
+      }
+      setUserProfiles(profiles);
+    };
+
+    loadUserProfiles();
+  }, [buyerIds]);
+
+  // Update buyers with real names
+  useEffect(() => {
+    if (Object.keys(userProfiles).length === 0) return;
+
+    setBuyers(prev => prev.map(buyer => {
+      const profile = userProfiles[buyer.id];
+      if (profile) {
+        return {
+          ...buyer,
+          displayName: profile.displayName,
+          email: profile.email
+        };
+      }
+      return buyer;
+    }));
+  }, [userProfiles]);
 
   // Apply filters and sorting
   useEffect(() => {
