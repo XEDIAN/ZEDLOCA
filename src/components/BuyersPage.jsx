@@ -492,20 +492,20 @@ function BuyersPage({ sellerId, onBack }) {
           /* List View */
           <div className="space-y-4">
             {filteredBuyers.length === 0 ? (
-              <div className="bg-white/10 backdrop-blur-md rounded-lg p-8 text-center border border-white/20">
-                <p className="text-white text-lg">No buyers found matching your criteria.</p>
+              <div className="bg-white rounded-lg p-8 text-center border border-gray-200">
+                <p className="text-black text-lg">No buyers found matching your criteria.</p>
               </div>
             ) : (
               filteredBuyers.map(buyer => (
-                <div key={buyer.id} className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
+                <div key={buyer.id} className="bg-white rounded-lg p-6 border border-gray-200">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-white">{buyer.displayName}</h3>
+                        <h3 className="text-xl font-semibold text-black">{buyer.displayName}</h3>
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           buyer.isActive
-                            ? 'bg-green-500/20 text-green-300'
-                            : 'bg-gray-500/20 text-gray-300'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
                         }`}>
                           {buyer.isActive ? 'Active' : 'Inactive'}
                         </span>
@@ -513,20 +513,20 @@ function BuyersPage({ sellerId, onBack }) {
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                         <div>
-                          <div className="text-white/60 text-sm">Last Active</div>
-                          <div className="text-white font-medium">{getActivityStatus(buyer)}</div>
+                          <div className="text-gray-600 text-sm">Last Active</div>
+                          <div className="text-black font-medium">{getActivityStatus(buyer)}</div>
                         </div>
                         <div>
-                          <div className="text-white/60 text-sm">Messages</div>
-                          <div className="text-white font-medium">{buyer.totalMessages}</div>
+                          <div className="text-gray-600 text-sm">Messages</div>
+                          <div className="text-black font-medium">{buyer.totalMessages}</div>
                         </div>
                         <div>
-                          <div className="text-white/60 text-sm">Orders</div>
-                          <div className="text-white font-medium">{buyer.totalOrders}</div>
+                          <div className="text-gray-600 text-sm">Orders</div>
+                          <div className="text-black font-medium">{buyer.totalOrders}</div>
                         </div>
                         <div>
-                          <div className="text-white/60 text-sm">Location</div>
-                          <div className="text-white font-medium">
+                          <div className="text-gray-600 text-sm">Location</div>
+                          <div className="text-black font-medium">
                             {buyer.lat && buyer.lng ? '📍 Available' : '📍 Unknown'}
                           </div>
                         </div>
@@ -534,8 +534,8 @@ function BuyersPage({ sellerId, onBack }) {
 
                       {buyer.messages[0] && (
                         <div className="mb-4">
-                          <div className="text-white/60 text-sm mb-1">Latest Message</div>
-                          <p className="text-white/80 italic">
+                          <div className="text-gray-600 text-sm mb-1">Latest Message</div>
+                          <p className="text-gray-800 italic">
                             "{buyer.messages[0].message.substring(0, 100)}..."
                           </p>
                         </div>

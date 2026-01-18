@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import ImageUpload from './ImageUpload';
+import { useCurrency } from './CurrencyContext';
 
 function Listings({ userId }) {
+  const { formatPrice } = useCurrency();
   const [listings, setListings] = useState([]);
   const [form, setForm] = useState({ title: '', price: '', description: '', category: '' });
   const [loading, setLoading] = useState(false);
@@ -450,7 +452,7 @@ function Listings({ userId }) {
               {/* Listing Details */}
               <div className="p-3 sm:p-4">
                 <div className="mb-3">
-                  <div className="text-lg sm:text-xl font-bold text-green-600 mb-1">${listing.price}</div>
+                  <div className="text-lg sm:text-xl font-bold text-green-600 mb-1">{formatPrice(listing.price)}</div>
                   <p className="text-gray-600 text-xs sm:text-sm line-clamp-3">{listing.description}</p>
                 </div>
 

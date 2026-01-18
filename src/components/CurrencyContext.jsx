@@ -10,7 +10,7 @@ const EXCHANGE_RATES = {
 };
 
 const CURRENCY_SYMBOLS = {
-  ZMW: 'ZMW',
+  ZMW: 'K',
   USD: '$',
   EUR: '€',
   GBP: '£',

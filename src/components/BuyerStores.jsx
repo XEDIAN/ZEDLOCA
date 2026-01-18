@@ -288,7 +288,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-teal-400 via-blue-300 to-purple-500">
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
         <div className="flex-1 flex flex-col items-center justify-center pb-32">
           <div className="w-full max-w-6xl mt-8 px-4">
             <div className="h-12 bg-gray-200 rounded mb-6 w-64 mx-auto animate-pulse"></div>
@@ -318,7 +318,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
   if (viewingSellerId) {
     const seller = sellers[viewingSellerId];
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-teal-400 via-blue-300 to-purple-500">
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
         <div className="flex-1 flex flex-col items-center justify-center pb-32">
           {/* Seller Header */}
           <div className="w-full max-w-6xl mt-8 px-4 mb-6">
@@ -483,7 +483,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
 }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-teal-400 via-blue-300 to-purple-500">
+    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
       <div className="flex-1 flex flex-col items-center justify-center pb-32">
         {/* Header with Stats */}
         <div className="w-full max-w-6xl mt-8 px-4 mb-6">
