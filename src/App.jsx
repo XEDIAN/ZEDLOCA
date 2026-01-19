@@ -22,7 +22,6 @@ import PlaceOrderPage from './pages/PlaceOrderPage';
 import SellerOrders from './components/SellerOrders';
 import SellerProfile from './components/SellerProfile';
 import SellerListings from './components/SellerListings';
-import AIChatbot from './components/AIChatbot';
 
 
 const App = () => {
@@ -350,13 +349,6 @@ const App = () => {
           >
             Stores
           </button>
-          <button
-            className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-yellow-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
-            onClick={() => setShowAIChatbot(true)}
-            title="AI Assistant"
-          >
-            🤖 AI
-          </button>
 
         </div>
         <DraggableSidebar role={role} />
@@ -539,10 +531,6 @@ const App = () => {
       <MapView
         onViewStore={setShowSellerListings}
         onBack={() => setShowMap(false)}
-      />
-      <AIChatbot
-        open={showAIChatbot}
-        onClose={() => setShowAIChatbot(false)}
       />
     </>
   );
