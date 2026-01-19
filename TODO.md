@@ -1,16 +1,14 @@
-# Location Accuracy Check Implementation
+# Switch from OpenAI to Google AI for Gemini
 
-## Completed Tasks
-- [x] Added location accuracy check in PlaceOrderPage.jsx handleUpdateLocation function
-- [x] Check if location accuracy > 10m and prompt user to move to open space
-- [x] Display specific error message with current accuracy value
-- [x] Prevent location update if accuracy is too low
-
-## Summary
-Implemented the requirement to ensure that if the location error is greater than 10m upon updating current location in the place order system, buyers are prompted to move to an open space and reclick the button.
-
-The implementation:
-- Checks `currentLocation.accuracy > 10` in the `handleUpdateLocation` function
-- Shows a user-friendly error message: "Location accuracy is Xm, which is too low for accurate delivery. Please move to an open space with better GPS signal and try again."
-- Prevents the location from being set if accuracy is insufficient
-- Allows users to retry after moving to a better location
+## Tasks to Complete
+- [x] Remove "openai": "^6.16.0" from package.json dependencies
+- [x] Update src/components/AIChatbot.jsx:
+  - [x] Change import from OpenAI to @google/generative-ai
+  - [x] Replace OpenAI initialization with GoogleGenerativeAI
+  - [x] Update sendMessage function to use Google's generateContent API
+  - [x] Change UI text from "Powered by OpenAI" to "Powered by Google Gemini"
+  - [x] Update error messages and footer text
+- [x] Update .env to use VITE_GOOGLE_AI_API_KEY instead of VITE_OPENAI_API_KEY
+- [x] Update TODO.md to reflect the switch to Google AI
+- [x] Run npm install to update dependencies
+- [x] Test the chatbot functionality
