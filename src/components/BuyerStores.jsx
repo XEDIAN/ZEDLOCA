@@ -773,6 +773,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                           Contact Seller
                         </button>
                       )}
+
                     </div>
                   </div>
                 );

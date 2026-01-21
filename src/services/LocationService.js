@@ -4,9 +4,9 @@ class LocationService {
     this.options = {
       enableHighAccuracy: true,
       timeout: 10000,
-      maximumAge: 300000, // 5 minutes
-      updateInterval: 300000, // 5 minutes
-      minDistance: 100, // 100 meters
+      maximumAge: 120000, // 2 minutes
+      updateInterval: 120000, // 2 minutes
+      minDistance: 5, // 5 meters
       batteryThreshold: 20, // Stop tracking below 20%
       ...options
     };
@@ -64,9 +64,17 @@ class LocationService {
       }
     }
 
-    // Check accuracy improvement
-    if (this.lastPosition && newPosition.accuracy < this.lastPosition.accuracy * 0.8) {
+    // Check accuracy improvement: update if accuracy <= 12m and 5% more accurate
+    if (this.lastPosition && newPosition.accuracy <= 12 && newPosition.accuracy < this.lastPosition.accuracy * 0.95) {
       return true;
+    }
+
+    // For poor accuracy (>12m), update if moved at least 5m regardless of accuracy improvement
+    if (this.lastPosition && newPosition.accuracy > 12) {
+      const distance = this.calculateDistance(this.lastPosition, newPosition);
+      if (distance >= 5) {
+        return true;
+      }
     }
 
     return false;

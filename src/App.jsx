@@ -20,6 +20,7 @@ import BuyerStores from './components/BuyerStores';
 import MessageSellerModal from './components/MessageSellerModal';
 import PlaceOrderPage from './pages/PlaceOrderPage';
 import SellerOrders from './components/SellerOrders';
+import BuyerMyOrders from './components/BuyerMyOrders';
 import SellerProfile from './components/SellerProfile';
 import SellerListings from './components/SellerListings';
 
@@ -32,6 +33,7 @@ const App = () => {
   const [showInbox, setShowInbox] = useState(false);
   const [showBuyerMessages, setShowBuyerMessages] = useState(false);
   const [showBuyerStores, setShowBuyerStores] = useState(false);
+  const [showBuyerOrders, setShowBuyerOrders] = useState(false);
   const [showBuyerMap, setShowBuyerMap] = useState(false);
   const [showSellerOrders, setShowSellerOrders] = useState(false);
   const [showSellerProfile, setShowSellerProfile] = useState(false);
@@ -43,7 +45,6 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [roleLoading, setRoleLoading] = useState(false);
-  const [showAIChatbot, setShowAIChatbot] = useState(false);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -135,6 +136,7 @@ const App = () => {
             setPlaceOrderData(data);
             setShowPlaceOrderPage(true);
           }}
+          onViewOrders={() => setShowBuyerOrders(true)}
           user={user}
           role={role}
         />
@@ -184,12 +186,32 @@ const App = () => {
     );
   }
 
+  // Show buyer orders page
+  if (showBuyerOrders && user && role === 'buyer') {
+    return (
+      <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
+        <div className="flex-1 flex flex-col items-center justify-center pb-32">
+          <div className="mb-8 w-full max-w-6xl mt-16">
+            <BuyerMyOrders buyerId={user.uid} onBack={() => setShowBuyerOrders(false)} />
+          </div>
+        </div>
+        <div className="flex justify-center mt-4">
+          <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => setShowBuyerOrders(false)}>Back</button>
+        </div>
+      </div>
+    );
+  }
+
   // Show buyers page for sellers
   if (showBuyerMap && user && role === 'seller') {
     return (
       <BuyersPage
         sellerId={user.uid}
         onBack={() => setShowBuyerMap(false)}
+        onViewBuyerOrders={(buyerId) => {
+          // Navigate to buyer orders page for this specific buyer
+          setShowSellerListings(`buyer-orders-${buyerId}`);
+        }}
       />
     );
   }
@@ -313,6 +335,13 @@ const App = () => {
               </button>
               <button
                 className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+                onClick={() => setShowBuyerOrders(true)}
+                title="My Orders"
+              >
+                Orders
+              </button>
+              <button
+                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-yellow-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
                 onClick={() => {
                   if (user && navigator.geolocation) {
                     window.alert('Please allow location access to update your location.');
@@ -372,22 +401,6 @@ const App = () => {
                 Connect with local sellers and buyers in your area. Discover unique products,
                 support local businesses, and build your community marketplace.
               </p>
-
-              {/* User Type Selection */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center mb-6 sm:mb-12">
-                <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl shadow-lg border-2 border-blue-100 hover:border-blue-300 transition-colors">
-                  <div className="text-xl sm:text-3xl mb-1 sm:mb-2">🛍️</div>
-                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">I'm a Buyer</h3>
-                  <p className="text-gray-600 text-xs mb-2">Discover local products and connect with sellers</p>
-                  <div className="text-xs text-blue-600 font-medium">Popular choice</div>
-                </div>
-                <div className="bg-white p-3 sm:p-4 rounded-lg sm:rounded-xl shadow-lg border-2 border-purple-100 hover:border-purple-300 transition-colors">
-                  <div className="text-xl sm:text-3xl mb-1 sm:mb-2">🏪</div>
-                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">I'm a Seller</h3>
-                  <p className="text-gray-600 text-xs mb-2">Reach local customers and grow your business</p>
-                  <div className="text-xs text-purple-600 font-medium">Start selling today</div>
-                </div>
-              </div>
 
               {/* Auth Section */}
               <div className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl">

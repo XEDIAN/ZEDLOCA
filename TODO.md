@@ -1,5 +1,5 @@
-- [x] Remove AIChatbot import from src/App.jsx
-- [x] Remove showAIChatbot state from src/App.jsx
+- [ ] Remove AIChatbot import from src/App.jsx
+- [ ] Remove showAIChatbot state from src/App.jsx
 - [ ] Remove AI button from footer in src/App.jsx
 - [ ] Remove AIChatbot component usage from src/App.jsx
-- [x] Delete src/components/AIChatbot.jsx file
+- [ ] Delete src/components/AIChatbot.jsx file

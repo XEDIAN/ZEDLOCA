@@ -1,72 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
 import { collection, onSnapshot, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
-import L from 'leaflet';
 import MessageSellerModal from './MessageSellerModal';
 
-// Custom icons
-const buyerIcon = L.divIcon({
-  html: `<div style="
-    background-color: #ef4444;
-    border: 2px solid white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    font-size: 12px;
-    color: white;
-    font-weight: bold;
-  ">👤</div>`,
-  className: 'custom-buyer-marker',
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-});
-
-const sellerIcon = L.divIcon({
-  html: `<div style="
-    background-color: #10b981;
-    border: 2px solid white;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    font-size: 14px;
-    color: white;
-    font-weight: bold;
-  ">🏪</div>`,
-  className: 'custom-seller-marker',
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-});
-
-function MapController({ center, zoom }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (center) {
-      map.setView(center, zoom || 13);
-    }
-  }, [center, zoom, map]);
-
-  return null;
-}
-
-function BuyersPage({ sellerId, onBack }) {
-  const [viewMode, setViewMode] = useState('map'); // 'map' or 'list'
+function BuyersPage({ sellerId, onBack, onViewBuyerOrders }) {
   const [buyers, setBuyers] = useState([]);
   const [filteredBuyers, setFilteredBuyers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [sellerLocation, setSellerLocation] = useState(null);
   const [buyerIds, setBuyerIds] = useState([]);
   const [userProfiles, setUserProfiles] = useState({});
+  const [sellerLocation, setSellerLocation] = useState(null);
   const [analytics, setAnalytics] = useState({
     totalBuyers: 0,
     activeBuyers: 0,
@@ -78,9 +22,8 @@ function BuyersPage({ sellerId, onBack }) {
   // Filters and sorting
   const [filters, setFilters] = useState({
     search: '',
-    radius: 50000, // max radius
     activityLevel: 'all', // all, active, inactive
-    sortBy: 'recent', // recent, distance, orders, messages
+    sortBy: 'recent', // recent, orders, messages
     sortOrder: 'desc'
   });
 
@@ -88,26 +31,23 @@ function BuyersPage({ sellerId, onBack }) {
   const [selectedBuyer, setSelectedBuyer] = useState(null);
   const [showMessageModal, setShowMessageModal] = useState(false);
 
-  // Load seller location
+  // Fetch seller location
   useEffect(() => {
     if (!sellerId) return;
 
-    const loadSellerLocation = async () => {
+    const fetchSellerLocation = async () => {
       try {
-        const sellerRef = doc(db, 'sellers', sellerId);
-        const sellerSnap = await getDoc(sellerRef);
-        if (sellerSnap.exists()) {
-          const data = sellerSnap.data();
-          if (data.lat && data.lng) {
-            setSellerLocation({ lat: data.lat, lng: data.lng });
-          }
+        const sellerDoc = await getDoc(doc(db, 'sellers', sellerId));
+        if (sellerDoc.exists()) {
+          const sellerData = sellerDoc.data();
+          setSellerLocation({ lat: sellerData.lat, lng: sellerData.lng });
         }
-      } catch (err) {
-        console.error('Error loading seller location:', err);
+      } catch (error) {
+        console.error('Error fetching seller location:', error);
       }
     };
 
-    loadSellerLocation();
+    fetchSellerLocation();
   }, [sellerId]);
 
   // Load buyers data
@@ -115,6 +55,9 @@ function BuyersPage({ sellerId, onBack }) {
     if (!sellerId) return;
 
     setLoading(true);
+
+    // Query all buyers
+    const buyersQuery = collection(db, 'buyers');
 
     // Query messages for buyer interactions
     const messagesQuery = query(
@@ -129,84 +72,109 @@ function BuyersPage({ sellerId, onBack }) {
       where('sellerId', '==', sellerId)
     );
 
-    const unsubMessages = onSnapshot(messagesQuery, (snapshot) => {
-      const buyerData = {};
-      const uniqueBuyerIds = new Set();
-      let totalMessages = 0;
-
-      snapshot.docs.forEach(doc => {
-        const msg = doc.data();
-        totalMessages++;
-        uniqueBuyerIds.add(msg.buyerId);
-
-        if (!buyerData[msg.buyerId]) {
-          buyerData[msg.buyerId] = {
-            id: msg.buyerId,
-            displayName: msg.buyerId, // Will be updated with real name
-            lat: msg.buyerLat || null,
-            lng: msg.buyerLng || null,
-            messages: [],
-            orders: [],
-            lastInteraction: msg.timestamp,
-            totalMessages: 0,
-            totalOrders: 0,
-            isActive: false
-          };
-        }
-
-        buyerData[msg.buyerId].messages.push(msg);
-        buyerData[msg.buyerId].totalMessages++;
-        buyerData[msg.buyerId].lastInteraction = msg.timestamp;
-
-        // Check if active (interacted in last 30 days)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        if (msg.timestamp?.toDate() > thirtyDaysAgo) {
-          buyerData[msg.buyerId].isActive = true;
-        }
+    const unsubBuyers = onSnapshot(buyersQuery, (buyersSnapshot) => {
+      const allBuyers = {};
+      buyersSnapshot.docs.forEach(doc => {
+        const buyerData = doc.data();
+        allBuyers[doc.id] = {
+          id: doc.id,
+          displayName: buyerData.displayName || buyerData.name || buyerData.email || doc.id,
+          email: buyerData.email || '',
+          lat: buyerData.lat || null,
+          lng: buyerData.lng || null,
+          messages: [],
+          orders: [],
+          lastInteraction: null,
+          totalMessages: 0,
+          totalOrders: 0,
+          isActive: false
+        };
       });
 
-      // Set buyer IDs for profile loading
-      setBuyerIds(Array.from(uniqueBuyerIds));
+      // Now merge interaction data
+      const unsubMessages = onSnapshot(messagesQuery, (messagesSnapshot) => {
+        const uniqueBuyerIds = new Set();
+        let totalMessages = 0;
 
-      // Convert to array and calculate analytics
-      const buyersArray = Object.values(buyerData);
-      setBuyers(buyersArray);
-      setFilteredBuyers(buyersArray);
+        messagesSnapshot.docs.forEach(doc => {
+          const msg = doc.data();
+          totalMessages++;
+          uniqueBuyerIds.add(msg.buyerId);
 
-      setAnalytics(prev => ({
-        ...prev,
-        totalBuyers: buyersArray.length,
-        activeBuyers: buyersArray.filter(b => b.isActive).length,
-        totalMessages
-      }));
+          if (!allBuyers[msg.buyerId]) {
+            // If buyer not in allBuyers, add them (though unlikely)
+            allBuyers[msg.buyerId] = {
+              id: msg.buyerId,
+              displayName: msg.buyerId,
+              lat: msg.buyerLat || null,
+              lng: msg.buyerLng || null,
+              messages: [],
+              orders: [],
+              lastInteraction: msg.timestamp,
+              totalMessages: 0,
+              totalOrders: 0,
+              isActive: false
+            };
+          }
 
-      setLoading(false);
-    });
+          allBuyers[msg.buyerId].messages.push(msg);
+          allBuyers[msg.buyerId].totalMessages++;
+          allBuyers[msg.buyerId].lastInteraction = msg.timestamp;
 
-    const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
-      const orderData = {};
-      snapshot.docs.forEach(doc => {
-        const order = doc.data();
-        if (!orderData[order.buyerId]) {
-          orderData[order.buyerId] = [];
-        }
-        orderData[order.buyerId].push(order);
+          // Check if active (interacted in last 30 days)
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          if (msg.timestamp?.toDate() > thirtyDaysAgo) {
+            allBuyers[msg.buyerId].isActive = true;
+          }
+        });
+
+        // Set buyer IDs for profile loading (though now we have all buyers)
+        setBuyerIds(Object.keys(allBuyers));
+
+        // Convert to array and calculate analytics
+        const buyersArray = Object.values(allBuyers);
+        setBuyers(buyersArray);
+        setFilteredBuyers(buyersArray);
+
+        setAnalytics(prev => ({
+          ...prev,
+          totalBuyers: buyersArray.length,
+          activeBuyers: buyersArray.filter(b => b.isActive).length,
+          totalMessages
+        }));
+
+        setLoading(false);
       });
 
-      setBuyers(prev => prev.map(buyer => ({
-        ...buyer,
-        orders: orderData[buyer.id] || [],
-        totalOrders: (orderData[buyer.id] || []).length
-      })));
+      const unsubOrders = onSnapshot(ordersQuery, (ordersSnapshot) => {
+        const orderData = {};
+        ordersSnapshot.docs.forEach(doc => {
+          const order = doc.data();
+          if (!orderData[order.buyerId]) {
+            orderData[order.buyerId] = [];
+          }
+          orderData[order.buyerId].push(order);
+        });
 
-      const totalOrders = Object.values(orderData).reduce((sum, orders) => sum + orders.length, 0);
-      setAnalytics(prev => ({ ...prev, totalOrders }));
+        setBuyers(prev => prev.map(buyer => ({
+          ...buyer,
+          orders: orderData[buyer.id] || [],
+          totalOrders: (orderData[buyer.id] || []).length
+        })));
+
+        const totalOrders = Object.values(orderData).reduce((sum, orders) => sum + orders.length, 0);
+        setAnalytics(prev => ({ ...prev, totalOrders }));
+      });
+
+      return () => {
+        unsubMessages();
+        unsubOrders();
+      };
     });
 
     return () => {
-      unsubMessages();
-      unsubOrders();
+      unsubBuyers();
     };
   }, [sellerId]);
 
@@ -284,14 +252,7 @@ function BuyersPage({ sellerId, onBack }) {
       );
     }
 
-    // Radius filter
-    if (sellerLocation && filters.radius < 50000) {
-      filtered = filtered.filter(buyer => {
-        if (!buyer.lat || !buyer.lng) return false;
-        const distance = haversine(sellerLocation.lat, sellerLocation.lng, buyer.lat, buyer.lng);
-        return distance <= filters.radius;
-      });
-    }
+
 
     // Activity filter
     if (filters.activityLevel === 'active') {
@@ -339,7 +300,7 @@ function BuyersPage({ sellerId, onBack }) {
     });
 
     setFilteredBuyers(filtered);
-  }, [buyers, filters, sellerLocation]);
+  }, [buyers, filters]);
 
   const handleNavigateToBuyer = (buyer) => {
     if (!buyer.lat || !buyer.lng) return;
@@ -363,6 +324,19 @@ function BuyersPage({ sellerId, onBack }) {
   const handleMessageBuyer = (buyer) => {
     setSelectedBuyer(buyer);
     setShowMessageModal(true);
+  };
+
+  const handleViewBuyerOrders = (buyer) => {
+    if (onViewBuyerOrders) {
+      onViewBuyerOrders(buyer.id);
+    }
+  };
+
+  const handleViewBuyerStore = (buyer) => {
+    // Navigate to buyer's "store" - could be their profile or orders
+    if (onViewBuyerOrders) {
+      onViewBuyerOrders(buyer.id);
+    }
   };
 
   const getActivityStatus = (buyer) => {
@@ -427,214 +401,106 @@ function BuyersPage({ sellerId, onBack }) {
           </div>
         </div>
 
-        {/* View Toggle and Filters */}
+        {/* Filters */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            {/* View Mode Toggle */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setViewMode('map')}
-                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
-                  viewMode === 'map'
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md'
-                }`}
-              >
-                🗺️ Map View
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
-                  viewMode === 'list'
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md'
-                }`}
-              >
-                📋 List View
-              </button>
-            </div>
+          <div className="flex flex-wrap gap-3 items-center">
+            <input
+              type="text"
+              placeholder="Search buyers..."
+              value={filters.search}
+              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              className="px-4 py-2 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-center">
-              <input
-                type="text"
-                placeholder="Search buyers..."
-                value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className="px-4 py-2 rounded-lg bg-gray-50 text-gray-900 placeholder-gray-500 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+            <select
+              value={filters.activityLevel}
+              onChange={(e) => setFilters(prev => ({ ...prev, activityLevel: e.target.value }))}
+              className="px-4 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Buyers</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </select>
 
-              <select
-                value={filters.activityLevel}
-                onChange={(e) => setFilters(prev => ({ ...prev, activityLevel: e.target.value }))}
-                className="px-4 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Buyers</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
-              </select>
-
-              <select
-                value={filters.sortBy}
-                onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
-                className="px-4 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="recent">Sort by Recent</option>
-                <option value="distance">Sort by Distance</option>
-                <option value="orders">Sort by Orders</option>
-                <option value="messages">Sort by Messages</option>
-              </select>
-            </div>
+            <select
+              value={filters.sortBy}
+              onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
+              className="px-4 py-2 rounded-lg bg-gray-50 text-gray-900 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="recent">Sort by Recent</option>
+              <option value="orders">Sort by Orders</option>
+              <option value="messages">Sort by Messages</option>
+            </select>
           </div>
         </div>
 
-        {/* Content */}
-        {viewMode === 'map' ? (
-          <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/20 overflow-hidden">
-            <div className="h-[600px]">
-              <MapContainer
-                center={sellerLocation || [51.505, -0.09]}
-                zoom={13}
-                style={{ height: '100%', width: '100%' }}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-
-                <MapController center={sellerLocation} zoom={13} />
-
-                {/* Seller marker */}
-                {sellerLocation && (
-                  <Marker position={[sellerLocation.lat, sellerLocation.lng]} icon={sellerIcon}>
-                    <Popup>
-                      <div className="p-2">
-                        <h3 className="font-semibold">Your Store</h3>
-                      </div>
-                    </Popup>
-                  </Marker>
-                )}
-
-                {/* Buyer markers */}
-                {buyers.map(buyer => (
-                  buyer.lat && buyer.lng && (
-                    <Marker
-                      key={buyer.id}
-                      position={[buyer.lat, buyer.lng]}
-                      icon={buyerIcon}
-                    >
-                      <Popup>
-                        <div className="p-3 min-w-[250px]">
-                          <h3 className="font-semibold text-gray-800 mb-2">{buyer.displayName}</h3>
-                          <div className="space-y-1 text-sm text-gray-600 mb-3">
-                            <p>Last active: {getActivityStatus(buyer)}</p>
-                            <p>{buyer.totalMessages} messages, {buyer.totalOrders} orders</p>
-                            {buyer.messages[0] && (
-                              <p className="text-xs italic">
-                                "{buyer.messages[0].message.substring(0, 50)}..."
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleNavigateToBuyer(buyer)}
-                              className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors"
-                            >
-                              🧭 Navigate
-                            </button>
-                            <button
-                              onClick={() => handleMessageBuyer(buyer)}
-                              className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors"
-                            >
-                              💬 Message
-                            </button>
-                          </div>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  )
-                ))}
-              </MapContainer>
+        {/* List View */}
+        <div className="space-y-4">
+          {filteredBuyers.length === 0 ? (
+            <div className="bg-white rounded-lg p-8 text-center border border-gray-200">
+              <p className="text-black text-lg">No buyers found matching your criteria.</p>
             </div>
-          </div>
-        ) : (
-          /* List View */
-          <div className="space-y-4">
-            {filteredBuyers.length === 0 ? (
-              <div className="bg-white rounded-lg p-8 text-center border border-gray-200">
-                <p className="text-black text-lg">No buyers found matching your criteria.</p>
-              </div>
-            ) : (
-              filteredBuyers.map(buyer => (
-                <div key={buyer.id} className="bg-white rounded-lg p-6 border border-gray-200">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-semibold text-black">{buyer.displayName}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          buyer.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {buyer.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                        <div>
-                          <div className="text-gray-600 text-sm">Last Active</div>
-                          <div className="text-black font-medium">{getActivityStatus(buyer)}</div>
-                        </div>
-                        <div>
-                          <div className="text-gray-600 text-sm">Messages</div>
-                          <div className="text-black font-medium">{buyer.totalMessages}</div>
-                        </div>
-                        <div>
-                          <div className="text-gray-600 text-sm">Orders</div>
-                          <div className="text-black font-medium">{buyer.totalOrders}</div>
-                        </div>
-                        <div>
-                          <div className="text-gray-600 text-sm">Location</div>
-                          <div className="text-black font-medium">
-                            {buyer.lat && buyer.lng ? '📍 Available' : '📍 Unknown'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {buyer.messages[0] && (
-                        <div className="mb-4">
-                          <div className="text-gray-600 text-sm mb-1">Latest Message</div>
-                          <p className="text-gray-800 italic">
-                            "{buyer.messages[0].message.substring(0, 100)}..."
-                          </p>
-                        </div>
-                      )}
+          ) : (
+            filteredBuyers.map(buyer => (
+              <div key={buyer.id} className="bg-white rounded-lg p-6 border border-gray-200">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-xl font-semibold text-black">{buyer.displayName}</h3>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        buyer.isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {buyer.isActive ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
 
-                    <div className="flex gap-2 ml-4">
-                      {buyer.lat && buyer.lng && (
-                        <button
-                          onClick={() => handleNavigateToBuyer(buyer)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                          title="Navigate to buyer"
-                        >
-                          🧭
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleMessageBuyer(buyer)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-                        title="Send message"
-                      >
-                        💬
-                      </button>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div>
+                        <div className="text-gray-600 text-sm">Last Active</div>
+                        <div className="text-black font-medium">{getActivityStatus(buyer)}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600 text-sm">Messages</div>
+                        <div className="text-black font-medium">{buyer.totalMessages}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600 text-sm">Orders</div>
+                        <div className="text-black font-medium">{buyer.totalOrders}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-600 text-sm">Location</div>
+                        <div className="text-black font-medium">
+                          {buyer.lat && buyer.lng ? '📍 Available' : '📍 Unknown'}
+                        </div>
+                      </div>
                     </div>
+
+                    {buyer.messages[0] && (
+                      <div className="mb-4">
+                        <div className="text-gray-600 text-sm mb-1">Latest Message</div>
+                        <p className="text-gray-800 italic">
+                          "{buyer.messages[0].message.substring(0, 100)}..."
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 ml-4">
+                    <button
+                      onClick={() => handleMessageBuyer(buyer)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      title="Send message"
+                    >
+                      💬
+                    </button>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Message Modal */}
@@ -654,17 +520,6 @@ function BuyersPage({ sellerId, onBack }) {
   );
 }
 
-// Haversine distance calculation
-function haversine(lat1, lon1, lat2, lon2) {
-  const toRad = (v) => (v * Math.PI) / 180;
-  const R = 6371000; // earth radius in meters
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+
 
 export default BuyersPage;

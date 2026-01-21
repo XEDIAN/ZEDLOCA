@@ -19,6 +19,7 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
   const [location, setLocation] = useState(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [locationSuccess, setLocationSuccess] = useState('');
 
   // Automatically prompt for location when page opens (optional for pickup)
   useEffect(() => {
@@ -105,38 +106,79 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
   const handleUpdateLocation = async () => {
     setLocationLoading(true);
     setLocationError('');
+    setLocationSuccess('');
 
     try {
       const currentLocation = await getLocation();
 
-      // Check if location accuracy is greater than 10 meters
-      if (currentLocation.accuracy > 10) {
-        setLocationError(`Location accuracy is ${currentLocation.accuracy.toFixed(1)}m, which is too low for accurate delivery. Please move to an open space with better GPS signal and try again.`);
+      // Check position accuracy and provide feedback
+      if (currentLocation.accuracy <= 10) {
+        // Position is very accurate
+        setLocation(currentLocation);
+        setLocationSuccess('Your position is very accurate!');
+
+        // Update delivery address with current coordinates
+        setDeliveryAddress(`GPS Location: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} (Precise coordinates for accurate delivery)`);
+
+        // Update buyer's stored location in Firestore for future orders (mobility support)
+        if (buyer && buyer.uid) {
+          try {
+            const buyerRef = doc(db, 'users', buyer.uid);
+            await updateDoc(buyerRef, {
+              location: currentLocation,
+              locationUpdatedAt: serverTimestamp()
+            });
+          } catch (firestoreError) {
+            console.error('Error updating buyer location in Firestore:', firestoreError);
+            // Don't show error to user as this is not critical for the order
+          }
+        }
+      } else if (currentLocation.accuracy <= 20) {
+        // Position is accurate
+        setLocation(currentLocation);
+        setLocationSuccess('Your position is accurate!');
+
+        // Update delivery address with current coordinates
+        setDeliveryAddress(`GPS Location: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} (Precise coordinates for accurate delivery)`);
+
+        // Update buyer's stored location in Firestore for future orders (mobility support)
+        if (buyer && buyer.uid) {
+          try {
+            const buyerRef = doc(db, 'users', buyer.uid);
+            await updateDoc(buyerRef, {
+              location: currentLocation,
+              locationUpdatedAt: serverTimestamp()
+            });
+          } catch (firestoreError) {
+            console.error('Error updating buyer location in Firestore:', firestoreError);
+            // Don't show error to user as this is not critical for the order
+          }
+        }
+      } else {
+        // Position is not accurate enough - still save location data for future reference
+        setLocation(currentLocation);
+
+        // Update delivery address with current coordinates (even if accuracy is poor)
+        setDeliveryAddress(`GPS Location: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} (Coordinates captured - accuracy: ${currentLocation.accuracy.toFixed(1)}m)`);
+
+        // Update buyer's stored location in Firestore for future orders (mobility support)
+        if (buyer && buyer.uid) {
+          try {
+            const buyerRef = doc(db, 'users', buyer.uid);
+            await updateDoc(buyerRef, {
+              location: currentLocation,
+              locationUpdatedAt: serverTimestamp()
+            });
+          } catch (firestoreError) {
+            console.error('Error updating buyer location in Firestore:', firestoreError);
+            // Don't show error to user as this is not critical for the order
+          }
+        }
+
+        setLocationError(`Location accuracy is ${currentLocation.accuracy.toFixed(1)}m. Please move to an open area with better GPS signal and click "Refresh Page for New Location" to try again.`);
         setLocationLoading(false);
         return;
       }
-
-      setLocation(currentLocation);
-
-      // Update delivery address with current coordinates
-      setDeliveryAddress(`GPS Location: ${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)} (Precise coordinates for accurate delivery)`);
-
-      // Update buyer's stored location in Firestore for future orders (mobility support)
-      if (buyer && buyer.uid) {
-        try {
-          const buyerRef = doc(db, 'users', buyer.uid);
-          await updateDoc(buyerRef, {
-            location: currentLocation,
-            locationUpdatedAt: serverTimestamp()
-          });
-        } catch (firestoreError) {
-          console.error('Error updating buyer location in Firestore:', firestoreError);
-          // Don't show error to user as this is not critical for the order
-        }
-      }
-
-      // Clear any previous location errors
-      setLocationError('');
     } catch (err) {
       console.error('Error updating location:', err);
       if (err.isGeolocationError) {
@@ -215,10 +257,29 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
     setError('');
 
     try {
+      // Fetch seller email from Firestore
+      let sellerEmail = '';
+      let sellerName = seller.displayName || '';
+      try {
+        const sellerDoc = await getDoc(doc(db, 'users', seller.id));
+        if (sellerDoc.exists()) {
+          const sellerData = sellerDoc.data();
+          sellerEmail = sellerData.email || '';
+          sellerName = sellerData.displayName || sellerData.name || seller.displayName || '';
+        }
+      } catch (sellerError) {
+        console.error('Error fetching seller email:', sellerError);
+        // Continue without seller email if fetch fails
+      }
+
       const orderData = {
         listingId: listing.id,
         sellerId: seller.id,
+        sellerName: sellerName,
+        sellerEmail: sellerEmail,
         buyerId: buyer.uid,
+        buyerName: buyer.displayName || '',
+        buyerEmail: buyer.email || '',
         title: listing.title,
         price: listing.price,
         quantity: quantity,
@@ -497,10 +558,28 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
                       ) : (
                         <>
                           <span className="text-lg">📍</span>
-                          Use Current Location
+                          Check Position Accuracy
                         </>
                       )}
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="mt-2 w-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                    >
+                      <span className="text-lg">🔄</span>
+                      Refresh Page for New Location
+                    </button>
+
+                    {locationSuccess && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-500">✅</span>
+                          <div className="text-green-700 text-sm font-medium">{locationSuccess}</div>
+                        </div>
+                      </div>
+                    )}
 
                     {locationError && (
                       <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">

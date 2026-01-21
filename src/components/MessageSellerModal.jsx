@@ -11,7 +11,7 @@ import React, { useState, useEffect } from 'react';
  * - seller: object (optional) - seller details
  */
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const MESSAGE_TEMPLATES = {
   'price-inquiry': 'Hi! I\'m interested in this item. Is the price negotiable?',
@@ -35,11 +35,13 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [buyerLocation, setBuyerLocation] = useState(null);
   const [locationError, setLocationError] = useState('');
+  const [userProfiles, setUserProfiles] = useState({});
 
   // Load recent message history
   useEffect(() => {
     if (open && sellerId && buyerId) {
       loadMessageHistory();
+      loadUserProfiles();
     }
   }, [open, sellerId, buyerId]);
 
@@ -72,6 +74,40 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
       console.error('Error loading message history:', err);
     }
     setLoadingHistory(false);
+  };
+
+  const loadUserProfiles = async () => {
+    try {
+      const profiles = {};
+      const userIds = [buyerId, sellerId];
+      for (const userId of userIds) {
+        try {
+          const userRef = doc(db, 'users', userId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            profiles[userId] = {
+              displayName: userData.displayName || userData.name || userData.email || 'Unknown User',
+              email: userData.email || '',
+            };
+          } else {
+            profiles[userId] = {
+              displayName: userId,
+              email: '',
+            };
+          }
+        } catch (error) {
+          console.error('Error loading user profile for', userId, error);
+          profiles[userId] = {
+            displayName: 'Unknown User',
+            email: '',
+          };
+        }
+      }
+      setUserProfiles(profiles);
+    } catch (error) {
+      console.error('Error loading user profiles:', error);
+    }
   };
 
   const handleTemplateSelect = (templateKey) => {
@@ -204,18 +240,51 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                   Recent Messages
                 </h3>
                 <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {recentMessages.map((msg) => (
-                    <div key={msg.id} className={`p-3 rounded-lg text-sm ${
-                      msg.buyerId === buyerId
-                        ? 'bg-blue-100 ml-8'
-                        : 'bg-gray-100 mr-8'
-                    }`}>
-                      <p className="text-gray-800">{msg.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {msg.timestamp?.toDate?.()?.toLocaleDateString() || 'Recent'}
-                      </p>
-                    </div>
-                  ))}
+                  {recentMessages.map((msg) => {
+                    const senderProfile = userProfiles[msg.buyerId === buyerId ? msg.buyerId : msg.sellerId];
+                    const senderName = msg.buyerId === buyerId ? (senderProfile?.displayName || 'Buyer') : (senderProfile?.displayName || sellerName || 'Seller');
+                    return (
+                      <div key={msg.id} className={`p-3 rounded-lg text-sm ${
+                        msg.buyerId === buyerId
+                          ? 'bg-blue-100 ml-8'
+                          : 'bg-gray-100 mr-8'
+                      }`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-xs text-gray-600">{senderName}</span>
+                        </div>
+                        <p className="text-gray-800">{msg.message}</p>
+                        {msg.buyerLat && msg.buyerLng && (
+                          <div className="mt-2">
+                            <button
+                              onClick={() => {
+                                if (navigator.geolocation) {
+                                  navigator.geolocation.getCurrentPosition(
+                                    (pos) => {
+                                      const origin = `${pos.coords.latitude},${pos.coords.longitude}`;
+                                      const destination = `${msg.buyerLat},${msg.buyerLng}`;
+                                      const url = `https://www.google.com/maps/dir/${origin}/${destination}`;
+                                      window.open(url, '_blank');
+                                    },
+                                    () => {
+                                      const url = `https://www.google.com/maps/dir/?api=1&destination=${msg.buyerLat},${msg.buyerLng}`;
+                                      window.open(url, '_blank');
+                                    }
+                                  );
+                                }
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition-colors"
+                              title="Navigate to shared location"
+                            >
+                              🧭 Navigate
+                            </button>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">
+                          {msg.timestamp?.toDate?.()?.toLocaleDateString() || 'Recent'}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
