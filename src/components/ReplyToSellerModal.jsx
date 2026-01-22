@@ -15,8 +15,27 @@ function ReplyToSellerModal({ open, onClose, sellerId, buyerId, originalMessageI
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [buyerLocation, setBuyerLocation] = useState(null);
+  const [locationError, setLocationError] = useState('');
 
   if (!open) return null;
+
+  const handleLocationCapture = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setLocationError('');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setBuyerLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      (err) => {
+        setLocationError('Unable to get location: ' + err.message);
+      },
+      { enableHighAccuracy: true, maximumAge: 1000 * 60 * 5 }
+    );
+  };
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -30,11 +49,14 @@ function ReplyToSellerModal({ open, onClose, sellerId, buyerId, originalMessageI
         replyTo: originalMessageId,
         message: reply,
         fromSeller: false,
+        buyerLat: buyerLocation?.lat || null,
+        buyerLng: buyerLocation?.lng || null,
         timestamp: serverTimestamp(),
         read: false,
       });
       setSuccess(true);
       setReply('');
+      setBuyerLocation(null);
     } catch (err) {
       setError('Failed to send reply: ' + err.message);
     }
@@ -55,6 +77,31 @@ function ReplyToSellerModal({ open, onClose, sellerId, buyerId, originalMessageI
             required
             disabled={sending}
           />
+
+          {/* Location Sharing */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-gray-800 mb-2">Share Your Location (Optional)</h3>
+            <p className="text-sm text-gray-600 mb-2">Allow the seller to see your location for easier navigation.</p>
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+              <button
+                type="button"
+                onClick={handleLocationCapture}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                disabled={sending}
+              >
+                📍 Share Location
+              </button>
+              {buyerLocation && (
+                <span className="text-sm text-green-600">
+                  ✓ Location captured: {buyerLocation.lat.toFixed(4)}, {buyerLocation.lng.toFixed(4)}
+                </span>
+              )}
+            </div>
+            {locationError && (
+              <p className="text-red-600 text-sm mt-1">{locationError}</p>
+            )}
+          </div>
+
           {error && <div className="text-red-600 mb-2">{error}</div>}
           {success && <div className="text-green-600 mb-2">Reply sent!</div>}
           <div className="flex justify-end gap-2">
