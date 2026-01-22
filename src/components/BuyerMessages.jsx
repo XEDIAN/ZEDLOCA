@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDoc } from 'firebase/firestore';
+import ReplyToSellerModal from './ReplyToSellerModal';
 
 function BuyerMessages({ buyerId }) {
   const [messages, setMessages] = useState([]);
@@ -10,6 +11,7 @@ function BuyerMessages({ buyerId }) {
   const [filter, setFilter] = useState('all'); // all, unread, read
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [userProfiles, setUserProfiles] = useState({});
+  const [replyModal, setReplyModal] = useState({ open: false, sellerId: '', originalMessageId: '' });
 
   useEffect(() => {
     if (!buyerId) return;
@@ -174,8 +176,8 @@ function BuyerMessages({ buyerId }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-2 sm:p-4">
+      <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm">
           {/* Header */}
           <div className="border-b border-gray-200 p-6">
@@ -214,11 +216,11 @@ function BuyerMessages({ buyerId }) {
           </div>
 
           {/* Main Content */}
-          <div className="flex">
+          <div className="flex flex-col lg:flex-row">
             {/* Conversations List */}
-            <div className="w-full md:w-1/3 border-r border-gray-200">
-              <div className="p-4">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Conversations</h2>
+            <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200">
+              <div className="p-3 sm:p-4">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Conversations</h2>
                 {filteredConversations.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="text-4xl mb-4">💬</div>
@@ -267,16 +269,35 @@ function BuyerMessages({ buyerId }) {
             </div>
 
             {/* Messages View */}
-            <div className="flex-1">
+            <div className="flex-1 min-h-0">
               {selectedConversation ? (
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-gray-900 truncate">
+                <div className="p-3 sm:p-4">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                       Conversation with {userProfiles[selectedConversation.sellerId]?.displayName || selectedConversation.sellerId}
                     </h3>
+                    <div className="flex gap-2">
+                      {/* Back button for mobile */}
+                      <button
+                        onClick={() => setSelectedConversation(null)}
+                        className="lg:hidden bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300"
+                      >
+                        ← Back
+                      </button>
+                      <button
+                        onClick={() => setReplyModal({
+                          open: true,
+                          sellerId: selectedConversation.sellerId,
+                          originalMessageId: selectedConversation.lastMessage?.id
+                        })}
+                        className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                      >
+                        Reply
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div className="space-y-3 sm:space-y-4 max-h-80 sm:max-h-96 overflow-y-auto">
                     {selectedConversation.messages
                       .sort((a, b) => (a.timestamp?.toDate?.() || 0) - (b.timestamp?.toDate?.() || 0))
                       .map(msg => (
@@ -285,13 +306,13 @@ function BuyerMessages({ buyerId }) {
                           className={`flex ${msg.fromSeller ? 'justify-start' : 'justify-end'}`}
                         >
                           <div
-                            className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                            className={`max-w-xs sm:max-w-sm lg:max-w-md px-3 sm:px-4 py-2 rounded-lg ${
                               msg.fromSeller
                                 ? 'bg-gray-200 text-gray-900'
                                 : 'bg-blue-600 text-white'
                             }`}
                           >
-                            <p className="text-sm">{msg.message}</p>
+                            <p className="text-xs sm:text-sm">{msg.message}</p>
                             <div className={`text-xs mt-1 ${msg.fromSeller ? 'text-gray-500' : 'text-blue-200'}`}>
                               {msg.timestamp?.toDate?.().toLocaleString?.() || ''}
                               {msg.fromSeller && !msg.read && (
@@ -348,11 +369,11 @@ function BuyerMessages({ buyerId }) {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">📧</div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a conversation</h3>
-                    <p className="text-gray-600">Choose a conversation from the list to view messages</p>
+                <div className="flex items-center justify-center h-64 sm:h-full">
+                  <div className="text-center px-4">
+                    <div className="text-4xl sm:text-6xl mb-4">📧</div>
+                    <h3 className="text-base sm:text-xl font-semibold text-gray-900 mb-2">Select a conversation</h3>
+                    <p className="text-xs sm:text-sm text-gray-600">Choose a conversation from the list to view messages</p>
                   </div>
                 </div>
               )}
@@ -360,6 +381,14 @@ function BuyerMessages({ buyerId }) {
           </div>
         </div>
       </div>
+
+      <ReplyToSellerModal
+        open={replyModal.open}
+        onClose={() => setReplyModal({ open: false, sellerId: '', originalMessageId: '' })}
+        sellerId={replyModal.sellerId}
+        buyerId={buyerId}
+        originalMessageId={replyModal.originalMessageId}
+      />
     </div>
   );
 }
