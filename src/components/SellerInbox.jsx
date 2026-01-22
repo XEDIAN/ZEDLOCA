@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import ReplyToBuyerModal from './ReplyToBuyerModal';
 
 function SellerInbox({ sellerId }) {
@@ -11,6 +11,7 @@ function SellerInbox({ sellerId }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all'); // all, unread, read
   const [selectedConversation, setSelectedConversation] = useState(null);
+  const [userProfiles, setUserProfiles] = useState({});
 
   useEffect(() => {
     if (!sellerId) return;
@@ -29,6 +30,48 @@ function SellerInbox({ sellerId }) {
     });
     return () => unsub();
   }, [sellerId]);
+
+  // Load user profiles for all unique user IDs in messages
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    const uniqueUserIds = new Set();
+    messages.forEach(msg => {
+      uniqueUserIds.add(msg.buyerId);
+    });
+    uniqueUserIds.add(sellerId); // Include seller
+
+    const loadProfiles = async () => {
+      const profiles = {};
+      for (const userId of uniqueUserIds) {
+        try {
+          const userRef = doc(db, 'users', userId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            profiles[userId] = {
+              displayName: userData.displayName || userData.name || userData.email || 'Unknown User',
+              email: userData.email || '',
+            };
+          } else {
+            profiles[userId] = {
+              displayName: 'Unknown User',
+              email: '',
+            };
+          }
+        } catch (error) {
+          console.error('Error loading user profile for', userId, error);
+          profiles[userId] = {
+            displayName: 'Unknown User',
+            email: '',
+          };
+        }
+      }
+      setUserProfiles(profiles);
+    };
+
+    loadProfiles();
+  }, [messages, sellerId]);
 
   // Group messages by buyer for conversation view
   const conversations = useMemo(() => {
@@ -62,7 +105,9 @@ function SellerInbox({ sellerId }) {
   // Filter conversations based on search and filter
   const filteredConversations = useMemo(() => {
     return conversations.filter(conv => {
+      const buyerName = userProfiles[conv.buyerId]?.displayName || conv.buyerId;
       const matchesSearch = searchTerm === '' ||
+        buyerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         conv.buyerId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         conv.messages.some(msg => msg.message.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -72,7 +117,7 @@ function SellerInbox({ sellerId }) {
 
       return matchesSearch && matchesFilter;
     });
-  }, [conversations, searchTerm, filter]);
+  }, [conversations, searchTerm, filter, userProfiles]);
 
   const markAsRead = async (msgId) => {
     try {
@@ -137,7 +182,9 @@ function SellerInbox({ sellerId }) {
           {/* Header */}
           <div className="border-b border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {userProfiles[sellerId]?.displayName ? `${userProfiles[sellerId].displayName}'s Inbox` : 'Inbox'}
+              </h1>
               {totalUnread > 0 && (
                 <span className="bg-blue-600 text-white text-sm px-3 py-1 rounded-full">
                   {totalUnread} unread
@@ -201,7 +248,9 @@ function SellerInbox({ sellerId }) {
                         } ${conv.unreadCount > 0 ? 'border-l-4 border-blue-500' : ''}`}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-900">{conv.buyerId}</span>
+                          <span className="font-medium text-gray-900">
+                            {userProfiles[conv.buyerId]?.displayName || conv.buyerId}
+                          </span>
                           {conv.unreadCount > 0 && (
                             <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
                               {conv.unreadCount}
@@ -227,7 +276,7 @@ function SellerInbox({ sellerId }) {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-semibold text-gray-900">
-                      Conversation with {selectedConversation.buyerId}
+                      Conversation with {userProfiles[selectedConversation.buyerId]?.displayName || selectedConversation.buyerId}
                     </h3>
                     <button
                       onClick={() => setReplyModal({
