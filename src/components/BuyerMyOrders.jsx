@@ -76,13 +76,13 @@ const BuyerMyOrders = ({ buyerId, onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="w-full">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white rounded-lg mb-6">
+        <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">📦 My Orders</h1>
+              <h1 className="text-2xl font-bold">📦 My Orders</h1>
               <p className="text-blue-100 mt-1">View all your placed orders</p>
             </div>
             <button
@@ -95,7 +95,7 @@ const BuyerMyOrders = ({ buyerId, onBack }) => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="px-4">
         {orders.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📦</div>
@@ -140,7 +140,7 @@ const BuyerMyOrders = ({ buyerId, onBack }) => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-600">Total Price:</span>
-                          <span className="font-semibold text-green-600">{formatPrice(order.totalPrice || (order.price * order.quantity) || 0)}</span>
+                          <span className="font-semibold text-green-600">{formatPrice(order.totalPrice || (parseFloat(order.price?.replace(/[^0-9.-]+/g, '') || 0) * (order.quantity || 1)) || 0)}</span>
                         </div>
                       </div>
                     </div>

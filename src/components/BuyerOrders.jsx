@@ -147,7 +147,7 @@ const BuyerOrders = ({ buyerId, sellerId, onBack }) => {
 
                 {/* Order Details */}
                 <div className="p-6">
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid md:grid-cols-3 gap-6">
                     {/* Product & Pricing */}
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-3">📦 Order Details</h4>
@@ -167,21 +167,82 @@ const BuyerOrders = ({ buyerId, sellerId, onBack }) => {
                       </div>
                     </div>
 
-                    {/* Delivery Info */}
+                    {/* Buyer Profile Info */}
                     <div>
-                      <h4 className="font-semibold text-gray-800 mb-3">🚚 Delivery Information</h4>
+                      <h4 className="font-semibold text-gray-800 mb-3">👤 Buyer Profile</h4>
                       <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="text-gray-600">Address:</span>
-                          <p className="font-medium text-gray-800 mt-1">{order.deliveryAddress}</p>
-                        </div>
-                        {order.specialInstructions && (
+                        {order.buyerProfile?.occupation && (
                           <div>
-                            <span className="text-gray-600">Special Instructions:</span>
-                            <p className="font-medium text-gray-800 mt-1">{order.specialInstructions}</p>
+                            <span className="text-gray-600">Occupation:</span>
+                            <p className="font-medium text-gray-800 mt-1">{order.buyerProfile.occupation}</p>
                           </div>
                         )}
+                        {order.buyerProfile?.phone && (
+                          <div>
+                            <span className="text-gray-600">Phone:</span>
+                            <p className="font-medium text-gray-800 mt-1">{order.buyerProfile.phone}</p>
+                          </div>
+                        )}
+                        {order.buyerProfile?.bio && (
+                          <div>
+                            <span className="text-gray-600">Bio:</span>
+                            <p className="font-medium text-gray-800 mt-1">{order.buyerProfile.bio}</p>
+                          </div>
+                        )}
+                        {!order.buyerProfile?.occupation && !order.buyerProfile?.phone && !order.buyerProfile?.bio && (
+                          <p className="text-gray-500 italic">No profile information available</p>
+                        )}
                       </div>
+                    </div>
+
+                    {/* Seller Profile Info */}
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-3">🏪 Seller Profile</h4>
+                      <div className="space-y-2 text-sm">
+                        {order.sellerProfile?.storeName && (
+                          <div>
+                            <span className="text-gray-600">Store:</span>
+                            <p className="font-medium text-gray-800 mt-1">{order.sellerProfile.storeName}</p>
+                          </div>
+                        )}
+                        {order.sellerProfile?.phone && (
+                          <div>
+                            <span className="text-gray-600">Phone:</span>
+                            <p className="font-medium text-gray-800 mt-1">{order.sellerProfile.phone}</p>
+                          </div>
+                        )}
+                        {order.sellerProfile?.address && (
+                          <div>
+                            <span className="text-gray-600">Address:</span>
+                            <p className="font-medium text-gray-800 mt-1">
+                              {order.sellerProfile.address}
+                              {order.sellerProfile.city && `, ${order.sellerProfile.city}`}
+                              {order.sellerProfile.state && `, ${order.sellerProfile.state}`}
+                              {order.sellerProfile.zipCode && ` ${order.sellerProfile.zipCode}`}
+                            </p>
+                          </div>
+                        )}
+                        {!order.sellerProfile?.storeName && !order.sellerProfile?.phone && !order.sellerProfile?.address && (
+                          <p className="text-gray-500 italic">No profile information available</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Delivery Info */}
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <h4 className="font-semibold text-gray-800 mb-3">🚚 Delivery Information</h4>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <span className="text-gray-600">Address:</span>
+                        <p className="font-medium text-gray-800 mt-1">{order.deliveryAddress}</p>
+                      </div>
+                      {order.specialInstructions && (
+                        <div>
+                          <span className="text-gray-600">Special Instructions:</span>
+                          <p className="font-medium text-gray-800 mt-1">{order.specialInstructions}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

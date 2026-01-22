@@ -257,19 +257,56 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
     setError('');
 
     try {
-      // Fetch seller email from Firestore
+      // Fetch seller profile from Firestore
       let sellerEmail = '';
       let sellerName = seller.displayName || '';
+      let sellerProfile = {};
       try {
-        const sellerDoc = await getDoc(doc(db, 'users', seller.id));
+        const sellerDoc = await getDoc(doc(db, 'sellers', seller.id));
         if (sellerDoc.exists()) {
           const sellerData = sellerDoc.data();
           sellerEmail = sellerData.email || '';
           sellerName = sellerData.displayName || sellerData.name || seller.displayName || '';
+          sellerProfile = {
+            storeName: sellerData.storeName || '',
+            displayName: sellerData.displayName || '',
+            email: sellerData.email || '',
+            phone: sellerData.phone || '',
+            description: sellerData.description || '',
+            address: sellerData.address || '',
+            city: sellerData.city || '',
+            state: sellerData.state || '',
+            zipCode: sellerData.zipCode || '',
+            website: sellerData.website || '',
+            categories: sellerData.categories || [],
+            paymentMethods: sellerData.paymentMethods || [],
+            deliveryOptions: sellerData.deliveryOptions || [],
+            location: sellerData.location || null,
+            photoURL: sellerData.photoURL || '',
+            coverPhotoURL: sellerData.coverPhotoURL || ''
+          };
         }
       } catch (sellerError) {
-        console.error('Error fetching seller email:', sellerError);
-        // Continue without seller email if fetch fails
+        console.error('Error fetching seller profile:', sellerError);
+        // Continue without seller profile if fetch fails
+      }
+
+      // Fetch buyer profile from Firestore
+      let buyerProfile = {};
+      try {
+        const buyerDoc = await getDoc(doc(db, 'buyers', buyer.uid));
+        if (buyerDoc.exists()) {
+          const buyerData = buyerDoc.data();
+          buyerProfile = {
+            occupation: buyerData.occupation || '',
+            phone: buyerData.phone || '',
+            bio: buyerData.bio || '',
+            preferences: buyerData.preferences || {}
+          };
+        }
+      } catch (buyerError) {
+        console.error('Error fetching buyer profile:', buyerError);
+        // Continue without buyer profile if fetch fails
       }
 
       const orderData = {
@@ -277,9 +314,11 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
         sellerId: seller.id,
         sellerName: sellerName,
         sellerEmail: sellerEmail,
+        sellerProfile: sellerProfile,
         buyerId: buyer.uid,
         buyerName: buyer.displayName || '',
         buyerEmail: buyer.email || '',
+        buyerProfile: buyerProfile,
         title: listing.title,
         price: listing.price,
         quantity: quantity,

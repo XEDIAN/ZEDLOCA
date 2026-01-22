@@ -46,6 +46,8 @@ const App = () => {
   const [role, setRole] = useState(null);
   const [roleLoading, setRoleLoading] = useState(false);
 
+
+
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
@@ -195,9 +197,7 @@ const App = () => {
             <BuyerMyOrders buyerId={user.uid} onBack={() => setShowBuyerOrders(false)} />
           </div>
         </div>
-        <div className="flex justify-center mt-4">
-          <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => setShowBuyerOrders(false)}>Back</button>
-        </div>
+        {renderFooter()}
       </div>
     );
   }
@@ -336,9 +336,9 @@ const App = () => {
               <button
                 className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
                 onClick={() => setShowBuyerOrders(true)}
-                title="My Orders"
+                title="My Placed Orders"
               >
-                Orders
+                Placed Orders
               </button>
               <button
                 className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-yellow-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
