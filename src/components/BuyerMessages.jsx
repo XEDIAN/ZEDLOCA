@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { db } from '../firebase';
-import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDoc } from 'firebase/firestore';
 
 function BuyerMessages({ buyerId }) {
   const [messages, setMessages] = useState([]);
@@ -9,6 +9,7 @@ function BuyerMessages({ buyerId }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all'); // all, unread, read
   const [selectedConversation, setSelectedConversation] = useState(null);
+  const [userProfiles, setUserProfiles] = useState({});
 
   useEffect(() => {
     if (!buyerId) return;
@@ -27,6 +28,48 @@ function BuyerMessages({ buyerId }) {
     });
     return () => unsub();
   }, [buyerId]);
+
+  // Load user profiles for all unique user IDs in messages
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    const uniqueUserIds = new Set();
+    messages.forEach(msg => {
+      uniqueUserIds.add(msg.sellerId);
+    });
+    uniqueUserIds.add(buyerId); // Include buyer
+
+    const loadProfiles = async () => {
+      const profiles = {};
+      for (const userId of uniqueUserIds) {
+        try {
+          const userRef = doc(db, 'users', userId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            profiles[userId] = {
+              displayName: userData.displayName || userData.name || userData.email || 'Unknown User',
+              email: userData.email || '',
+            };
+          } else {
+            profiles[userId] = {
+              displayName: 'Unknown User',
+              email: '',
+            };
+          }
+        } catch (error) {
+          console.error('Error loading user profile for', userId, error);
+          profiles[userId] = {
+            displayName: 'Unknown User',
+            email: '',
+          };
+        }
+      }
+      setUserProfiles(profiles);
+    };
+
+    loadProfiles();
+  }, [messages, buyerId]);
 
   // Group messages by seller for conversation view
   const conversations = useMemo(() => {
@@ -60,7 +103,9 @@ function BuyerMessages({ buyerId }) {
   // Filter conversations based on search and filter
   const filteredConversations = useMemo(() => {
     return conversations.filter(conv => {
+      const sellerName = userProfiles[conv.sellerId]?.displayName || conv.sellerId;
       const matchesSearch = searchTerm === '' ||
+        sellerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         conv.sellerId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         conv.messages.some(msg => msg.message.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -70,7 +115,7 @@ function BuyerMessages({ buyerId }) {
 
       return matchesSearch && matchesFilter;
     });
-  }, [conversations, searchTerm, filter]);
+  }, [conversations, searchTerm, filter, userProfiles]);
 
   const markAsRead = async (msgId) => {
     try {
@@ -199,7 +244,9 @@ function BuyerMessages({ buyerId }) {
                         } ${conv.unreadCount > 0 ? 'border-l-4 border-blue-500' : ''}`}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-900">{conv.sellerId}</span>
+                          <span className="font-medium text-gray-900 truncate">
+                            {userProfiles[conv.sellerId]?.displayName || conv.sellerId}
+                          </span>
                           {conv.unreadCount > 0 && (
                             <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
                               {conv.unreadCount}
@@ -224,8 +271,8 @@ function BuyerMessages({ buyerId }) {
               {selectedConversation ? (
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      Conversation with {selectedConversation.sellerId}
+                    <h3 className="text-xl font-semibold text-gray-900 truncate">
+                      Conversation with {userProfiles[selectedConversation.sellerId]?.displayName || selectedConversation.sellerId}
                     </h3>
                   </div>
 
@@ -266,6 +313,32 @@ function BuyerMessages({ buyerId }) {
                                   className="text-xs text-red-600 hover:text-red-800 underline"
                                 >
                                   Delete
+                                </button>
+                              </div>
+                            )}
+                            {msg.fromSeller && msg.sellerLat && msg.sellerLng && (
+                              <div className="mt-2">
+                                <button
+                                  onClick={() => {
+                                    if (navigator.geolocation) {
+                                      navigator.geolocation.getCurrentPosition(
+                                        (pos) => {
+                                          const origin = `${pos.coords.latitude},${pos.coords.longitude}`;
+                                          const destination = `${msg.sellerLat},${msg.sellerLng}`;
+                                          const url = `https://www.google.com/maps/dir/${origin}/${destination}`;
+                                          window.open(url, '_blank');
+                                        },
+                                        () => {
+                                          const url = `https://www.google.com/maps/dir/?api=1&destination=${msg.sellerLat},${msg.sellerLng}`;
+                                          window.open(url, '_blank');
+                                        }
+                                      );
+                                    }
+                                  }}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                                  title="Navigate to shared location"
+                                >
+                                  🧭 Navigate
                                 </button>
                               </div>
                             )}

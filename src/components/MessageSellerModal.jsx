@@ -253,20 +253,22 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                           <span className="font-medium text-xs text-gray-600">{senderName}</span>
                         </div>
                         <p className="text-gray-800">{msg.message}</p>
-                        {msg.buyerLat && msg.buyerLng && (
+                        {(msg.buyerLat && msg.buyerLng && !msg.fromSeller) || (msg.sellerLat && msg.sellerLng && msg.fromSeller) ? (
                           <div className="mt-2">
                             <button
                               onClick={() => {
+                                const lat = msg.fromSeller ? msg.sellerLat : msg.buyerLat;
+                                const lng = msg.fromSeller ? msg.sellerLng : msg.buyerLng;
                                 if (navigator.geolocation) {
                                   navigator.geolocation.getCurrentPosition(
                                     (pos) => {
                                       const origin = `${pos.coords.latitude},${pos.coords.longitude}`;
-                                      const destination = `${msg.buyerLat},${msg.buyerLng}`;
+                                      const destination = `${lat},${lng}`;
                                       const url = `https://www.google.com/maps/dir/${origin}/${destination}`;
                                       window.open(url, '_blank');
                                     },
                                     () => {
-                                      const url = `https://www.google.com/maps/dir/?api=1&destination=${msg.buyerLat},${msg.buyerLng}`;
+                                      const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
                                       window.open(url, '_blank');
                                     }
                                   );
@@ -278,7 +280,7 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                               🧭 Navigate
                             </button>
                           </div>
-                        )}
+                        ) : null}
                         <p className="text-xs text-gray-500 mt-1">
                           {msg.timestamp?.toDate?.()?.toLocaleDateString() || 'Recent'}
                         </p>
