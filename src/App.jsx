@@ -17,10 +17,10 @@ import SplashScreen from './components/SplashScreen';
 import SellerInbox from './components/SellerInbox';
 import BuyerMessages from './components/BuyerMessages';
 import BuyerStores from './components/BuyerStores';
+import BuyerMyOrders from './components/BuyerMyOrders';
 import MessageSellerModal from './components/MessageSellerModal';
 import PlaceOrderPage from './pages/PlaceOrderPage';
 import SellerOrders from './components/SellerOrders';
-import BuyerMyOrders from './components/BuyerMyOrders';
 import SellerProfile from './components/SellerProfile';
 import SellerListings from './components/SellerListings';
 
@@ -33,7 +33,7 @@ const App = () => {
   const [showInbox, setShowInbox] = useState(false);
   const [showBuyerMessages, setShowBuyerMessages] = useState(false);
   const [showBuyerStores, setShowBuyerStores] = useState(false);
-  const [showBuyerOrders, setShowBuyerOrders] = useState(false);
+  const [showBuyerMyOrders, setShowBuyerMyOrders] = useState(false);
   const [showBuyerMap, setShowBuyerMap] = useState(false);
   const [showSellerOrders, setShowSellerOrders] = useState(false);
   const [showSellerProfile, setShowSellerProfile] = useState(false);
@@ -188,16 +188,18 @@ const App = () => {
     );
   }
 
-  // Show buyer orders page
-  if (showBuyerOrders && user && role === 'buyer') {
+  // Show buyer my orders page
+  if (showBuyerMyOrders && user && role === 'buyer') {
     return (
       <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
         <div className="flex-1 flex flex-col items-center justify-center pb-32">
           <div className="mb-8 w-full max-w-6xl mt-16">
-            <BuyerMyOrders buyerId={user.uid} onBack={() => setShowBuyerOrders(false)} />
+            <BuyerMyOrders buyerId={user.uid} onBack={() => setShowBuyerMyOrders(false)} />
           </div>
         </div>
-        {renderFooter()}
+        <div className="flex justify-center mt-4">
+          <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => setShowBuyerMyOrders(false)}>Back</button>
+        </div>
       </div>
     );
   }
@@ -333,12 +335,13 @@ const App = () => {
               >
                 Messages
               </button>
+
               <button
                 className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
-                onClick={() => setShowBuyerOrders(true)}
-                title="My Placed Orders"
+                onClick={() => setShowBuyerMyOrders(true)}
+                title="My Orders"
               >
-                Placed Orders
+                Orders
               </button>
               <button
                 className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-yellow-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"

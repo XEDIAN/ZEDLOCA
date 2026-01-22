@@ -263,6 +263,32 @@ function SellerInbox({ sellerId }) {
                                 <span className="ml-2 text-blue-600">●</span>
                               )}
                             </div>
+                            {msg.buyerLat && msg.buyerLng && !msg.fromSeller && (
+                              <div className="mt-2">
+                                <button
+                                  onClick={() => {
+                                    if (navigator.geolocation) {
+                                      navigator.geolocation.getCurrentPosition(
+                                        (pos) => {
+                                          const origin = `${pos.coords.latitude},${pos.coords.longitude}`;
+                                          const destination = `${msg.buyerLat},${msg.buyerLng}`;
+                                          const url = `https://www.google.com/maps/dir/${origin}/${destination}`;
+                                          window.open(url, '_blank');
+                                        },
+                                        () => {
+                                          const url = `https://www.google.com/maps/dir/?api=1&destination=${msg.buyerLat},${msg.buyerLng}`;
+                                          window.open(url, '_blank');
+                                        }
+                                      );
+                                    }
+                                  }}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition-colors"
+                                  title="Navigate to shared location"
+                                >
+                                  🧭 Navigate
+                                </button>
+                              </div>
+                            )}
                             {!msg.fromSeller && (
                               <div className="flex gap-2 mt-2">
                                 {!msg.read && (
