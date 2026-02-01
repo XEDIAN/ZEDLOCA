@@ -23,6 +23,7 @@ import PlaceOrderPage from './pages/PlaceOrderPage';
 import SellerOrders from './components/SellerOrders';
 import SellerProfile from './components/SellerProfile';
 import SellerListings from './components/SellerListings';
+import { setNgrokUrl } from './utils/linkUtils';
 
 
 const App = () => {
@@ -45,6 +46,7 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
   const [roleLoading, setRoleLoading] = useState(false);
+  const [sharedSellerId, setSharedSellerId] = useState(null);
 
 
 
@@ -53,6 +55,15 @@ const App = () => {
       setShowSplash(false);
     }, 3000); // 3 seconds
     return () => clearTimeout(timer);
+  }, []);
+
+  // Handle URL parameters for shared seller links
+  React.useEffect(() => {
+    const path = window.location.pathname;
+    const pathParts = path.split('/');
+    if (pathParts[1] === 'seller' && pathParts[2]) {
+      setSharedSellerId(pathParts[2]);
+    }
   }, []);
 
   React.useEffect(() => {
@@ -102,6 +113,18 @@ const App = () => {
     });
     return () => unsubscribe();
   }, [showMap]);
+
+  // Show shared seller listings and contact details
+  if (sharedSellerId) {
+    return (
+      <SellerListings
+        sellerId={sharedSellerId}
+        onBack={() => setSharedSellerId(null)}
+        user={user}
+        isSharedView={true}
+      />
+    );
+  }
 
   // Show splash screen
   if (showSplash) {

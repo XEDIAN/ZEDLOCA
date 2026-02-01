@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
+import { getSellerProfileUrl } from '../utils/linkUtils';
 
 const SellerProfile = ({ sellerId, onBack }) => {
   const { formatPrice } = useCurrency();
@@ -110,6 +111,39 @@ const SellerProfile = ({ sellerId, onBack }) => {
       setLocationLoading(false);
     }
   };
+
+  const handleShareWhatsApp = () => {
+    const link = getSellerProfileUrl(sellerId);
+    const message = `Check out my store: ${profile.storeName || 'My Store'}\n${link}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleShareSMS = () => {
+    const link = getSellerProfileUrl(sellerId);
+    const message = `Check out my store: ${profile.storeName || 'My Store'} ${link}`;
+    const smsUrl = `sms:?body=${encodeURIComponent(message)}`;
+    window.open(smsUrl, '_blank');
+  };
+
+  const handleCopyLink = async () => {
+    const link = getSellerProfileUrl(sellerId);
+    try {
+      await navigator.clipboard.writeText(link);
+      alert('Link copied to clipboard!');
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = link;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  const isOwnProfile = auth.currentUser && auth.currentUser.uid === sellerId;
 
 
 
@@ -387,6 +421,50 @@ const SellerProfile = ({ sellerId, onBack }) => {
             </div>
           </div>
         </div>
+
+        {/* Share Store Link */}
+        {isOwnProfile && (
+          <div className="bg-white rounded-xl shadow-lg p-4">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Share Your Store</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Share your store link via WhatsApp, SMS, or copy the link directly to let customers discover your products.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <button
+                onClick={handleShareWhatsApp}
+                className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-medium"
+              >
+                <span className="text-lg">📱</span>
+                WhatsApp
+              </button>
+              <button
+                onClick={handleShareSMS}
+                className="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium"
+              >
+                <span className="text-lg">💬</span>
+                SMS
+              </button>
+              <button
+                onClick={handleCopyLink}
+                className="bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-medium"
+              >
+                <span className="text-lg">🔗</span>
+                Copy Link
+              </button>
+            </div>
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-600 mb-1">Your store link (clickable):</p>
+              <a
+                href={getSellerProfileUrl(sellerId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-mono text-blue-600 hover:text-blue-800 underline break-all"
+              >
+                {getSellerProfileUrl(sellerId)}
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex justify-between items-center pt-6">
