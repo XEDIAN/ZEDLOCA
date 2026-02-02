@@ -16,3 +16,9 @@
 - [x] Ensure localhost links are pre-tunneled by ngrok for accessibility before deployment
   - [x] Create linkUtils.js utility for environment-aware URL generation
   - [x] Update SellerProfile.jsx to use ngrok URLs in development
+
+## Sidebar Toggle Restriction for Sellers
+- [x] Modify DraggableSidebar.jsx to disable swipe and drag gestures for sellers (role === 'seller')
+- [x] Ensure only the toggle button controls sidebar open/close for sellers
+- [x] Keep swipe and drag functionality for buyers
+- [x] Test sidebar behavior for both roles

@@ -341,18 +341,22 @@ function DraggableSidebar({ role }) {
           boxShadow: isOpen ? 'rgba(0,0,0,0.18) -8px 0 24px' : 'rgba(0,0,0,0.08) -2px 0 8px',
           transition: 'all 0.3s cubic-bezier(.4,0,.2,1)'
         }}
-        onTouchStart={handleSwipeStart}
-        onTouchMove={handleSwipeMove}
-        onTouchEnd={handleSwipeEnd}
-        onMouseDown={handleSwipeStart}
-        onMouseMove={handleSwipeMove}
-        onMouseUp={handleSwipeEnd}
+        {...(role !== 'seller' && {
+          onTouchStart: handleSwipeStart,
+          onTouchMove: handleSwipeMove,
+          onTouchEnd: handleSwipeEnd,
+          onMouseDown: handleSwipeStart,
+          onMouseMove: handleSwipeMove,
+          onMouseUp: handleSwipeEnd
+        })}
       >
         {/* Drag handle */}
         <div
-          className="absolute top-0 left-0 h-full w-2 sm:w-2 cursor-col-resize bg-gray-700 hover:bg-gray-600 flex items-center justify-center rounded-l"
-          onMouseDown={handleDragStart}
-          onTouchStart={handleDragStart}
+          className={`absolute top-0 left-0 h-full w-2 sm:w-2 cursor-col-resize bg-gray-700 hover:bg-gray-600 flex items-center justify-center rounded-l ${role === 'seller' ? 'pointer-events-none opacity-50' : ''}`}
+          {...(role !== 'seller' && {
+            onMouseDown: handleDragStart,
+            onTouchStart: handleDragStart
+          })}
         >
           <div className="w-1 h-12 bg-white rounded"></div>
         </div>
