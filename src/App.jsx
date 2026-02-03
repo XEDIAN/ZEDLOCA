@@ -406,7 +406,11 @@ const App = () => {
           </button>
 
         </div>
-        <DraggableSidebar role={role} />
+        <DraggableSidebar
+          role={role}
+          onNavigateToInbox={() => setShowInbox(true)}
+          onNavigateToMessages={() => setShowBuyerMessages(true)}
+        />
       </footer>
     );
   };
@@ -570,6 +574,9 @@ const App = () => {
       <MapView
         onViewStore={setShowSellerListings}
         onBack={() => setShowMap(false)}
+        role={role}
+        onNavigateToInbox={() => setShowInbox(true)}
+        onNavigateToMessages={() => setShowBuyerMessages(true)}
       />
     </>
   );

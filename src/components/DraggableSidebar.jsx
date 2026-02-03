@@ -17,7 +17,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function DraggableSidebar({ role }) {
+function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNavigateToListings }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isSwipeDragging, setIsSwipeDragging] = useState(false);
@@ -25,7 +25,7 @@ function DraggableSidebar({ role }) {
   const [userLocation, setUserLocation] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [listingCount, setListingCount] = useState(0);
-  const [analytics, setAnalytics] = useState({ views: 0, messages: 0 });
+  const [analytics, setAnalytics] = useState({ views: 0, messages: 0, viewEvents: [], messageEvents: [] });
   const [buyerUnreadReplies, setBuyerUnreadReplies] = useState(0);
   const [savedSellers, setSavedSellers] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
@@ -71,7 +71,9 @@ function DraggableSidebar({ role }) {
       const events = snapshot.docs.map(doc => doc.data());
       const views = events.filter(e => e.eventType === 'view').length;
       const messages = events.filter(e => e.eventType === 'message').length;
-      setAnalytics({ views, messages });
+      const viewEvents = events.filter(e => e.eventType === 'view');
+      const messageEvents = events.filter(e => e.eventType === 'message');
+      setAnalytics({ views, messages, viewEvents, messageEvents });
     });
 
     return () => {
@@ -203,10 +205,12 @@ function DraggableSidebar({ role }) {
       const events = snapshot.docs.map(d => d.data());
       const views = events.filter(e => e.eventType === 'view').length;
       const messages = events.filter(e => e.eventType === 'message').length;
-      setAnalytics({ views, messages });
+      const viewEvents = events.filter(e => e.eventType === 'view');
+      const messageEvents = events.filter(e => e.eventType === 'message');
+      setAnalytics({ views, messages, viewEvents, messageEvents });
     }, (err) => {
       console.error('Failed to load analytics:', err);
-      setAnalytics({ views: 0, messages: 0 });
+      setAnalytics({ views: 0, messages: 0, viewEvents: [], messageEvents: [] });
     });
 
     return () => {
@@ -322,8 +326,8 @@ function DraggableSidebar({ role }) {
       {/* Backdrop overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-30 transition-opacity duration-300"
-          onClick={toggleSidebar}
+          className={`fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-30 transition-opacity duration-300 ${role === 'seller' ? 'pointer-events-none' : ''}`}
+          {...(role !== 'seller' && { onClick: toggleSidebar })}
           aria-label="Close sidebar"
         />
       )}
@@ -364,7 +368,7 @@ function DraggableSidebar({ role }) {
         {/* Toggle button */}
         <button
           onClick={toggleSidebar}
-          className="absolute top-4 -left-3 sm:-left-4 w-5 h-6 sm:w-7 sm:h-10 bg-gray-700/80 text-white flex items-center justify-center shadow rounded-l-lg z-50 hover:bg-gray-800/90 transition"
+          className="absolute top-1/2 -translate-y-1/2 -left-3 sm:-left-4 w-5 h-6 sm:w-7 sm:h-10 bg-gray-700/80 text-white flex items-center justify-center shadow rounded-l-lg z-50 hover:bg-gray-800/90 transition"
           aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
           style={{
             opacity: isOpen ? 0.7 : 0.8,
@@ -391,12 +395,15 @@ function DraggableSidebar({ role }) {
                 {/* Seller-specific sections */}
                 <div className="mb-4">
                   <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Inbox Overview</h2>
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div
+                    className="p-3 bg-blue-50 rounded-lg border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
+                    onClick={() => onNavigateToInbox && onNavigateToInbox()}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">📬</span>
                         <div>
-                          <p className="font-semibold text-sm">Unread Messages</p>
+                          <p className="font-semibold text-sm text-black">Unread Messages</p>
                           <p className="text-xs text-gray-600">From buyers</p>
                         </div>
                       </div>
@@ -419,7 +426,7 @@ function DraggableSidebar({ role }) {
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">🏪</span>
                         <div>
-                          <p className="font-semibold text-sm">Active Listings</p>
+                          <p className="font-semibold text-sm text-black">Active Listings</p>
                           <p className="text-xs text-gray-600">Total products</p>
                         </div>
                       </div>
@@ -431,20 +438,31 @@ function DraggableSidebar({ role }) {
                 <div className="mb-4">
                   <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Analytics</h2>
                   <div className="space-y-2">
-                    <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div
+                      className="p-3 bg-purple-50 rounded-lg border border-purple-200 cursor-pointer hover:bg-purple-100 transition-colors"
+                      onClick={() => {
+                        const viewerIds = analytics.viewEvents.map(event => event.userId).filter(id => id);
+                        const uniqueViewers = [...new Set(viewerIds)];
+                        const message = `Promotion Views: ${analytics.views}\n\nViewers: ${uniqueViewers.length > 0 ? uniqueViewers.join(', ') : 'No viewers yet'}\n\nThis shows how many times buyers viewed your promotions.`;
+                        alert(message);
+                      }}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">👁️</span>
-                          <p className="font-semibold text-sm">Promotion Views</p>
+                          <p className="font-semibold text-sm text-black">Promotion Views</p>
                         </div>
                         <span className="text-lg font-bold text-purple-600">{analytics.views}</span>
                       </div>
                     </div>
-                    <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <div
+                      className="p-3 bg-orange-50 rounded-lg border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors"
+                      onClick={() => onNavigateToInbox && onNavigateToInbox()}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">💬</span>
-                          <p className="font-semibold text-sm">Messages Received</p>
+                          <p className="font-semibold text-sm text-black">Messages Received</p>
                         </div>
                         <span className="text-lg font-bold text-orange-600">{analytics.messages}</span>
                       </div>
@@ -457,12 +475,12 @@ function DraggableSidebar({ role }) {
                   <div className="space-y-2">
                     <button
                       onClick={() => setShowEditPromotionModal(true)}
-                      className="w-full p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition text-left"
+                      className="w-full p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition cursor-pointer text-left"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-xl">✏️</span>
                         <div>
-                          <p className="font-semibold text-sm">Edit Promotion</p>
+                          <p className="font-semibold text-sm text-black">Edit Promotion</p>
                           <p className="text-xs text-gray-600">Update your current offer</p>
                         </div>
                       </div>
@@ -516,7 +534,7 @@ function DraggableSidebar({ role }) {
                       <div className="flex items-center gap-2">
                         <span className="text-xl">📍</span>
                         <div>
-                          <p className="font-semibold text-sm">Update Store Location</p>
+                          <p className="font-semibold text-sm text-black">Update Store Location</p>
                           <p className="text-xs text-gray-600">Fetch real-time location</p>
                         </div>
                       </div>
@@ -572,7 +590,10 @@ function DraggableSidebar({ role }) {
                 {/* Buyer-specific sections */}
                 <div className="mb-4">
                   <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Messages</h2>
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div
+                    className="p-3 bg-blue-50 rounded-lg border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
+                    onClick={() => onNavigateToMessages && onNavigateToMessages()}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">💬</span>
@@ -732,6 +753,13 @@ function DraggableSidebar({ role }) {
           </div>
         </div>
       </div>
+
+      {/* Edit Promotion Modal */}
+      {showEditPromotionModal && (
+        <EditPromotionModal
+          onClose={() => setShowEditPromotionModal(false)}
+        />
+      )}
     </>
   );
 }

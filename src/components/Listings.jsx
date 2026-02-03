@@ -288,7 +288,7 @@ function Listings({ userId }) {
             <div className="flex gap-3">
               <button
                 onClick={handleEditPromo}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-lg transition-colors font-medium"
               >
                 Edit Promotion
               </button>

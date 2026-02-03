@@ -4,6 +4,7 @@ import { db, auth } from '../firebase';
 import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import MessageSellerModal from './MessageSellerModal';
 import MapControls from './MapControls';
+import DraggableSidebar from './DraggableSidebar';
 import L from 'leaflet';
 
 // Custom icons
@@ -117,7 +118,7 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
   );
 }
 
-function MapView({ onViewStore, onBack }) {
+function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMessages }) {
   const [sellers, setSellers] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [messageModal, setMessageModal] = useState({ open: false, seller: null });
@@ -420,6 +421,12 @@ function MapView({ onViewStore, onBack }) {
         sellerId={messageModal.seller?.id || ''}
         sellerName={messageModal.seller?.displayName || ''}
         buyerId={auth?.currentUser?.uid || ''}
+      />
+
+      <DraggableSidebar
+        role={role}
+        onNavigateToInbox={onNavigateToInbox}
+        onNavigateToMessages={onNavigateToMessages}
       />
     </div>
   );
