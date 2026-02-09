@@ -731,7 +731,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                               <span className="text-xs text-gray-600">(4.8)</span>
                             </div>
                             {(promoActiveForListing || promoActiveForSeller) && (
-                              <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">🔥 PROMOTION</span>
+                              <span className="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">PROMOTION</span>
                             )}
                           </div>
                           {seller.description && (
