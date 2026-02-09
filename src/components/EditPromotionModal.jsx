@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
-const EditPromotionModal = ({ open, onClose }) => {
-  const [promoText, setPromoText] = useState('');
-  const [promoRadius, setPromoRadius] = useState(1000);
-  const [promoActive, setPromoActive] = useState(false);
+const EditPromotionModal = ({ open, onClose, listingId, initialPromoText = '', initialPromoRadius = 1000, initialPromoActive = false }) => {
+  const [promoText, setPromoText] = useState(initialPromoText);
+  const [promoRadius, setPromoRadius] = useState(initialPromoRadius);
+  const [promoActive, setPromoActive] = useState(initialPromoActive);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -13,22 +13,29 @@ const EditPromotionModal = ({ open, onClose }) => {
 
   // Load current promotion data
   useEffect(() => {
-    if (open && auth?.currentUser?.uid) {
+    if (open && listingId) {
       loadPromotionData();
     }
-  }, [open]);
+  }, [open, listingId]);
+
+  // Update state when props change
+  useEffect(() => {
+    setPromoText(initialPromoText);
+    setPromoRadius(initialPromoRadius);
+    setPromoActive(initialPromoActive);
+  }, [initialPromoText, initialPromoRadius, initialPromoActive]);
 
   const loadPromotionData = async () => {
-    if (!auth?.currentUser?.uid) return;
+    if (!listingId) return;
 
     setLoading(true);
     setError('');
     try {
-      const sellerRef = doc(db, 'sellers', auth.currentUser.uid);
-      const sellerSnap = await getDoc(sellerRef);
+      const listingRef = doc(db, 'listings', listingId);
+      const listingSnap = await getDoc(listingRef);
 
-      if (sellerSnap.exists()) {
-        const data = sellerSnap.data();
+      if (listingSnap.exists()) {
+        const data = listingSnap.data();
         setPromoText(data.promo_text || '');
         setPromoRadius(data.promo_radius_meters || 1000);
         setPromoActive(data.promo_active || false);
@@ -63,8 +70,8 @@ const EditPromotionModal = ({ open, onClose }) => {
     setSuccess(false);
 
     try {
-      const sellerRef = doc(db, 'sellers', auth.currentUser.uid);
-      await updateDoc(sellerRef, {
+      const listingRef = doc(db, 'listings', listingId);
+      await updateDoc(listingRef, {
         promo_text: promoText.trim(),
         promo_radius_meters: promoRadius,
         promo_active: promoActive,

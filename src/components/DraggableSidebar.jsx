@@ -132,13 +132,15 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
     };
   }, [isDragging]);
 
-  // Subscribe to sellers with promotions
+  // Subscribe to listings with promotions
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'sellers'), (snapshot) => {
-      const promos = snapshot.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(s => !!s.promo_active && typeof s.promo_radius_meters === 'number');
-      setPromotions(promos);
+    const q = query(
+      collection(db, 'listings'),
+      where('promo_active', '==', true)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      const promoListings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setPromotions(promoListings);
     }, (err) => {
       console.error('Failed to load promotions:', err);
       setPromotions([]);

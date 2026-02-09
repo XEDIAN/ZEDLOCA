@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import ImageUpload from './ImageUpload';
 import { useCurrency } from './CurrencyContext';
+import EditPromotionModal from './EditPromotionModal';
 
 function Listings({ userId }) {
   const { formatPrice } = useCurrency();
@@ -16,6 +17,8 @@ function Listings({ userId }) {
 
   const [sellerPromo, setSellerPromo] = useState(null);
   const [loadingPromo, setLoadingPromo] = useState(false);
+  const [editPromoModalOpen, setEditPromoModalOpen] = useState(false);
+  const [selectedListingForPromo, setSelectedListingForPromo] = useState(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -125,61 +128,70 @@ function Listings({ userId }) {
       return;
     }
     try {
-      await addDoc(collection(db, 'listings'), {
+      // Get current location for the listing
+      let lat = null, lng = null, sellerDisplayName = auth.currentUser?.displayName || 'Seller';
+      if (navigator.geolocation) {
+        try {
+          const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 });
+          });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        } catch (geoErr) {
+          console.warn('Failed to get location for listing:', geoErr);
+          // Continue without location
+        }
+      }
+
+      const listingRef = await addDoc(collection(db, 'listings'), {
         userId,
         title: form.title,
         price: form.price,
         description: form.description,
         category: form.category,
         images: uploadedImages.map(img => img.url),
+        lat,
+        lng,
+        sellerDisplayName,
+        promo_active: false,
+        promo_text: '',
+        promo_radius_meters: 0,
         createdAt: serverTimestamp(),
       });
+
       setForm({ title: '', price: '', description: '', category: '' });
       setSuccessMessage('Listing created successfully!');
       setErrorMessage('');
-      // Prompt seller to register location via popup and optionally enable a promotion
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            try {
-              await updateDoc(doc(db, 'sellers', userId), {
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude,
-                updatedAt: new Date(),
-              });
-              // After registering location, ask seller if they want to enable a promotion for this listing
-              const enablePromo = window.confirm('Your location was registered. Would you like to enable a promotion for this listing?');
-              if (enablePromo) {
-                const pText = window.prompt('Enter promotion text (e.g., "10% off today"):', '10% off today') || '';
-                const pRadiusStr = window.prompt('Enter promotion radius in meters (e.g., 200):', '200') || '200';
-                const pRadius = Number(pRadiusStr) || 200;
-                try {
-                  await updateDoc(doc(db, 'sellers', userId), {
-                    promo_active: true,
-                    promo_text: pText,
-                    promo_radius_meters: pRadius,
-                    updatedAt: new Date(),
-                  });
-                  // refresh local promo state
-                  setSellerPromo(prev => ({ ...(prev || {}), promo_active: true, promo_text: pText, promo_radius_meters: pRadius }));
-                  alert('Your location and promotion have been saved!');
-                } catch (promoErr) {
-                  console.error('Failed to save promotion:', promoErr);
-                  alert('Location saved but failed to enable promotion: ' + (promoErr.message || promoErr));
-                }
-              } else {
-                alert('Your location has been registered!');
-              }
-            } catch (errUpdate) {
-              console.error('Failed to update seller location:', errUpdate);
-              alert('Failed to save location: ' + (errUpdate.message || errUpdate));
-            }
-          },
-          (err) => {
-            alert('Failed to get location: ' + err.message);
-          },
-          { enableHighAccuracy: true }
-        );
+
+      // Update seller location if obtained
+      if (lat !== null && lng !== null) {
+        try {
+          await updateDoc(doc(db, 'sellers', userId), {
+            lat,
+            lng,
+            updatedAt: new Date(),
+          });
+        } catch (errUpdate) {
+          console.error('Failed to update seller location:', errUpdate);
+        }
+      }
+
+      // Ask if they want to enable a promotion for this listing
+      if (window.confirm('Would you like to enable a promotion for this listing?')) {
+        const pText = window.prompt('Enter promotion text (e.g., "10% off today"):', '10% off today') || '';
+        const pRadiusStr = window.prompt('Enter promotion radius in meters (e.g., 200):', '200') || '200';
+        const pRadius = Number(pRadiusStr) || 200;
+        try {
+          await updateDoc(listingRef, {
+            promo_active: true,
+            promo_text: pText,
+            promo_radius_meters: pRadius,
+          });
+          alert('Promotion enabled for this listing!');
+        } catch (promoErr) {
+          console.error('Failed to save promotion:', promoErr);
+          alert('Failed to enable promotion: ' + (promoErr.message || promoErr));
+        }
       }
     } catch (err) {
       setErrorMessage('Failed to create listing: ' + err.message);
@@ -477,6 +489,15 @@ function Listings({ userId }) {
                   </div>
                 )}
 
+                {/* Promotion Status */}
+                {listing.promo_active && (
+                  <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-yellow-800 text-xs font-medium">
+                      🏷️ Promotion: {listing.promo_text} ({listing.promo_radius_meters}m radius)
+                    </p>
+                  </div>
+                )}
+
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-1">
                   <div className="flex flex-col sm:flex-row gap-1">
@@ -493,17 +514,43 @@ function Listings({ userId }) {
                       Delete
                     </button>
                   </div>
-                  <button
-                    onClick={() => alert(`Details for ${listing.title}:\nPrice: $${listing.price}\nDescription: ${listing.description}\nCategory: ${listing.category || 'Not specified'}`)}
-                    className="w-full bg-blue-100 text-blue-700 px-2 sm:px-3 py-1.5 rounded hover:bg-blue-200 transition-colors font-medium text-xs sm:text-sm min-h-[36px]"
-                  >
-                    View Details
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => {
+                        setSelectedListingForPromo(listing);
+                        setEditPromoModalOpen(true);
+                      }}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 sm:px-3 py-1.5 rounded transition-colors font-medium text-xs sm:text-sm min-h-[36px]"
+                    >
+                      {listing.promo_active ? 'Edit Promo' : 'Add Promo'}
+                    </button>
+                    <button
+                      onClick={() => alert(`Details for ${listing.title}:\nPrice: $${listing.price}\nDescription: ${listing.description}\nCategory: ${listing.category || 'Not specified'}`)}
+                      className="flex-1 bg-blue-100 text-blue-700 px-2 sm:px-3 py-1.5 rounded hover:bg-blue-200 transition-colors font-medium text-xs sm:text-sm min-h-[36px]"
+                    >
+                      View Details
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Edit Promotion Modal */}
+      {editPromoModalOpen && selectedListingForPromo && (
+        <EditPromotionModal
+          open={editPromoModalOpen}
+          onClose={() => {
+            setEditPromoModalOpen(false);
+            setSelectedListingForPromo(null);
+          }}
+          listingId={selectedListingForPromo.id}
+          initialPromoText={selectedListingForPromo.promo_text || ''}
+          initialPromoRadius={selectedListingForPromo.promo_radius_meters || 1000}
+          initialPromoActive={selectedListingForPromo.promo_active || false}
+        />
       )}
     </div>
   );

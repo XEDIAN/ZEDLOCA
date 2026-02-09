@@ -1,8 +1,7 @@
-# Heatmap Implementation Tasks
+# Ensure Promotions Are Per Listing
 
-- [ ] Add heatmap toggle button to MapControls.jsx
-- [ ] Modify MapView.jsx to add heatmap state management (add useState for heatmapEnabled)
-- [ ] Modify MapView.jsx to pass heatmap props to MapControls component
-- [ ] Modify MapView.jsx to conditionally render heatmap layer using leaflet.heat when enabled
-- [ ] Import leaflet.heat library in MapView.jsx
-- [ ] Test heatmap functionality
+- [ ] Update Listings.jsx: Change promotion management to per listing instead of global seller promo. Load promo for each listing, update UI to edit promo per listing.
+- [ ] Update EditPromotionModal.jsx: Modify to edit promotion for a specific listing (pass listingId prop).
+- [ ] Update DraggableSidebar.jsx: Change to fetch active promotions from 'listings' collection instead of 'sellers'.
+- [ ] Modify listing creation in Listings.jsx: When creating a listing, store lat, lng, and sellerDisplayName in the listing document.
+- [ ] Test the changes: Verify promotions are per listing, location-based display works.
