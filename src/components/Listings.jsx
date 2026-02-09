@@ -15,8 +15,6 @@ function Listings({ userId }) {
   const [editingId, setEditingId] = useState(null);
   const [uploadedImages, setUploadedImages] = useState([]);
 
-  const [sellerPromo, setSellerPromo] = useState(null);
-  const [loadingPromo, setLoadingPromo] = useState(false);
   const [editPromoModalOpen, setEditPromoModalOpen] = useState(false);
   const [selectedListingForPromo, setSelectedListingForPromo] = useState(null);
 
@@ -61,34 +59,7 @@ function Listings({ userId }) {
     return () => unsub();
   }, [userId]);
 
-  // Load seller promo info for the current user
-  useEffect(() => {
-    if (!userId) {
-      setSellerPromo(null);
-      return;
-    }
-    let cancelled = false;
-    const loadPromo = async () => {
-      setLoadingPromo(true);
-      try {
-        const d = doc(db, 'sellers', userId);
-        const snap = await getDoc(d);
-        if (cancelled) return;
-        if (snap.exists()) {
-          setSellerPromo({ id: snap.id, ...snap.data() });
-        } else {
-          setSellerPromo(null);
-        }
-      } catch (err) {
-        console.error('Failed to load seller promo:', err);
-        setSellerPromo(null);
-      } finally {
-        if (!cancelled) setLoadingPromo(false);
-      }
-    };
-    loadPromo();
-    return () => { cancelled = true; };
-  }, [userId]);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -178,8 +149,10 @@ function Listings({ userId }) {
 
       // Ask if they want to enable a promotion for this listing
       if (window.confirm('Would you like to enable a promotion for this listing?')) {
-        const pText = window.prompt('Enter promotion text (e.g., "10% off today"):', '10% off today') || '';
-        const pRadiusStr = window.prompt('Enter promotion radius in meters (e.g., 200):', '200') || '200';
+        const pText = window.prompt('Enter promotion text (e.g., "10% off today"):', '10% off today');
+        if (pText === null) return; // cancelled
+        const pRadiusStr = window.prompt('Enter promotion radius in meters (e.g., 200):', '200');
+        if (pRadiusStr === null) return; // cancelled
         const pRadius = Number(pRadiusStr) || 200;
         try {
           await updateDoc(listingRef, {
@@ -279,41 +252,7 @@ function Listings({ userId }) {
         <p className="text-gray-600">Manage your product listings and promotions</p>
       </div>
 
-      {/* Promotion management UI for sellers */}
-      {userId && (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Promotion Management</h3>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <p className="text-gray-700">
-                {loadingPromo ? (
-                  <span className="text-blue-600">Loading promotion...</span>
-                ) : sellerPromo?.promo_active ? (
-                  <span className="text-green-600 font-medium">
-                    Active: "{sellerPromo.promo_text}" — {sellerPromo.promo_radius_meters}m radius
-                  </span>
-                ) : (
-                  <span className="text-gray-500">No active promotion</span>
-                )}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleEditPromo}
-                className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-lg transition-colors font-medium"
-              >
-                Edit Promotion
-              </button>
-              <button
-                onClick={handleClearPromo}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-              >
-                Clear Promotion
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Status Messages */}
       {loading && (

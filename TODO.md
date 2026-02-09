@@ -1,7 +1,13 @@
-# Ensure Promotions Are Per Listing
+# TODO: Implement Per-Listing Promotions Only
 
-- [ ] Update Listings.jsx: Change promotion management to per listing instead of global seller promo. Load promo for each listing, update UI to edit promo per listing.
-- [ ] Update EditPromotionModal.jsx: Modify to edit promotion for a specific listing (pass listingId prop).
-- [ ] Update DraggableSidebar.jsx: Change to fetch active promotions from 'listings' collection instead of 'sellers'.
-- [ ] Modify listing creation in Listings.jsx: When creating a listing, store lat, lng, and sellerDisplayName in the listing document.
-- [ ] Test the changes: Verify promotions are per listing, location-based display works.
+## Tasks
+- [x] Remove store-wide promotion display from seller header in SellerListings.jsx
+- [x] Update listing cards to show promotions only for listings with promo_active set
+- [x] Use listing.promo_text and listing.promo_radius_meters for promotion display
+- [x] Compute promotion visibility based on distance to seller location
+- [x] Remove seller-wide promotion display from listings in SellerListings.jsx
+- [x] Remove Promotion Management UI from Listings.jsx for seller-wide promotions
+
+## Files to Edit
+- src/components/SellerListings.jsx
+- src/components/Listings.jsx

@@ -107,20 +107,16 @@ function SellerListings({ sellerId, onBack, user }) {
     );
   }
 
-  // Compute distance to seller and whether promo is active for the current user
+  // Compute distance to seller for promotion checks
   const distanceToSeller = (seller && userLocation && typeof seller.lat === 'number' && typeof seller.lng === 'number')
     ? haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng)
     : Infinity;
-
-  const promoActiveForUser = !!seller && !!seller.promo_active && typeof seller.promo_radius_meters === 'number'
-    ? distanceToSeller <= seller.promo_radius_meters
-    : false;
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
       <div className="flex-1 flex flex-col items-center justify-center pb-24">
         {seller ? (
-          <div className="w-full max-w-sm sm:max-w-md px-4 mt-4">
+          <div className="w-full max-w-lg px-4 mt-4">
             <div className="mb-4 p-4 bg-white rounded-lg shadow-lg">
               <div className="flex items-start gap-3">
                 {seller.photoURL && (
@@ -128,39 +124,9 @@ function SellerListings({ sellerId, onBack, user }) {
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col gap-2 mb-2">
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800 leading-tight">{seller.storeName || seller.displayName}</h2>
-                    {/* Show store-wide promo status */}
-                    {seller.promo_active && promoActiveForUser && (
-                      <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full self-start">Promotion active</span>
-                    )}
-                    {seller.promo_active && !promoActiveForUser && (
-                      <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full self-start">Promotion (out of range)</span>
-                    )}
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-800 leading-tight break-words">{seller.storeName || seller.displayName}</h2>
                   </div>
-                  <p className="text-gray-600 text-sm mb-2 break-words">{seller.email}</p>
-                  {seller.description && (
-                    <p className="text-gray-700 text-sm mb-3 leading-relaxed">{seller.description}</p>
-                  )}
-                  {seller.phone && (
-                    <a
-                      href={`https://wa.me/${seller.phone.replace(/\D/g, '')}?text=Hi, I'm interested in your products`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-green-600 hover:text-green-700 font-medium text-sm mb-3 inline-flex items-center gap-1"
-                    >
-                      <span className="text-base">💬</span>
-                      WhatsApp: {seller.phone}
-                    </a>
-                  )}
-                  {/* If promo is active and user is within radius, show promo text */}
-                  {seller.promo_active && seller.promo_text && promoActiveForUser && (
-                    <div className="bg-green-50 border border-green-200 rounded p-2 mb-3">
-                      <p className="text-green-800 font-semibold text-sm">Special Offer:</p>
-                      <p className="text-green-700 text-sm">{seller.promo_text}</p>
-                      <p className="text-xs text-green-600 mt-1">Available within {seller.promo_radius_meters} meters</p>
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 items-center mb-2">
                     <button
                       onClick={() => handleNavigateToSeller(seller)}
                       className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm"
@@ -179,6 +145,21 @@ function SellerListings({ sellerId, onBack, user }) {
                       </a>
                     )}
                   </div>
+                  <p className="text-gray-600 text-sm mb-2 break-words">{seller.email}</p>
+                  {seller.description && (
+                    <p className="text-gray-700 text-sm mb-3 leading-relaxed">{seller.description}</p>
+                  )}
+                  {seller.phone && (
+                    <a
+                      href={`https://wa.me/${seller.phone.replace(/\D/g, '')}?text=Hi, I'm interested in your products`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-green-600 hover:text-green-700 font-medium text-sm mb-3 inline-flex items-center gap-1"
+                    >
+                      <span className="text-base">💬</span>
+                      WhatsApp: {seller.phone}
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -197,7 +178,7 @@ function SellerListings({ sellerId, onBack, user }) {
                             {listing.category.charAt(0).toUpperCase() + listing.category.slice(1)}
                           </span>
                         )}
-                        {seller.promo_active && promoActiveForUser && (
+                        {listing.promo_active && distanceToSeller <= (listing.promo_radius_meters || 0) && (
                           <span className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
                             Promo
                           </span>
@@ -208,12 +189,6 @@ function SellerListings({ sellerId, onBack, user }) {
                       <h4 className="font-bold text-base mb-2 leading-tight">{listing.title}</h4>
                       <p className="text-gray-700 font-semibold text-lg mb-2">{listing.price}</p>
                       <p className="text-gray-600 text-sm mb-3 line-clamp-2 leading-relaxed">{listing.description}</p>
-                      {seller.promo_active && promoActiveForUser && seller.promo_text && (
-                        <div className="bg-green-50 border border-green-200 rounded p-2 mb-3">
-                          <p className="text-green-800 text-sm font-semibold">Special Offer:</p>
-                          <p className="text-green-700 text-sm">"{seller.promo_text}"</p>
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
