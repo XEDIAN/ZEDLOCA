@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { db, auth } from '../firebase';
-import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import MessageSellerModal from './MessageSellerModal';
 import MapControls from './MapControls';
 import DraggableSidebar from './DraggableSidebar';
 import L from 'leaflet';
+import 'leaflet.heat';
 
 // Custom icons
 const isMobile = typeof window !== "undefined" && window.innerWidth <= 600;
@@ -118,6 +119,41 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
   );
 }
 
+function HeatmapLayer({ sellers, enabled }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!enabled || !sellers.length) return;
+
+    const heatData = sellers
+      .filter(seller => typeof seller.lat === 'number' && typeof seller.lng === 'number')
+      .map(seller => [seller.lat, seller.lng, 0.5]); // [lat, lng, intensity]
+
+    const heatLayer = L.heatLayer(heatData, {
+      radius: 25,
+      blur: 15,
+      maxZoom: 18,
+      max: 1.0,
+      minOpacity: 0.3,
+      gradient: {
+        0.2: 'blue',
+        0.4: 'lime',
+        0.6: 'yellow',
+        0.8: 'orange',
+        1.0: 'red'
+      }
+    });
+
+    heatLayer.addTo(map);
+
+    return () => {
+      map.removeLayer(heatLayer);
+    };
+  }, [sellers, enabled, map]);
+
+  return null;
+}
+
 function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMessages }) {
   const [sellers, setSellers] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
@@ -127,6 +163,7 @@ function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMes
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('distance'); // 'distance', 'name', 'rating'
   const [loading, setLoading] = useState(true);
+  const [heatmapEnabled, setHeatmapEnabled] = useState(false);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'sellers'), (snapshot) => {
@@ -325,7 +362,8 @@ function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMes
               setMessageModal={setMessageModal}
               onNavigate={handleNavigateToSeller}
             />
-            <MapControls />
+            <HeatmapLayer sellers={filteredAndSortedSellers} enabled={heatmapEnabled} />
+            <MapControls heatmapEnabled={heatmapEnabled} onToggleHeatmap={() => setHeatmapEnabled(!heatmapEnabled)} />
           </MapContainer>
         </div>
       )}

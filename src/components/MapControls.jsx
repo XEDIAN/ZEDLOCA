@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { useMap } from 'react-leaflet';
 
-function MapControls() {
+function MapControls({ heatmapEnabled, onToggleHeatmap }) {
   const map = useMap();
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState(null);
+
+  const handleToggleHeatmap = () => {
+    if (onToggleHeatmap) {
+      onToggleHeatmap();
+    }
+    // Add haptic feedback for mobile devices
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+  };
 
   const handleZoomIn = () => {
     map.zoomIn();
@@ -113,7 +123,7 @@ function MapControls() {
         <button
           onClick={handleLocateMe}
           disabled={isLocating}
-          className={`w-12 h-12 md:w-10 md:h-10 bg-white hover:bg-gray-100 active:bg-gray-200 
+          className={`w-12 h-12 md:w-10 md:h-10 bg-white hover:bg-gray-100 active:bg-gray-200
                      rounded-lg shadow-lg flex items-center justify-center text-gray-700
                      transition-colors duration-150 touch-manipulation select-none
                      ${isLocating ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'}
@@ -123,36 +133,64 @@ function MapControls() {
         >
           {isLocating ? (
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle 
-                className="opacity-25" 
-                cx="12" 
-                cy="12" 
-                r="10" 
-                stroke="currentColor" 
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
                 strokeWidth="4"
               />
-              <path 
-                className="opacity-75" 
-                fill="currentColor" 
+              <path
+                className="opacity-75"
+                fill="currentColor"
                 d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
           ) : (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
               />
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
           )}
+        </button>
+
+        {/* Heatmap Toggle Control */}
+        <button
+          onClick={handleToggleHeatmap}
+          className={`w-12 h-12 md:w-10 md:h-10 rounded-lg shadow-lg flex items-center justify-center
+                     transition-colors duration-150 touch-manipulation select-none
+                     ${heatmapEnabled
+                       ? 'bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-700'
+                       : 'bg-white text-gray-700 hover:bg-gray-100 active:bg-gray-200'
+                     }`}
+          aria-label={heatmapEnabled ? 'Disable heatmap' : 'Enable heatmap'}
+          type="button"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
         </button>
       </div>
 
