@@ -317,6 +317,12 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
   // Render seller store view if viewing a specific seller
   if (viewingSellerId) {
     const seller = sellers[viewingSellerId];
+    const distanceToSeller = seller && userLocation && typeof seller.lat === 'number' && typeof seller.lng === 'number'
+      ? haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng)
+      : Infinity;
+    const promoActiveForUser = seller && seller.promo_active && typeof seller.promo_radius_meters === 'number'
+      ? distanceToSeller <= seller.promo_radius_meters
+      : false;
     return (
       <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-400 via-gray-300 to-gray-500">
         <div className="flex-1 flex flex-col items-center justify-center pb-32">
@@ -380,6 +386,14 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                     )}
                     {seller.phone && (
                       <p className="text-gray-600 mt-1">📞 {seller.phone}</p>
+                    )}
+                    {/* If promo is active and user is within radius, show promo text */}
+                    {seller.promo_active && seller.promo_text && promoActiveForUser && (
+                      <div className="bg-green-50 border border-green-200 rounded p-2 mt-3">
+                        <p className="text-green-800 font-semibold text-sm">Special Offer:</p>
+                        <p className="text-green-700 text-sm">{seller.promo_text}</p>
+                        <p className="text-xs text-green-600 mt-1">Available within {seller.promo_radius_meters} meters</p>
+                      </div>
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
@@ -452,6 +466,14 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                         <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mb-3">
                           {listing.category.charAt(0).toUpperCase() + listing.category.slice(1)}
                         </span>
+                      )}
+
+                      {/* Promotion Badge and Text */}
+                      {promoActiveForUser && seller.promo_text && (
+                        <div className="bg-green-50 border border-green-200 rounded p-2 mb-3">
+                          <p className="text-green-800 text-sm font-semibold">Special Offer:</p>
+                          <p className="text-green-700 text-sm">{seller.promo_text}</p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -649,6 +671,12 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                 const distance = userLocation && seller && seller.lat && seller.lng
                   ? (haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng) / 1000).toFixed(1)
                   : null;
+                const distanceToSeller = seller && userLocation && typeof seller.lat === 'number' && typeof seller.lng === 'number'
+                  ? haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng)
+                  : Infinity;
+                const promoActiveForUser = seller && seller.promo_active && typeof seller.promo_radius_meters === 'number'
+                  ? distanceToSeller <= seller.promo_radius_meters
+                  : false;
 
                 return (
                   <div key={listing.id} className="relative bg-white rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
