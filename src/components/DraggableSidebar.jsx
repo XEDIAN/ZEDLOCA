@@ -358,7 +358,7 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
       {/* Backdrop overlay */}
       {isOpen && (
         <div
-          className={`fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm z-30 transition-opacity duration-300 ${role === 'seller' ? 'pointer-events-none' : ''}`}
+          className={`fixed inset-0 backdrop-blur-md z-30 transition-opacity duration-300 ${role === 'seller' ? 'pointer-events-none' : ''}`}
           {...(role !== 'seller' && { onClick: toggleSidebar })}
           aria-label="Close sidebar"
         />
