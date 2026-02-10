@@ -6,6 +6,8 @@ import LocationSettingsModal from './LocationSettingsModal';
 import { db, auth } from '../firebase';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, where, orderBy, limit, doc, updateDoc } from 'firebase/firestore';
 
+const DARK_MODE_KEY = 'darkMode';
+
 function haversine(lat1, lon1, lat2, lon2) {
   if ([lat1, lon1, lat2, lon2].some(v => typeof v !== 'number')) return Infinity;
   const toRad = (v) => (v * Math.PI) / 180;
@@ -36,11 +38,23 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
   const [showEditPromotionModal, setShowEditPromotionModal] = useState(false);
   const [showCurrencySettingsModal, setShowCurrencySettingsModal] = useState(false);
   const [showLocationSettingsModal, setShowLocationSettingsModal] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const sidebarRef = useRef(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
   const swipeStartXRef = useRef(0);
   const swipeStartYRef = useRef(0);
+
+  // Load dark mode preference from localStorage
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem(DARK_MODE_KEY) === 'true';
+    setIsDarkMode(savedDarkMode);
+    if (savedDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
 
   // Fetch seller data if role is seller
   useEffect(() => {
@@ -289,6 +303,17 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
     setIsOpen(!isOpen);
   };
 
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    localStorage.setItem(DARK_MODE_KEY, newDarkMode.toString());
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
   // Swipe gesture handlers
   const handleSwipeStart = (e) => {
     const clientX = e.touches?.[0].clientX || e.clientX;
@@ -343,7 +368,7 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
         className={`fixed top-0 right-0 h-full z-40 transition-all duration-300 ease-in-out
           ${isOpen
             ? 'bg-white shadow-2xl w-64 sm:w-80 opacity-100'
-            : 'bg-white/40 backdrop-blur-md shadow-md w-4 sm:w-8 md:w-12 opacity-70'
+            : 'bg-white/40 backdrop-blur-md shadow-md w-0 sm:w-8 md:w-12 opacity-70'
           }
         `}
         style={{
@@ -552,6 +577,18 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
                         </div>
                       </div>
                     </button>
+                    <button
+                      onClick={toggleDarkMode}
+                      className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{isDarkMode ? '☀️' : '🌙'}</span>
+                        <div>
+                          <p className="font-semibold text-sm text-black">Dark Mode</p>
+                          <p className="text-xs text-gray-600">{isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}</p>
+                        </div>
+                      </div>
+                    </button>
                   </div>
                 </div>
 
@@ -701,6 +738,18 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
                         <div>
                           <p className="font-semibold text-sm">Location Settings</p>
                           <p className="text-xs text-gray-600">Update search preferences</p>
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={toggleDarkMode}
+                      className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{isDarkMode ? '☀️' : '🌙'}</span>
+                        <div>
+                          <p className="font-semibold text-sm text-black">Dark Mode</p>
+                          <p className="text-xs text-gray-600">{isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}</p>
                         </div>
                       </div>
                     </button>
