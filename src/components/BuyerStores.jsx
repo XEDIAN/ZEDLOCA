@@ -358,7 +358,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
             {/* Seller Info */}
             {seller && (
               <div className="bg-white rounded-xl p-6 shadow-xl mb-6 border border-gray-100">
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                   <div className="relative">
                     {seller.photoURL ? (
                       <img
@@ -376,7 +376,26 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                   </div>
                   <div className="flex-1">
                     <h2 className="text-2xl font-bold text-gray-800">{seller.storeName || seller.displayName}</h2>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex flex-col gap-2 mt-2">
+                      {user && role === 'buyer' && (
+                        <button
+                          onClick={() => handleMessageSeller({ id: seller.id, displayName: seller.displayName, seller, listing: null })}
+                          className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 w-fit"
+                        >
+                          <span className="text-lg">💬</span>
+                          Contact Seller
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleNavigateToSeller(seller)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 w-fit"
+                        title="Get directions to this seller"
+                      >
+                        <span className="text-lg">🗺️</span>
+                        Navigate
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
                       {[...Array(5)].map((_, i) => (
                         <span key={i} className="text-yellow-400 text-lg">⭐</span>
                       ))}
@@ -396,25 +415,6 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                         <p className="text-xs text-green-600 mt-1">Available within {seller.promo_radius_meters} meters</p>
                       </div>
                     )}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {user && role === 'buyer' && (
-                      <button
-                        onClick={() => handleMessageSeller({ id: seller.id, displayName: seller.displayName, seller, listing: null })}
-                        className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
-                      >
-                        <span className="text-lg">💬</span>
-                        Contact Seller
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleNavigateToSeller(seller)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
-                      title="Get directions to this seller"
-                    >
-                      <span className="text-lg">🗺️</span>
-                      Navigate
-                    </button>
                   </div>
                 </div>
               </div>
@@ -448,18 +448,18 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                     {listing.images && listing.images.length > 0 && (
                       <div className="mb-4 flex gap-2 overflow-x-auto rounded-lg p-2 bg-gray-50">
                         {listing.images.slice(0, 4).map((img, idx) => (
-                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-16 h-16 object-cover rounded-lg shadow-sm" />
+                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg shadow-sm" />
                         ))}
                       </div>
                     )}
 
                     {/* Listing Details */}
                     <div className="flex-1">
-                      <h4 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                        <span className="text-xl">🏷️</span>
+                      <h4 className="text-base sm:text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <span className="text-lg sm:text-xl">🏷️</span>
                         {listing.title}
                       </h4>
-                      <p className="text-green-600 font-bold text-xl mb-2">{formatPrice(listing.price)}</p>
+                      <p className="text-green-600 font-bold text-lg sm:text-xl mb-2">{formatPrice(listing.price)}</p>
                       <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-3">{listing.description}</p>
 
                       {/* Category Badge */}
@@ -511,8 +511,8 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
         {/* Header with Stats */}
         <div className="w-full max-w-6xl mt-8 px-4 mb-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-2">
-              <span className="text-4xl">🛍️</span>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white flex items-center gap-2">
+              <span className="text-3xl sm:text-4xl">🛍️</span>
               All Stores
             </h1>
             <div className="flex gap-4 text-white">
@@ -666,7 +666,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
 
         {sortedListings.length > 0 ? (
           <div className="w-full max-w-6xl px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {paginatedListings.map(listing => {
                 const seller = sellers[listing.userId];
                 const distance = userLocation && seller && seller.lat && seller.lng

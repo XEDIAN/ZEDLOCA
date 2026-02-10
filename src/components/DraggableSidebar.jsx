@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import UserProfile from './UserProfile';
 import EditPromotionModal from './EditPromotionModal';
 import CurrencySettingsModal from './CurrencySettingsModal';
+import LocationSettingsModal from './LocationSettingsModal';
 import { db, auth } from '../firebase';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, where, orderBy, limit, doc, updateDoc } from 'firebase/firestore';
 
@@ -34,6 +35,7 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
   const [buyerError, setBuyerError] = useState(null);
   const [showEditPromotionModal, setShowEditPromotionModal] = useState(false);
   const [showCurrencySettingsModal, setShowCurrencySettingsModal] = useState(false);
+  const [showLocationSettingsModal, setShowLocationSettingsModal] = useState(false);
   const sidebarRef = useRef(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
@@ -691,7 +693,7 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
                       </div>
                     </button>
                     <button
-                      onClick={() => alert('Location preferences coming soon!')}
+                      onClick={() => setShowLocationSettingsModal(true)}
                       className="w-full p-3 bg-indigo-50 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition text-left"
                     >
                       <div className="flex items-center gap-2">
@@ -786,6 +788,13 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
       {showCurrencySettingsModal && (
         <CurrencySettingsModal
           onClose={() => setShowCurrencySettingsModal(false)}
+        />
+      )}
+
+      {/* Location Settings Modal */}
+      {showLocationSettingsModal && (
+        <LocationSettingsModal
+          onClose={() => setShowLocationSettingsModal(false)}
         />
       )}
     </>
