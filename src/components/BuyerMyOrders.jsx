@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
+import MessageSellerModal from './MessageSellerModal';
 
 const BuyerMyOrders = ({ buyerId, onBack }) => {
   const [orders, setOrders] = useState([]);
@@ -12,6 +13,8 @@ const BuyerMyOrders = ({ buyerId, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [sellers, setSellers] = useState({});
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const { formatPrice } = useCurrency();
 
@@ -351,8 +354,8 @@ const BuyerMyOrders = ({ buyerId, onBack }) => {
                       <button
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
                         onClick={() => {
-                          // Implement contact seller functionality
-                          alert('Contact seller functionality coming soon!');
+                          setSelectedOrder(order);
+                          setMessageModalOpen(true);
                         }}
                       >
                         💬 Contact Seller
@@ -374,6 +377,18 @@ const BuyerMyOrders = ({ buyerId, onBack }) => {
           </div>
         )}
       </div>
+
+      {/* Message Seller Modal */}
+      {selectedOrder && (
+        <MessageSellerModal
+          open={messageModalOpen}
+          onClose={() => setMessageModalOpen(false)}
+          sellerId={selectedOrder.sellerId}
+          sellerName={sellers[selectedOrder.sellerId]?.displayName}
+          buyerId={buyerId}
+          listing={{ id: selectedOrder.id, title: selectedOrder.title, description: selectedOrder.description || '' }}
+        />
+      )}
     </div>
   );
 };
