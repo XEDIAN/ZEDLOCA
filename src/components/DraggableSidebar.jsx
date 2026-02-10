@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import UserProfile from './UserProfile';
 import EditPromotionModal from './EditPromotionModal';
+import CurrencySettingsModal from './CurrencySettingsModal';
 import { db, auth } from '../firebase';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, where, orderBy, limit, doc, updateDoc } from 'firebase/firestore';
 
@@ -32,6 +33,7 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
   const [buyerLoading, setBuyerLoading] = useState(false);
   const [buyerError, setBuyerError] = useState(null);
   const [showEditPromotionModal, setShowEditPromotionModal] = useState(false);
+  const [showCurrencySettingsModal, setShowCurrencySettingsModal] = useState(false);
   const sidebarRef = useRef(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
@@ -242,6 +244,7 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
     const repliesQuery = query(
       collection(db, 'messages'),
       where('buyerId', '==', userId),
+      where('fromSeller', '==', true),
       where('read', '==', false)
     );
     const unsubReplies = onSnapshot(repliesQuery, (snapshot) => {
@@ -386,6 +389,12 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
+          )}
+          {role === 'buyer' && buyerUnreadReplies > 0 && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white"></div>
+          )}
+          {role === 'buyer' && savedSellers.length > 0 && (
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border border-white"></div>
           )}
         </button>
 
@@ -619,11 +628,21 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
                 <div className="mb-4">
                   <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Saved Sellers</h2>
                   <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">⭐</span>
-                      <div>
-                        <p className="font-semibold text-sm">Favorite Stores</p>
-                        <p className="text-xs text-gray-600">Quick access to preferred sellers</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">⭐</span>
+                        <div>
+                          <p className="font-semibold text-sm">Favorite Stores</p>
+                          <p className="text-xs text-gray-600">Quick access to preferred sellers</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-lg font-bold ${savedSellers.length > 0 ? 'text-yellow-600' : 'text-green-600'}`}>
+                          {savedSellers.length}
+                        </span>
+                        {savedSellers.length > 0 && (
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full mx-auto mt-1"></div>
+                        )}
                       </div>
                     </div>
                     {savedSellers.length === 0 ? (
@@ -660,7 +679,7 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
                   <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">Buyer Tools</h2>
                   <div className="space-y-2">
                     <button
-                      onClick={() => alert('Currency settings coming soon!')}
+                      onClick={() => setShowCurrencySettingsModal(true)}
                       className="w-full p-3 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 transition text-left"
                     >
                       <div className="flex items-center gap-2">
@@ -760,6 +779,13 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
       {showEditPromotionModal && (
         <EditPromotionModal
           onClose={() => setShowEditPromotionModal(false)}
+        />
+      )}
+
+      {/* Currency Settings Modal */}
+      {showCurrencySettingsModal && (
+        <CurrencySettingsModal
+          onClose={() => setShowCurrencySettingsModal(false)}
         />
       )}
     </>
