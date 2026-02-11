@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import MapView from './components/MapView';
 import BuyersPage from './components/BuyersPage';
@@ -13,6 +14,8 @@ import DraggableSidebar from './components/DraggableSidebar';
 import Listings from './components/Listings';
 import RequireRole from './components/RequireRole';
 import SplashScreen from './components/SplashScreen';
+import StaffLogin from './components/StaffLogin';
+import StaffDashboard from './components/StaffDashboard';
 
 import SellerInbox from './components/SellerInbox';
 import BuyerMessages from './components/BuyerMessages';
@@ -24,9 +27,22 @@ import SellerOrders from './components/SellerOrders';
 import SellerProfile from './components/SellerProfile';
 import SellerListings from './components/SellerListings';
 import { setNgrokUrl } from './utils/linkUtils';
+import { FaMapMarkerAlt, FaComments, FaDollarSign, FaUserCheck, FaShoppingCart, FaStore, FaArrowRight, FaUserShield } from 'react-icons/fa';
 
 
 const App = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/staff-login" element={<StaffLogin />} />
+        <Route path="/staff-dashboard" element={<StaffDashboard />} />
+        <Route path="/*" element={<MainApp />} />
+      </Routes>
+    </Router>
+  );
+};
+
+const MainApp = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [showMap, setShowMap] = useState(false);
   const [showListings, setShowListings] = useState(false);
@@ -445,6 +461,18 @@ const App = () => {
                   </div>
                 )}
               </div>
+
+              {/* Staff Login Link */}
+              <div className="mt-6 text-center">
+                <Link
+                  to="/staff-login"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                >
+                  <FaUserShield className="mr-2" />
+                  Staff Portal
+                  <FaArrowRight className="ml-2" />
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -501,19 +529,25 @@ const App = () => {
 
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">1</div>
+                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FaUserCheck className="text-xl" />
+                </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Sign Up</h3>
                 <p className="text-gray-600">Create your account and choose whether you're buying or selling</p>
               </div>
 
               <div className="text-center">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">2</div>
+                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FaStore className="text-xl" />
+                </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Connect</h3>
                 <p className="text-gray-600">Browse listings or create your own products for sale</p>
               </div>
 
               <div className="text-center">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">3</div>
+                <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FaShoppingCart className="text-xl" />
+                </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Transact</h3>
                 <p className="text-gray-600">Communicate directly and complete your local transactions</p>
               </div>
