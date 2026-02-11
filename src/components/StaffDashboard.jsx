@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaUserShield, FaUsers, FaStore, FaShoppingCart, FaChartLine, FaCog, FaSignOutAlt, FaEye, FaTrash, FaBan, FaTimes, FaSearch, FaFilter, FaDownload, FaCalendar, FaSync, FaCheckSquare, FaSquare, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { auth, db } from '../firebase';
-import { collection, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, limit, startAfter, getCountFromServer } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, limit, startAfter, getCountFromServer, onSnapshot } from 'firebase/firestore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 
@@ -86,18 +86,43 @@ const StaffDashboard = () => {
       return;
     }
 
-    loadData();
+    // Set up real-time listeners
+    const usersUnsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsers(usersData);
+      generateAnalyticsData(usersData, sellers, listings);
+      generateActivityLogs(usersData, sellers, listings);
+      setLastRefresh(new Date());
+    });
 
-    // Set up auto-refresh if enabled
+    const sellersUnsubscribe = onSnapshot(collection(db, 'sellers'), (snapshot) => {
+      const sellersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setSellers(sellersData);
+      generateAnalyticsData(users, sellersData, listings);
+      generateActivityLogs(users, sellersData, listings);
+    });
+
+    const listingsUnsubscribe = onSnapshot(collection(db, 'listings'), (snapshot) => {
+      const listingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setListings(listingsData);
+      generateAnalyticsData(users, sellers, listingsData);
+      generateActivityLogs(users, sellers, listingsData);
+    });
+
+    setLoading(false);
+
+    // Set up auto-refresh if enabled (for analytics updates)
     let interval;
     if (autoRefresh) {
       interval = setInterval(() => {
-        loadData();
         setLastRefresh(new Date());
       }, 30000); // Refresh every 30 seconds
     }
 
     return () => {
+      usersUnsubscribe();
+      sellersUnsubscribe();
+      listingsUnsubscribe();
       if (interval) clearInterval(interval);
     };
   }, [autoRefresh]);
@@ -587,6 +612,8 @@ const StaffDashboard = () => {
                             Name: u.displayName,
                             Email: u.email,
                             Role: u.role || 'buyer',
+                            Location: u.location && u.location.lat && u.location.lng ? `${u.location.lat.toFixed(2)}, ${u.location.lng.toFixed(2)}` : 'Not set',
+                            'Last Location Update': u.locationUpdatedAt ? format(u.locationUpdatedAt.toDate(), 'MMM dd, yyyy HH:mm:ss') : 'Never',
                             Status: u.suspended ? 'Suspended' : 'Active'
                           })), 'users.csv')}
                           className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -663,6 +690,9 @@ const StaffDashboard = () => {
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accuracy</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Location Update</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                           </tr>
@@ -705,6 +735,21 @@ const StaffDashboard = () => {
                                 }`}>
                                   {user.role || 'buyer'}
                                 </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {user.location && user.location.lat && user.location.lng
+                                  ? `${user.location.lat.toFixed(2)}, ${user.location.lng.toFixed(2)}`
+                                  : 'Not set'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {user.location && user.location.accuracy
+                                  ? `${user.location.accuracy.toFixed(0)}m`
+                                  : 'N/A'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {user.locationUpdatedAt
+                                  ? format(user.locationUpdatedAt.toDate(), 'MMM dd, HH:mm')
+                                  : 'Never'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
