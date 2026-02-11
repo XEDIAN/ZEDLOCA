@@ -45,6 +45,39 @@ const StaffDashboard = () => {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
+  // Settings state
+  const [settings, setSettings] = useState({
+    platform: {
+      maxListingsPerUser: 50,
+      commissionRate: 0
+    },
+    security: {
+      passwordMinLength: 8,
+      sessionTimeout: 30,
+      requireTwoFactor: false,
+      maxLoginAttempts: 5
+    },
+    notifications: {
+      emailNewUser: true,
+      emailNewListing: true,
+      emailSuspension: true,
+      smsNotifications: false
+    },
+    maintenance: {
+      maintenanceMode: false,
+      maintenanceMessage: 'Site is under maintenance. Please check back later.'
+    },
+    registration: {
+      autoApproveSellers: false,
+      requireEmailVerification: true,
+      requirePhoneVerification: false,
+      allowGuestPosting: false
+    }
+  });
+  const [settingsTab, setSettingsTab] = useState('platform');
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+
   useEffect(() => {
     // Check authentication
     const isAuthenticated = localStorage.getItem('staffAuthenticated');
@@ -210,6 +243,35 @@ const StaffDashboard = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const saveSettings = async () => {
+    setSaving(true);
+    setSaveMessage('');
+
+    try {
+      // Validate settings
+      if (settings.security.passwordMinLength < 6) {
+        throw new Error('Password minimum length must be at least 6 characters');
+      }
+      if (settings.security.sessionTimeout < 5) {
+        throw new Error('Session timeout must be at least 5 minutes');
+      }
+      if (settings.security.maxLoginAttempts < 1) {
+        throw new Error('Max login attempts must be at least 1');
+      }
+
+      // Save to Firebase (using a settings collection)
+      await updateDoc(doc(db, 'settings', 'global'), settings);
+
+      setSaveMessage('Settings saved successfully!');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setSaveMessage(`Error: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const viewSeller = (seller) => {
@@ -960,36 +1022,309 @@ const StaffDashboard = () => {
                 {activeTab === 'settings' && (
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900 mb-6">System Settings</h2>
+
+                    {/* Tab Navigation */}
+                    <div className="border-b border-gray-200 mb-6">
+                      <nav className="-mb-px flex space-x-8">
+                        {['platform', 'security', 'notifications', 'maintenance', 'registration'].map((tab) => (
+                          <button
+                            key={tab}
+                            onClick={() => setSettingsTab(tab)}
+                            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                              settingsTab === tab
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                          >
+                            {tab.charAt(0).toUpperCase() + tab.slice(1)} Settings
+                          </button>
+                        ))}
+                      </nav>
+                    </div>
+
+                    {/* Settings Content */}
                     <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Platform Configuration</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Max Listings per User
-                            </label>
-                            <input
-                              type="number"
-                              defaultValue="50"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Commission Rate (%)
-                            </label>
-                            <input
-                              type="number"
-                              defaultValue="0"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            />
+                      {settingsTab === 'platform' && (
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Platform Configuration</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Max Listings per User
+                              </label>
+                              <input
+                                type="number"
+                                value={settings.platform.maxListingsPerUser}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  platform: { ...settings.platform, maxListingsPerUser: parseInt(e.target.value) || 0 }
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Commission Rate (%)
+                              </label>
+                              <input
+                                type="number"
+                                value={settings.platform.commissionRate}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  platform: { ...settings.platform, commissionRate: parseInt(e.target.value) || 0 }
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex justify-end">
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                          Save Settings
-                        </button>
+                      )}
+
+                      {settingsTab === 'security' && (
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Security Settings</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Minimum Password Length
+                              </label>
+                              <input
+                                type="number"
+                                value={settings.security.passwordMinLength}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  security: { ...settings.security, passwordMinLength: parseInt(e.target.value) || 6 }
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Session Timeout (minutes)
+                              </label>
+                              <input
+                                type="number"
+                                value={settings.security.sessionTimeout}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  security: { ...settings.security, sessionTimeout: parseInt(e.target.value) || 5 }
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Max Login Attempts
+                              </label>
+                              <input
+                                type="number"
+                                value={settings.security.maxLoginAttempts}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  security: { ...settings.security, maxLoginAttempts: parseInt(e.target.value) || 1 }
+                                })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.security.requireTwoFactor}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  security: { ...settings.security, requireTwoFactor: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Require Two-Factor Authentication
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {settingsTab === 'notifications' && (
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Settings</h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.notifications.emailNewUser}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  notifications: { ...settings.notifications, emailNewUser: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Email notifications for new user registrations
+                              </label>
+                            </div>
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.notifications.emailNewListing}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  notifications: { ...settings.notifications, emailNewListing: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Email notifications for new listings
+                              </label>
+                            </div>
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.notifications.emailSuspension}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  notifications: { ...settings.notifications, emailSuspension: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Email notifications for user suspensions
+                              </label>
+                            </div>
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.notifications.smsNotifications}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  notifications: { ...settings.notifications, smsNotifications: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Enable SMS notifications
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {settingsTab === 'maintenance' && (
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Maintenance Mode</h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.maintenance.maintenanceMode}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  maintenance: { ...settings.maintenance, maintenanceMode: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Enable maintenance mode
+                              </label>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Maintenance Message
+                              </label>
+                              <textarea
+                                value={settings.maintenance.maintenanceMessage}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  maintenance: { ...settings.maintenance, maintenanceMessage: e.target.value }
+                                })}
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter maintenance message..."
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {settingsTab === 'registration' && (
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">User Registration Settings</h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.registration.autoApproveSellers}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  registration: { ...settings.registration, autoApproveSellers: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Auto-approve seller registrations
+                              </label>
+                            </div>
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.registration.requireEmailVerification}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  registration: { ...settings.registration, requireEmailVerification: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Require email verification for new accounts
+                              </label>
+                            </div>
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.registration.requirePhoneVerification}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  registration: { ...settings.registration, requirePhoneVerification: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Require phone verification for new accounts
+                              </label>
+                            </div>
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={settings.registration.allowGuestPosting}
+                                onChange={(e) => setSettings({
+                                  ...settings,
+                                  registration: { ...settings.registration, allowGuestPosting: e.target.checked }
+                                })}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <label className="ml-2 block text-sm text-gray-900">
+                                Allow guest posting without registration
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Save Button and Messages */}
+                      <div className="flex justify-between items-center pt-6 border-t">
+                        {saveMessage && (
+                          <div className={`text-sm ${saveMessage.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                            {saveMessage}
+                          </div>
+                        )}
+                        <div className="ml-auto">
+                          <button
+                            onClick={saveSettings}
+                            disabled={saving}
+                            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {saving ? 'Saving...' : 'Save Settings'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
