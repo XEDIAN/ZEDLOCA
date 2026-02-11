@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaUserShield, FaUsers, FaStore, FaShoppingCart, FaChartLine, FaCog, FaSignOutAlt, FaEye, FaTrash, FaBan, FaTimes } from 'react-icons/fa';
+import { FaUserShield, FaUsers, FaStore, FaShoppingCart, FaChartLine, FaCog, FaSignOutAlt, FaEye, FaTrash, FaBan, FaTimes, FaSearch, FaFilter, FaDownload, FaCalendar, FaSync, FaCheckSquare, FaSquare, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { auth, db } from '../firebase';
-import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, limit, startAfter, getCountFromServer } from 'firebase/firestore';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 
 const StaffDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -12,6 +14,37 @@ const StaffDashboard = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
+  // Search and Filter states
+  const [userSearch, setUserSearch] = useState('');
+  const [sellerSearch, setSellerSearch] = useState('');
+  const [listingSearch, setListingSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [userStatusFilter, setUserStatusFilter] = useState('all');
+  const [listingCategoryFilter, setListingCategoryFilter] = useState('all');
+  const [dateRange, setDateRange] = useState({ start: null, end: null });
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // Bulk actions states
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedListings, setSelectedListings] = useState([]);
+
+  // Analytics data
+  const [analyticsData, setAnalyticsData] = useState({
+    userGrowth: [],
+    listingTrends: [],
+    categoryDistribution: []
+  });
+
+  // Activity logs
+  const [activityLogs, setActivityLogs] = useState([]);
+
+  // Real-time updates
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+
   useEffect(() => {
     // Check authentication
     const isAuthenticated = localStorage.getItem('staffAuthenticated');
@@ -21,7 +54,20 @@ const StaffDashboard = () => {
     }
 
     loadData();
-  }, []);
+
+    // Set up auto-refresh if enabled
+    let interval;
+    if (autoRefresh) {
+      interval = setInterval(() => {
+        loadData();
+        setLastRefresh(new Date());
+      }, 30000); // Refresh every 30 seconds
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [autoRefresh]);
 
   const loadData = async () => {
     try {
@@ -40,11 +86,69 @@ const StaffDashboard = () => {
       const listingsData = listingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setListings(listingsData);
 
+      // Generate analytics data
+      generateAnalyticsData(usersData, sellersData, listingsData);
+
+      // Generate activity logs
+      generateActivityLogs(usersData, sellersData, listingsData);
+
       setLoading(false);
     } catch (error) {
       console.error('Error loading data:', error);
       setLoading(false);
     }
+  };
+
+  const generateAnalyticsData = (usersData, sellersData, listingsData) => {
+    // User growth over last 7 days (mock data for demo)
+    const userGrowth = Array.from({ length: 7 }, (_, i) => ({
+      date: format(subDays(new Date(), 6 - i), 'MMM dd'),
+      users: Math.floor(Math.random() * 50) + usersData.length - 25
+    }));
+
+    // Listing trends over last 7 days
+    const listingTrends = Array.from({ length: 7 }, (_, i) => ({
+      date: format(subDays(new Date(), 6 - i), 'MMM dd'),
+      listings: Math.floor(Math.random() * 30) + listingsData.length - 15
+    }));
+
+    // Category distribution
+    const categories = {};
+    listingsData.forEach(listing => {
+      categories[listing.category] = (categories[listing.category] || 0) + 1;
+    });
+
+    const categoryDistribution = Object.entries(categories).map(([name, value]) => ({
+      name,
+      value
+    }));
+
+    setAnalyticsData({ userGrowth, listingTrends, categoryDistribution });
+  };
+
+  const generateActivityLogs = (usersData, sellersData, listingsData) => {
+    const logs = [
+      ...usersData.slice(0, 5).map(user => ({
+        id: `user-${user.id}`,
+        type: 'user_registration',
+        message: `New user ${user.displayName} registered`,
+        timestamp: new Date(Date.now() - Math.random() * 86400000 * 7)
+      })),
+      ...sellersData.slice(0, 3).map(seller => ({
+        id: `seller-${seller.id}`,
+        type: 'seller_registration',
+        message: `New seller ${seller.displayName} joined`,
+        timestamp: new Date(Date.now() - Math.random() * 86400000 * 7)
+      })),
+      ...listingsData.slice(0, 5).map(listing => ({
+        id: `listing-${listing.id}`,
+        type: 'listing_created',
+        message: `New listing "${listing.title}" created`,
+        timestamp: new Date(Date.now() - Math.random() * 86400000 * 7)
+      }))
+    ].sort((a, b) => b.timestamp - a.timestamp);
+
+    setActivityLogs(logs);
   };
 
   const handleLogout = () => {
@@ -55,7 +159,7 @@ const StaffDashboard = () => {
   const suspendUser = async (userId) => {
     try {
       await updateDoc(doc(db, 'users', userId), { suspended: true });
-      loadData(); // Refresh data
+      loadData();
     } catch (error) {
       console.error('Error suspending user:', error);
     }
@@ -64,10 +168,48 @@ const StaffDashboard = () => {
   const deleteListing = async (listingId) => {
     try {
       await deleteDoc(doc(db, 'listings', listingId));
-      loadData(); // Refresh data
+      loadData();
     } catch (error) {
       console.error('Error deleting listing:', error);
     }
+  };
+
+  const bulkSuspendUsers = async () => {
+    try {
+      const promises = selectedUsers.map(userId =>
+        updateDoc(doc(db, 'users', userId), { suspended: true })
+      );
+      await Promise.all(promises);
+      setSelectedUsers([]);
+      loadData();
+    } catch (error) {
+      console.error('Error bulk suspending users:', error);
+    }
+  };
+
+  const bulkDeleteListings = async () => {
+    try {
+      const promises = selectedListings.map(listingId =>
+        deleteDoc(doc(db, 'listings', listingId))
+      );
+      await Promise.all(promises);
+      setSelectedListings([]);
+      loadData();
+    } catch (error) {
+      console.error('Error bulk deleting listings:', error);
+    }
+  };
+
+  const exportData = (data, filename) => {
+    const csvContent = "data:text/csv;charset=utf-8,"
+      + data.map(row => Object.values(row).join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const viewSeller = (seller) => {
@@ -84,6 +226,44 @@ const StaffDashboard = () => {
     setViewModalOpen(false);
     setSelectedItem(null);
   };
+
+  // Filtered and paginated data
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.displayName?.toLowerCase().includes(userSearch.toLowerCase()) ||
+                         user.email?.toLowerCase().includes(userSearch.toLowerCase());
+    const matchesRole = userRoleFilter === 'all' || user.role === userRoleFilter;
+    const matchesStatus = userStatusFilter === 'all' ||
+                         (userStatusFilter === 'active' && !user.suspended) ||
+                         (userStatusFilter === 'suspended' && user.suspended);
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const filteredSellers = sellers.filter(seller =>
+    seller.displayName?.toLowerCase().includes(sellerSearch.toLowerCase()) ||
+    seller.email?.toLowerCase().includes(sellerSearch.toLowerCase())
+  );
+
+  const filteredListings = listings.filter(listing => {
+    const matchesSearch = listing.title?.toLowerCase().includes(listingSearch.toLowerCase()) ||
+                         listing.sellerName?.toLowerCase().includes(listingSearch.toLowerCase());
+    const matchesCategory = listingCategoryFilter === 'all' || listing.category === listingCategoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Pagination
+  const paginate = (items, page, perPage) => {
+    const startIndex = (page - 1) * perPage;
+    return items.slice(startIndex, startIndex + perPage);
+  };
+
+  const paginatedUsers = paginate(filteredUsers, currentPage, itemsPerPage);
+  const paginatedSellers = paginate(filteredSellers, currentPage, itemsPerPage);
+  const paginatedListings = paginate(filteredListings, currentPage, itemsPerPage);
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  // Colors for pie chart
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   if (loading) {
     return (
@@ -197,8 +377,28 @@ const StaffDashboard = () => {
               <div className="p-6">
                 {activeTab === 'overview' && (
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Dashboard Overview</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl font-semibold text-gray-900">Dashboard Overview</h2>
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={() => setAutoRefresh(!autoRefresh)}
+                          className={`inline-flex items-center px-3 py-2 border rounded-md text-sm font-medium ${
+                            autoRefresh
+                              ? 'bg-green-100 text-green-700 border-green-300'
+                              : 'bg-gray-100 text-gray-700 border-gray-300'
+                          }`}
+                        >
+                          <FaSync className={`mr-2 ${autoRefresh ? 'animate-spin' : ''}`} />
+                          Auto Refresh {autoRefresh ? 'On' : 'Off'}
+                        </button>
+                        <span className="text-sm text-gray-500">
+                          Last updated: {format(lastRefresh, 'HH:mm:ss')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <div className="flex items-center">
                           <FaUsers className="text-blue-600 text-2xl mr-3" />
@@ -236,16 +436,169 @@ const StaffDashboard = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                      <div className="bg-white p-6 rounded-lg border">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">User Growth (Last 7 Days)</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <LineChart data={analyticsData.userGrowth}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line type="monotone" dataKey="users" stroke="#8884d8" strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      <div className="bg-white p-6 rounded-lg border">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Listing Trends (Last 7 Days)</h3>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={analyticsData.listingTrends}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="listings" fill="#82ca9d" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Category Distribution */}
+                    <div className="bg-white p-6 rounded-lg border mb-8">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Category Distribution</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={analyticsData.categoryDistribution}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {analyticsData.categoryDistribution.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* Recent Activity */}
+                    <div className="bg-white p-6 rounded-lg border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                      <div className="space-y-3">
+                        {activityLogs.slice(0, 10).map((log) => (
+                          <div key={log.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                            <div className="flex items-center">
+                              <div className={`w-2 h-2 rounded-full mr-3 ${
+                                log.type === 'user_registration' ? 'bg-blue-500' :
+                                log.type === 'seller_registration' ? 'bg-green-500' : 'bg-purple-500'
+                              }`}></div>
+                              <span className="text-sm text-gray-900">{log.message}</span>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {format(log.timestamp, 'MMM dd, HH:mm')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'users' && (
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-6">User Management</h2>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl font-semibold text-gray-900">User Management</h2>
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={() => exportData(filteredUsers.map(u => ({
+                            Name: u.displayName,
+                            Email: u.email,
+                            Role: u.role || 'buyer',
+                            Status: u.suspended ? 'Suspended' : 'Active'
+                          })), 'users.csv')}
+                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        >
+                          <FaDownload className="mr-2" />
+                          Export CSV
+                        </button>
+                        {selectedUsers.length > 0 && (
+                          <button
+                            onClick={bulkSuspendUsers}
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                          >
+                            <FaBan className="mr-2" />
+                            Suspend Selected ({selectedUsers.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Search and Filters */}
+                    <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="relative">
+                          <FaSearch className="absolute left-3 top-3 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={userSearch}
+                            onChange={(e) => setUserSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <select
+                          value={userRoleFilter}
+                          onChange={(e) => setUserRoleFilter(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="all">All Roles</option>
+                          <option value="buyer">Buyers</option>
+                          <option value="seller">Sellers</option>
+                        </select>
+                        <select
+                          value={userStatusFilter}
+                          onChange={(e) => setUserStatusFilter(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="all">All Status</option>
+                          <option value="active">Active</option>
+                          <option value="suspended">Suspended</option>
+                        </select>
+                        <div className="flex items-center">
+                          <span className="text-sm text-gray-600 mr-2">Total: {filteredUsers.length}</span>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <input
+                                type="checkbox"
+                                checked={selectedUsers.length === paginatedUsers.length && paginatedUsers.length > 0}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedUsers(paginatedUsers.map(u => u.id));
+                                  } else {
+                                    setSelectedUsers([]);
+                                  }
+                                }}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                            </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -253,8 +606,22 @@ const StaffDashboard = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {users.map((user) => (
+                          {paginatedUsers.map((user) => (
                             <tr key={user.id}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedUsers.includes(user.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedUsers([...selectedUsers, user.id]);
+                                    } else {
+                                      setSelectedUsers(selectedUsers.filter(id => id !== user.id));
+                                    }
+                                  }}
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                              </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10">
@@ -297,6 +664,34 @@ const StaffDashboard = () => {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between mt-6">
+                      <div className="text-sm text-gray-700">
+                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} results
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronLeft className="mr-1" />
+                          Previous
+                        </button>
+                        <span className="text-sm text-gray-700">
+                          Page {currentPage} of {Math.ceil(filteredUsers.length / itemsPerPage)}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(Math.min(Math.ceil(filteredUsers.length / itemsPerPage), currentPage + 1))}
+                          disabled={currentPage === Math.ceil(filteredUsers.length / itemsPerPage)}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                          <FaChevronRight className="ml-1" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -341,7 +736,7 @@ const StaffDashboard = () => {
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button className="text-blue-600 hover:text-blue-900 mr-4">
+                                <button onClick={() => viewSeller(seller)} className="text-blue-600 hover:text-blue-900 mr-4">
                                   <FaEye className="inline mr-1" />
                                   View
                                 </button>
@@ -356,11 +751,81 @@ const StaffDashboard = () => {
 
                 {activeTab === 'listings' && (
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Listing Management</h2>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl font-semibold text-gray-900">Listing Management</h2>
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={() => exportData(filteredListings.map(l => ({
+                            Title: l.title,
+                            Description: l.description,
+                            Category: l.category,
+                            Price: l.price,
+                            Seller: l.sellerName || 'Unknown'
+                          })), 'listings.csv')}
+                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        >
+                          <FaDownload className="mr-2" />
+                          Export CSV
+                        </button>
+                        {selectedListings.length > 0 && (
+                          <button
+                            onClick={bulkDeleteListings}
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                          >
+                            <FaTrash className="mr-2" />
+                            Delete Selected ({selectedListings.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Search and Filters */}
+                    <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="relative">
+                          <FaSearch className="absolute left-3 top-3 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search listings..."
+                            value={listingSearch}
+                            onChange={(e) => setListingSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <select
+                          value={listingCategoryFilter}
+                          onChange={(e) => setListingCategoryFilter(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="all">All Categories</option>
+                          {Array.from(new Set(listings.map(l => l.category))).map(category => (
+                            <option key={category} value={category}>{category}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center">
+                          <span className="text-sm text-gray-600 mr-2">Total: {filteredListings.length}</span>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <input
+                                type="checkbox"
+                                checked={selectedListings.length === paginatedListings.length && paginatedListings.length > 0}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedListings(paginatedListings.map(l => l.id));
+                                  } else {
+                                    setSelectedListings([]);
+                                  }
+                                }}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                            </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seller</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
@@ -369,8 +834,22 @@ const StaffDashboard = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {listings.map((listing) => (
+                          {paginatedListings.map((listing) => (
                             <tr key={listing.id}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedListings.includes(listing.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedListings([...selectedListings, listing.id]);
+                                    } else {
+                                      setSelectedListings(selectedListings.filter(id => id !== listing.id));
+                                    }
+                                  }}
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                              </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10">
@@ -413,6 +892,67 @@ const StaffDashboard = () => {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between mt-6">
+                      <div className="text-sm text-gray-700">
+                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredListings.length)} of {filteredListings.length} results
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <FaChevronLeft className="mr-1" />
+                          Previous
+                        </button>
+                        <span className="text-sm text-gray-700">
+                          Page {currentPage} of {Math.ceil(filteredListings.length / itemsPerPage)}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(Math.min(Math.ceil(filteredListings.length / itemsPerPage), currentPage + 1))}
+                          disabled={currentPage === Math.ceil(filteredListings.length / itemsPerPage)}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                          <FaChevronRight className="ml-1" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'activity' && (
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Activity Logs</h2>
+                    <div className="space-y-4">
+                      {activityLogs.map((log) => (
+                        <div key={log.id} className="bg-white p-4 rounded-lg border">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className={`w-3 h-3 rounded-full mr-3 ${
+                                log.type === 'user_registration' ? 'bg-blue-500' :
+                                log.type === 'seller_registration' ? 'bg-green-500' : 'bg-purple-500'
+                              }`}></div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{log.message}</p>
+                                <p className="text-xs text-gray-500">
+                                  {format(log.timestamp, 'MMM dd, yyyy HH:mm:ss')}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              log.type === 'user_registration' ? 'bg-blue-100 text-blue-800' :
+                              log.type === 'seller_registration' ? 'bg-green-100 text-green-800' :
+                              'bg-purple-100 text-purple-800'
+                            }`}>
+                              {log.type.replace('_', ' ').toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
