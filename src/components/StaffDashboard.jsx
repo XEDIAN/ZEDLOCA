@@ -613,7 +613,7 @@ const StaffDashboard = () => {
                             Email: u.email,
                             Role: u.role || 'buyer',
                             Location: u.location && u.location.lat && u.location.lng ? `${u.location.lat.toFixed(2)}, ${u.location.lng.toFixed(2)}` : 'Not set',
-                            'Last Location Update': u.locationUpdatedAt ? format(u.locationUpdatedAt.toDate(), 'MMM dd, yyyy HH:mm:ss') : 'Never',
+                            'Last Location Update': u.location?.updatedAt ? format(u.location.updatedAt.toDate(), 'MMM dd, yyyy HH:mm:ss') : 'Never',
                             Status: u.suspended ? 'Suspended' : 'Active'
                           })), 'users.csv')}
                           className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -747,8 +747,8 @@ const StaffDashboard = () => {
                                   : 'N/A'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {user.locationUpdatedAt
-                                  ? format(user.locationUpdatedAt.toDate(), 'MMM dd, HH:mm')
+                                {user.location?.updatedAt
+                                  ? format(user.location.updatedAt.toDate(), 'MMM dd, HH:mm')
                                   : 'Never'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
