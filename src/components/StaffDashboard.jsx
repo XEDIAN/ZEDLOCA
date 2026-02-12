@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { FaUserShield, FaUsers, FaStore, FaShoppingCart, FaChartLine, FaCog, FaSignOutAlt, FaEye, FaTrash, FaBan, FaTimes, FaSearch, FaFilter, FaDownload, FaCalendar, FaSync, FaCheckSquare, FaSquare, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaUserShield, FaUsers, FaStore, FaShoppingCart, FaChartLine, FaCog, FaSignOutAlt, FaEye, FaTrash, FaBan, FaTimes, FaSearch, FaFilter, FaDownload, FaCalendar, FaSync, FaCheckSquare, FaSquare, FaChevronLeft, FaChevronRight, FaMap } from 'react-icons/fa';
 import { auth, db } from '../firebase';
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, limit, startAfter, getCountFromServer, onSnapshot } from 'firebase/firestore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.heat';
 
 const StaffDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -44,6 +48,11 @@ const StaffDashboard = () => {
   // Real-time updates
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
+
+  // Geographic heatmap states
+  const [heatmapType, setHeatmapType] = useState('users');
+  const [mapCenter, setMapCenter] = useState([40.7128, -74.0060]); // Default to NYC
+  const [mapZoom, setMapZoom] = useState(10);
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -352,6 +361,76 @@ const StaffDashboard = () => {
   // Colors for pie chart
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
+  // Get heatmap data based on type
+  const getHeatmapData = () => {
+    let data = [];
+    if (heatmapType === 'users') {
+      data = users
+        .filter(user => user.location && user.location.lat && user.location.lng)
+        .map(user => [user.location.lat, user.location.lng, 0.5]);
+    } else if (heatmapType === 'sellers') {
+      data = sellers
+        .filter(seller => seller.lat && seller.lng)
+        .map(seller => [seller.lat, seller.lng, 0.7]);
+    } else if (heatmapType === 'listings') {
+      // Group listings by seller location
+      const locationCounts = {};
+      listings.forEach(listing => {
+        const seller = sellers.find(s => s.id === listing.sellerId);
+        if (seller && seller.lat && seller.lng) {
+          const key = `${seller.lat},${seller.lng}`;
+          locationCounts[key] = (locationCounts[key] || 0) + 1;
+        }
+      });
+      data = Object.entries(locationCounts).map(([coords, count]) => {
+        const [lat, lng] = coords.split(',').map(Number);
+        return [lat, lng, Math.min(count * 0.3, 1)]; // Scale intensity
+      });
+    }
+    return data;
+  };
+
+  // Heatmap Layer Component
+  const HeatmapLayer = ({ data, type }) => {
+    const map = useMap();
+
+    useEffect(() => {
+      if (!data || data.length === 0) return;
+
+      // Remove existing heatmap
+      map.eachLayer((layer) => {
+        if (layer instanceof L.HeatLayer) {
+          map.removeLayer(layer);
+        }
+      });
+
+      // Add new heatmap
+      const heatLayer = L.heatLayer(data, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 10,
+        max: 1.0,
+        gradient: {
+          0.2: 'green',
+          0.4: 'yellow',
+          0.6: 'orange',
+          0.8: 'red',
+          1.0: 'darkred'
+        }
+      });
+
+      heatLayer.addTo(map);
+
+      return () => {
+        if (map.hasLayer(heatLayer)) {
+          map.removeLayer(heatLayer);
+        }
+      };
+    }, [data, map]);
+
+    return null;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -577,6 +656,55 @@ const StaffDashboard = () => {
                           <Tooltip />
                         </PieChart>
                       </ResponsiveContainer>
+                    </div>
+
+                    {/* Geographic Analytics */}
+                    <div className="bg-white p-6 rounded-lg border mb-8">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Geographic Analytics</h3>
+                        <div className="flex items-center space-x-2">
+                          <select
+                            value={heatmapType}
+                            onChange={(e) => setHeatmapType(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="users">User Density</option>
+                            <option value="sellers">Seller Density</option>
+                            <option value="listings">Listing Activity</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="h-96 rounded-lg overflow-hidden border">
+                        <MapContainer
+                          center={mapCenter}
+                          zoom={mapZoom}
+                          style={{ height: '100%', width: '100%' }}
+                        >
+                          <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          />
+                          <HeatmapLayer
+                            data={getHeatmapData()}
+                            type={heatmapType}
+                          />
+                        </MapContainer>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+                        <div className="flex items-center space-x-4">
+                          <span>Showing: {heatmapType === 'users' ? users.length : heatmapType === 'sellers' ? sellers.length : listings.length} locations</span>
+                          <span>•</span>
+                          <span>Heat intensity indicates density</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 bg-red-500 rounded"></div>
+                          <span className="text-xs">High</span>
+                          <div className="w-4 h-4 bg-yellow-400 rounded"></div>
+                          <span className="text-xs">Medium</span>
+                          <div className="w-4 h-4 bg-green-400 rounded"></div>
+                          <span className="text-xs">Low</span>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Recent Activity */}
