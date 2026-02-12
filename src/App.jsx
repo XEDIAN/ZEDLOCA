@@ -63,6 +63,7 @@ const MainApp = () => {
   const [role, setRole] = useState(null);
   const [roleLoading, setRoleLoading] = useState(false);
   const [sharedSellerId, setSharedSellerId] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
 
 
@@ -71,6 +72,20 @@ const MainApp = () => {
       setShowSplash(false);
     }, 3000); // 3 seconds
     return () => clearTimeout(timer);
+  }, []);
+
+  // Handle online/offline status
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Handle URL parameters for shared seller links
@@ -133,12 +148,20 @@ const MainApp = () => {
   // Show shared seller listings and contact details
   if (sharedSellerId) {
     return (
-      <SellerListings
-        sellerId={sharedSellerId}
-        onBack={() => setSharedSellerId(null)}
-        user={user}
-        isSharedView={true}
-      />
+      <>
+        {/* Offline Banner */}
+        {!isOnline && (
+          <div className="bg-yellow-500 text-white text-center py-2 fixed top-0 left-0 w-full z-50">
+            You're offline. Some features may be limited.
+          </div>
+        )}
+        <SellerListings
+          sellerId={sharedSellerId}
+          onBack={() => setSharedSellerId(null)}
+          user={user}
+          isSharedView={true}
+        />
+      </>
     );
   }
 
