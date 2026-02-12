@@ -485,17 +485,7 @@ const MainApp = () => {
                 )}
               </div>
 
-              {/* Staff Login Link */}
-              <div className="mt-6 text-center">
-                <Link
-                  to="/staff-login"
-                  className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                >
-                  <FaUserShield className="mr-2" />
-                  Staff Portal
-                  <FaArrowRight className="ml-2" />
-                </Link>
-              </div>
+
             </div>
           </div>
 
