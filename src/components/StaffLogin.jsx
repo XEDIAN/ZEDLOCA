@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaUserShield, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { initStaffSession, isStaffSessionValid } from '../utils/staffAuth';
 
 const StaffLogin = () => {
   const [email, setEmail] = useState('');
@@ -7,6 +8,13 @@ const StaffLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Check if already authenticated - redirect to dashboard
+  React.useEffect(() => {
+    if (isStaffSessionValid()) {
+      window.location.href = '/staff-dashboard';
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,8 +27,8 @@ const StaffLogin = () => {
       const staffPassword = '4321';
 
       if (email === staffEmail && password === staffPassword) {
-        // Set authentication flag
-        localStorage.setItem('staffAuthenticated', 'true');
+        // Initialize staff session with timeout
+        initStaffSession(email);
         // Redirect to staff dashboard
         window.location.href = '/staff-dashboard';
       } else {

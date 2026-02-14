@@ -8,6 +8,7 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
+import { isStaffSessionValid, refreshStaffSession, clearStaffSession, getRemainingSessionTime, isSessionExpiringSoon } from '../utils/staffAuth';
 
 const StaffDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');

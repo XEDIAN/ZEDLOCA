@@ -2,8 +2,6 @@ import React from 'react';
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { Link } from 'react-router-dom';
-import { FaUserShield } from 'react-icons/fa';
 
 
 function Auth() {
@@ -101,13 +99,6 @@ function Auth() {
       ) : (
         <div className="flex flex-col items-center space-y-4">
           <button onClick={handleSignIn} className="bg-gray-700 text-white px-3 py-2 md:px-4 md:py-2 rounded text-base md:text-lg w-full max-w-xs">Sign in with Google</button>
-          <Link
-            to="/staff-login"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition-colors"
-          >
-            <FaUserShield className="mr-2" />
-            Staff Portal
-          </Link>
         </div>
       )}
     </div>
