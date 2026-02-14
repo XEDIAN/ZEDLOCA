@@ -1,9 +1,37 @@
-# Mobile Responsiveness for BuyerStores Component
+# Geographic Analytics Enhancement Plan
 
-## Tasks
-- [ ] Reduce header font sizes: text-2xl on mobile, text-3xl on md, text-4xl on lg
-- [ ] Adjust grid to single column on small screens, 2 on medium+
-- [ ] Reduce card padding: p-4 on small screens, p-6 on larger
-- [ ] Decrease font sizes: titles from text-lg to text-base on small, prices from text-xl to text-lg
-- [ ] Shrink image sizes in cards and seller info
-- [ ] Ensure flex layouts wrap and prevent horizontal overflow
+## Information Gathered
+- Current implementation: Basic heatmap showing user/seller/listing density on a Leaflet map
+- Features available:
+  - Dropdown to switch between User Density, Seller Density, and Listing Activity
+  - Heat intensity legend
+  - Basic map with OpenStreetMap tiles
+  
+## Plan: Enhance Geographic Analytics
+
+### Modifications to implement in StaffDashboard.jsx:
+
+1. **Add Regional Statistics Panel**
+   - Show top 5 locations by count
+   - Display percentage distribution
+
+2. **Add Time-Based Filtering**
+   - Filter data by: All Time, Last 7 days, Last 30 days, Last 90 days
+
+3. **Add Toggle between Heatmap and Clustered Markers**
+   - Option to view data as clustered markers with popups
+
+4. **Add Geographic Data Export**
+   - Export location data to CSV
+
+5. **Add Map Controls**
+   - Zoom controls
+   - Map type toggle (street/satellite)
+
+6. **Add Interactive Statistics Cards**
+   - Total locations
+   - Most active region
+   - Density indicator
+
+### File to edit:
+- `src/components/StaffDashboard.jsx` - Add enhanced geographic analytics features
