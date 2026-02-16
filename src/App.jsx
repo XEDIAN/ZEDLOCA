@@ -531,13 +531,7 @@ const MainApp = () => {
 
   // Simplified footer component
   const renderFooter = () => {
-    return (
-      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-3 flex justify-center items-center z-40 shadow-xl border-t border-slate-700">
-        <div className="text-center">
-          <p className="text-sm text-gray-400">© 2024 ZEDLOCA. All rights reserved.</p>
-        </div>
-      </footer>
-    );
+    return null;
   };
 
   // Show authentication loading state
