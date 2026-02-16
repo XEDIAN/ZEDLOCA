@@ -316,26 +316,28 @@ const MainApp = () => {
 
 
 
-  // Consistent footer component for authenticated users
+  // Enhanced footer component - visible on main menu page with professional styling
   const renderFooter = () => {
-    if (!user || !role) return null;
     return (
-      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-800 text-white py-1 sm:py-2 md:py-4 flex justify-center gap-0.5 sm:gap-1 md:gap-4 z-50 overflow-x-auto">
-        <div className="flex gap-0.5 sm:gap-1 md:gap-4 px-1 sm:px-2 md:px-4 min-w-max">
+      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-6 sm:py-8 md:py-10 flex justify-center gap-4 sm:gap-6 md:gap-8 z-50 shadow-2xl border-t-2 border-slate-600 backdrop-blur-lg bg-opacity-95">
+        <div className="flex gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 w-full max-w-7xl justify-between items-center">
           <button
-            className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+            className="flex-1 bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-blue-400 hover:to-blue-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-blue-400"
             onClick={() => {
               setShowMap(true);
               setShowListings(false);
               setShowSellerListings(null);
             }}
           >
-            Map
+            <span className="flex items-center justify-center gap-2 sm:gap-3">
+              <FaMapMarkerAlt className="text-lg sm:text-xl md:text-2xl" />
+              <span>Map</span>
+            </span>
           </button>
           {role === 'seller' && (
             <>
               <button
-                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+                className="flex-1 bg-gradient-to-br from-green-500 to-green-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-green-400 hover:to-green-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-green-400"
                 onClick={() => {
                   setShowListings(true);
                   setShowMap(false);
@@ -360,53 +362,74 @@ const MainApp = () => {
                   }
                 }}
               >
-                Listings
+                <span className="flex items-center justify-center gap-2 sm:gap-3">
+                  <FaStore className="text-lg sm:text-xl md:text-2xl" />
+                  <span>Listings</span>
+                </span>
               </button>
               <button
-                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-blue-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+                className="flex-1 bg-gradient-to-br from-purple-500 to-purple-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-purple-400 hover:to-purple-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-purple-400"
                 onClick={() => setShowInbox(true)}
               >
-                Inbox
+                <span className="flex items-center justify-center gap-2 sm:gap-3">
+                  <FaComments className="text-lg sm:text-xl md:text-2xl" />
+                  <span>Inbox</span>
+                </span>
               </button>
               <button
-                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+                className="flex-1 bg-gradient-to-br from-orange-500 to-orange-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-orange-400 hover:to-orange-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-orange-400"
                 onClick={() => setShowSellerOrders(true)}
               >
-                Orders
+                <span className="flex items-center justify-center gap-2 sm:gap-3">
+                  <FaShoppingCart className="text-lg sm:text-xl md:text-2xl" />
+                  <span>Orders</span>
+                </span>
               </button>
               <button
-                className="bg-white text-gray-800 font-bold px-2 sm:px-4 py-2 rounded shadow hover:bg-purple-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[44px]"
+                className="flex-1 bg-gradient-to-br from-pink-500 to-pink-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-pink-400 hover:to-pink-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-pink-400"
                 onClick={() => setShowSellerProfile(true)}
               >
-                Profile
+                <span className="flex items-center justify-center gap-2 sm:gap-3">
+                  <FaUserCheck className="text-lg sm:text-xl md:text-2xl" />
+                  <span>Profile</span>
+                </span>
               </button>
               <button
-                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-red-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+                className="flex-1 bg-gradient-to-br from-red-500 to-red-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-red-400 hover:to-red-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-red-400"
                 onClick={() => setShowBuyerMap(true)}
               >
-                Buyers
+                <span className="flex items-center justify-center gap-2 sm:gap-3">
+                  <FaUserShield className="text-lg sm:text-xl md:text-2xl" />
+                  <span>Buyers</span>
+                </span>
               </button>
             </>
           )}
           {role === 'buyer' && (
             <>
               <button
-                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-blue-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+                className="flex-1 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-400 hover:to-indigo-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-indigo-400"
                 onClick={() => setShowBuyerMessages(true)}
                 title="My Messages"
               >
-                Messages
+                <span className="flex items-center justify-center gap-2 sm:gap-3">
+                  <FaComments className="text-lg sm:text-xl md:text-2xl" />
+                  <span>Messages</span>
+                </span>
               </button>
 
               <button
-                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-green-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+                className="flex-1 bg-gradient-to-br from-teal-500 to-teal-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-teal-400 hover:to-teal-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-teal-400"
                 onClick={() => setShowBuyerMyOrders(true)}
                 title="My Orders"
               >
-                Orders
+                <span className="flex items-center justify-center gap-2 sm:gap-3">
+                  <FaShoppingCart className="text-lg sm:text-xl md:text-2xl" />
+                  <span>Orders</span>
+                </span>
               </button>
               <button
-                className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-yellow-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+                className="flex-1 bg-gradient-to-br from-yellow-500 to-yellow-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-yellow-400 hover:to-yellow-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-yellow-400"
                 onClick={() => {
                   if (user && navigator.geolocation) {
                     window.alert('Please allow location access to update your location.');
@@ -428,12 +451,15 @@ const MainApp = () => {
                 }}
                 title="Update Location"
               >
-                Location
+                <span className="flex items-center justify-center gap-2 sm:gap-3">
+                  <FaMapMarkerAlt className="text-lg sm:text-xl md:text-2xl" />
+                  <span>Location</span>
+                </span>
               </button>
             </>
           )}
           <button
-            className="bg-white text-gray-800 font-bold px-1 sm:px-2 md:px-4 py-1 sm:py-2 rounded shadow hover:bg-gray-200 transition footer-btn text-xs sm:text-sm whitespace-nowrap min-h-[32px] sm:min-h-[44px]"
+            className="flex-1 bg-gradient-to-br from-cyan-500 to-cyan-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-cyan-400 hover:to-cyan-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-cyan-400"
             onClick={() => {
               setShowBuyerStores(true);
               setShowMap(false);
@@ -441,7 +467,10 @@ const MainApp = () => {
               setShowSellerListings(null);
             }}
           >
-            Stores
+            <span className="flex items-center justify-center gap-2 sm:gap-3">
+              <FaStore className="text-lg sm:text-xl md:text-2xl" />
+              <span>Stores</span>
+            </span>
           </button>
 
         </div>
