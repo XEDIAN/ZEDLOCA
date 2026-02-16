@@ -316,169 +316,179 @@ const MainApp = () => {
 
 
 
-  // Enhanced footer component - visible on main menu page with professional styling
-  const renderFooter = () => {
+  // Main menu buttons - centered in the middle of the page with enlarged, well-styled buttons
+  const renderMainMenuButtons = () => {
     return (
-      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-6 sm:py-8 md:py-10 flex justify-center gap-4 sm:gap-6 md:gap-8 z-50 shadow-2xl border-t-2 border-slate-600 backdrop-blur-lg bg-opacity-95">
-        <div className="flex gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 w-full max-w-7xl justify-between items-center">
-          <button
-            className="flex-1 bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-blue-400 hover:to-blue-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-blue-400"
-            onClick={() => {
-              setShowMap(true);
-              setShowListings(false);
-              setShowSellerListings(null);
-            }}
-          >
-            <span className="flex items-center justify-center gap-2 sm:gap-3">
-              <FaMapMarkerAlt className="text-lg sm:text-xl md:text-2xl" />
-              <span>Map</span>
-            </span>
-          </button>
-          {role === 'seller' && (
-            <>
-              <button
-                className="flex-1 bg-gradient-to-br from-green-500 to-green-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-green-400 hover:to-green-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-green-400"
-                onClick={() => {
-                  setShowListings(true);
-                  setShowMap(false);
-                  setShowSellerListings(null);
-                  // Prompt seller to register location
-                  if (user && navigator.geolocation) {
-                    window.alert('Please allow location access to register your current location for your store.');
-                    navigator.geolocation.getCurrentPosition((pos) => {
-                      const { latitude, longitude } = pos.coords;
-                      (async () => {
-                        await setDoc(doc(db, 'sellers', user.uid), {
-                          uid: user.uid,
-                          displayName: user.displayName,
-                          email: user.email,
-                          lat: latitude,
-                          lng: longitude,
-                          photoURL: user.photoURL || '',
-                          updatedAt: new Date(),
-                        }, { merge: true });
-                      })();
-                    }, null, { enableHighAccuracy: true });
-                  }
-                }}
-              >
-                <span className="flex items-center justify-center gap-2 sm:gap-3">
-                  <FaStore className="text-lg sm:text-xl md:text-2xl" />
-                  <span>Listings</span>
-                </span>
-              </button>
-              <button
-                className="flex-1 bg-gradient-to-br from-purple-500 to-purple-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-purple-400 hover:to-purple-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-purple-400"
-                onClick={() => setShowInbox(true)}
-              >
-                <span className="flex items-center justify-center gap-2 sm:gap-3">
-                  <FaComments className="text-lg sm:text-xl md:text-2xl" />
-                  <span>Inbox</span>
-                </span>
-              </button>
-              <button
-                className="flex-1 bg-gradient-to-br from-orange-500 to-orange-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-orange-400 hover:to-orange-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-orange-400"
-                onClick={() => setShowSellerOrders(true)}
-              >
-                <span className="flex items-center justify-center gap-2 sm:gap-3">
-                  <FaShoppingCart className="text-lg sm:text-xl md:text-2xl" />
-                  <span>Orders</span>
-                </span>
-              </button>
-              <button
-                className="flex-1 bg-gradient-to-br from-pink-500 to-pink-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-pink-400 hover:to-pink-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-pink-400"
-                onClick={() => setShowSellerProfile(true)}
-              >
-                <span className="flex items-center justify-center gap-2 sm:gap-3">
-                  <FaUserCheck className="text-lg sm:text-xl md:text-2xl" />
-                  <span>Profile</span>
-                </span>
-              </button>
-              <button
-                className="flex-1 bg-gradient-to-br from-red-500 to-red-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-red-400 hover:to-red-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-red-400"
-                onClick={() => setShowBuyerMap(true)}
-              >
-                <span className="flex items-center justify-center gap-2 sm:gap-3">
-                  <FaUserShield className="text-lg sm:text-xl md:text-2xl" />
-                  <span>Buyers</span>
-                </span>
-              </button>
-            </>
-          )}
-          {role === 'buyer' && (
-            <>
-              <button
-                className="flex-1 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-400 hover:to-indigo-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-indigo-400"
-                onClick={() => setShowBuyerMessages(true)}
-                title="My Messages"
-              >
-                <span className="flex items-center justify-center gap-2 sm:gap-3">
-                  <FaComments className="text-lg sm:text-xl md:text-2xl" />
-                  <span>Messages</span>
-                </span>
-              </button>
+      <div className="py-16 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Quick Actions
+            </h2>
+            <p className="text-lg text-gray-600">
+              Navigate easily to your desired section
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+            {/* Map Button - Always visible */}
+            <button
+              className="flex flex-col items-center justify-center bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-blue-400 hover:to-blue-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-blue-300"
+              onClick={() => {
+                setShowMap(true);
+                setShowListings(false);
+                setShowSellerListings(null);
+              }}
+            >
+              <FaMapMarkerAlt className="text-4xl md:text-5xl mb-3" />
+              <span className="text-xl md:text-2xl font-bold">Map</span>
+            </button>
 
-              <button
-                className="flex-1 bg-gradient-to-br from-teal-500 to-teal-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-teal-400 hover:to-teal-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-teal-400"
-                onClick={() => setShowBuyerMyOrders(true)}
-                title="My Orders"
-              >
-                <span className="flex items-center justify-center gap-2 sm:gap-3">
-                  <FaShoppingCart className="text-lg sm:text-xl md:text-2xl" />
-                  <span>Orders</span>
-                </span>
-              </button>
-              <button
-                className="flex-1 bg-gradient-to-br from-yellow-500 to-yellow-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-yellow-400 hover:to-yellow-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-yellow-400"
-                onClick={() => {
-                  if (user && navigator.geolocation) {
-                    window.alert('Please allow location access to update your location.');
-                    navigator.geolocation.getCurrentPosition((pos) => {
-                      const { latitude, longitude } = pos.coords;
-                      (async () => {
-                        await setDoc(doc(db, 'buyers', user.uid), {
-                          uid: user.uid,
-                          displayName: user.displayName,
-                          email: user.email,
-                          lat: latitude,
-                          lng: longitude,
-                          photoURL: user.photoURL || '',
-                          updatedAt: new Date(),
-                        }, { merge: true });
-                      })();
-                    }, null, { enableHighAccuracy: true });
-                  }
-                }}
-                title="Update Location"
-              >
-                <span className="flex items-center justify-center gap-2 sm:gap-3">
-                  <FaMapMarkerAlt className="text-lg sm:text-xl md:text-2xl" />
-                  <span>Location</span>
-                </span>
-              </button>
-            </>
-          )}
-          <button
-            className="flex-1 bg-gradient-to-br from-cyan-500 to-cyan-700 text-white font-bold px-4 sm:px-6 md:px-8 py-4 sm:py-5 md:py-6 rounded-xl shadow-lg hover:shadow-xl hover:from-cyan-400 hover:to-cyan-600 transition-all duration-200 transform hover:scale-105 footer-btn text-base sm:text-lg md:text-xl whitespace-nowrap min-h-[60px] sm:min-h-[70px] md:min-h-[80px] border border-cyan-400"
-            onClick={() => {
-              setShowBuyerStores(true);
-              setShowMap(false);
-              setShowListings(false);
-              setShowSellerListings(null);
-            }}
-          >
-            <span className="flex items-center justify-center gap-2 sm:gap-3">
-              <FaStore className="text-lg sm:text-xl md:text-2xl" />
-              <span>Stores</span>
-            </span>
-          </button>
+            {/* Stores Button - Always visible */}
+            <button
+              className="flex flex-col items-center justify-center bg-gradient-to-br from-cyan-500 to-cyan-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-cyan-400 hover:to-cyan-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-cyan-300"
+              onClick={() => {
+                setShowBuyerStores(true);
+                setShowMap(false);
+                setShowListings(false);
+                setShowSellerListings(null);
+              }}
+            >
+              <FaStore className="text-4xl md:text-5xl mb-3" />
+              <span className="text-xl md:text-2xl font-bold">Stores</span>
+            </button>
 
+            {/* Seller-specific buttons */}
+            {role === 'seller' && (
+              <>
+                <button
+                  className="flex flex-col items-center justify-center bg-gradient-to-br from-green-500 to-green-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-green-400 hover:to-green-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-green-300"
+                  onClick={() => {
+                    setShowListings(true);
+                    setShowMap(false);
+                    setShowSellerListings(null);
+                    if (user && navigator.geolocation) {
+                      window.alert('Please allow location access to register your current location for your store.');
+                      navigator.geolocation.getCurrentPosition((pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        (async () => {
+                          await setDoc(doc(db, 'sellers', user.uid), {
+                            uid: user.uid,
+                            displayName: user.displayName,
+                            email: user.email,
+                            lat: latitude,
+                            lng: longitude,
+                            photoURL: user.photoURL || '',
+                            updatedAt: new Date(),
+                          }, { merge: true });
+                        })();
+                      }, null, { enableHighAccuracy: true });
+                    }
+                  }}
+                >
+                  <FaStore className="text-4xl md:text-5xl mb-3" />
+                  <span className="text-xl md:text-2xl font-bold">Listings</span>
+                </button>
+
+                <button
+                  className="flex flex-col items-center justify-center bg-gradient-to-br from-purple-500 to-purple-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-purple-400 hover:to-purple-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-purple-300"
+                  onClick={() => setShowInbox(true)}
+                >
+                  <FaComments className="text-4xl md:text-5xl mb-3" />
+                  <span className="text-xl md:text-2xl font-bold">Inbox</span>
+                </button>
+
+                <button
+                  className="flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-orange-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-orange-400 hover:to-orange-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-orange-300"
+                  onClick={() => setShowSellerOrders(true)}
+                >
+                  <FaShoppingCart className="text-4xl md:text-5xl mb-3" />
+                  <span className="text-xl md:text-2xl font-bold">Orders</span>
+                </button>
+
+                <button
+                  className="flex flex-col items-center justify-center bg-gradient-to-br from-pink-500 to-pink-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-pink-400 hover:to-pink-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-pink-300"
+                  onClick={() => setShowSellerProfile(true)}
+                >
+                  <FaUserCheck className="text-4xl md:text-5xl mb-3" />
+                  <span className="text-xl md:text-2xl font-bold">Profile</span>
+                </button>
+
+                <button
+                  className="flex flex-col items-center justify-center bg-gradient-to-br from-red-500 to-red-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-red-400 hover:to-red-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-red-300"
+                  onClick={() => setShowBuyerMap(true)}
+                >
+                  <FaUserShield className="text-4xl md:text-5xl mb-3" />
+                  <span className="text-xl md:text-2xl font-bold">Buyers</span>
+                </button>
+              </>
+            )}
+
+            {/* Buyer-specific buttons */}
+            {role === 'buyer' && (
+              <>
+                <button
+                  className="flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500 to-indigo-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-indigo-400 hover:to-indigo-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-indigo-300"
+                  onClick={() => setShowBuyerMessages(true)}
+                >
+                  <FaComments className="text-4xl md:text-5xl mb-3" />
+                  <span className="text-xl md:text-2xl font-bold">Messages</span>
+                </button>
+
+                <button
+                  className="flex flex-col items-center justify-center bg-gradient-to-br from-teal-500 to-teal-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-teal-400 hover:to-teal-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-teal-300"
+                  onClick={() => setShowBuyerMyOrders(true)}
+                >
+                  <FaShoppingCart className="text-4xl md:text-5xl mb-3" />
+                  <span className="text-xl md:text-2xl font-bold">Orders</span>
+                </button>
+
+                <button
+                  className="flex flex-col items-center justify-center bg-gradient-to-br from-yellow-500 to-yellow-700 text-white font-bold px-6 py-8 md:py-10 rounded-2xl shadow-xl hover:shadow-2xl hover:from-yellow-400 hover:to-yellow-600 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 min-h-[140px] md:min-h-[160px] border-2 border-yellow-300"
+                  onClick={() => {
+                    if (user && navigator.geolocation) {
+                      window.alert('Please allow location access to update your location.');
+                      navigator.geolocation.getCurrentPosition((pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        (async () => {
+                          await setDoc(doc(db, 'buyers', user.uid), {
+                            uid: user.uid,
+                            displayName: user.displayName,
+                            email: user.email,
+                            lat: latitude,
+                            lng: longitude,
+                            photoURL: user.photoURL || '',
+                            updatedAt: new Date(),
+                          }, { merge: true });
+                        })();
+                      }, null, { enableHighAccuracy: true });
+                    }
+                  }}
+                >
+                  <FaMapMarkerAlt className="text-4xl md:text-5xl mb-3" />
+                  <span className="text-xl md:text-2xl font-bold">Location</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
+        
         <DraggableSidebar
           role={role}
           onNavigateToInbox={() => setShowInbox(true)}
           onNavigateToMessages={() => setShowBuyerMessages(true)}
         />
+      </div>
+    );
+  };
+
+  // Simplified footer component
+  const renderFooter = () => {
+    return (
+      <footer className="fixed bottom-0 left-0 w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-3 flex justify-center items-center z-40 shadow-xl border-t border-slate-700">
+        <div className="text-center">
+          <p className="text-sm text-gray-400">© 2024 ZEDLOCA. All rights reserved.</p>
+        </div>
       </footer>
     );
   };
