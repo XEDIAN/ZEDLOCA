@@ -64,6 +64,7 @@ const MainApp = () => {
   const [roleLoading, setRoleLoading] = useState(false);
   const [sharedSellerId, setSharedSellerId] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
 
 
@@ -99,24 +100,34 @@ const MainApp = () => {
 
   React.useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
+      console.log('Auth state changed:', u ? 'User signed in' : 'No user');
       setUser(u);
+      setAuthInitialized(true);
+      
       if (u) {
         setRoleLoading(true);
         try {
           const userRef = doc(db, 'users', u.uid);
           const userSnap = await getDoc(userRef);
           if (userSnap.exists() && userSnap.data().role) {
-            setRole(userSnap.data().role);
+            const userRole = userSnap.data().role;
+            console.log('User role loaded:', userRole);
+            setRole(userRole);
           } else {
+            console.log('No role found in Firestore, setting to null');
             setRole(null);
           }
-        } catch {
+        } catch (error) {
+          console.error('Error loading user role:', error);
           setRole(null);
+        } finally {
+          setRoleLoading(false);
         }
-        setRoleLoading(false);
       } else {
+        console.log('No user signed in, clearing role and map');
         setRole(null);
         setShowMap(false);
+        setRoleLoading(false);
       }
     });
     return () => unsubscribe();
@@ -316,6 +327,38 @@ const MainApp = () => {
 
 
 
+  // Helper function to determine if main menu should be shown
+  const shouldShowMainMenu = () => {
+    return !showMap && 
+           !showListings && 
+           !showSellerListings && 
+           !showInbox && 
+           !showBuyerMessages && 
+           !showBuyerStores && 
+           !showBuyerMyOrders && 
+           !showBuyerMap && 
+           !showSellerOrders && 
+           !showSellerProfile && 
+           !showPlaceOrderPage && 
+           user && 
+           role && 
+           !roleLoading && 
+           authInitialized;
+  };
+
+  // Loading component for authentication state
+  const renderAuthLoading = () => {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Loading your account...</p>
+          <p className="text-sm text-gray-400 mt-2">Please wait while we verify your authentication status</p>
+        </div>
+      </div>
+    );
+  };
+
   // Main menu buttons - centered in the middle of the page with enlarged, well-styled buttons
   const renderMainMenuButtons = () => {
     return (
@@ -328,6 +371,10 @@ const MainApp = () => {
             <p className="text-lg text-gray-600">
               Navigate easily to your desired section
             </p>
+            <div className="mt-2 text-sm text-gray-500">
+              Role: <span className="font-semibold">{role || 'Unknown'}</span> | 
+              Status: <span className="font-semibold text-green-600">Ready</span>
+            </div>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
@@ -493,7 +540,43 @@ const MainApp = () => {
     );
   };
 
-  if (!showMap && !showListings) {
+  // Show authentication loading state
+  if (!authInitialized || roleLoading) {
+    return renderAuthLoading();
+  }
+
+  // Show main menu only when all conditions are met
+  if (shouldShowMainMenu()) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-center">
+        {/* Large, Centered Main Menu Buttons */}
+        {renderMainMenuButtons()}
+      </div>
+    );
+  }
+
+  // Show error state if user is signed in but has no role
+  if (user && !role && !roleLoading && authInitialized) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-red-50 via-white to-red-50">
+        <div className="text-center max-w-md">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <strong className="font-bold">Account Setup Required</strong>
+            <span className="block sm:inline ml-2">Your account needs to be configured. Please contact support.</span>
+          </div>
+          <button 
+            onClick={() => auth.signOut()}
+            className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show hero/landing page when not authenticated
+  if (!user && !role) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
         {/* Hero Section */}
@@ -523,8 +606,6 @@ const MainApp = () => {
                   </div>
                 )}
               </div>
-
-
             </div>
           </div>
 
