@@ -289,16 +289,6 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
     setIsOpen(!isOpen);
   };
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    localStorage.setItem(DARK_MODE_KEY, newDarkMode.toString());
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
 
   // Swipe gesture handlers
   const handleSwipeStart = (e) => {
@@ -563,18 +553,6 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
                         </div>
                       </div>
                     </button>
-                    <button
-                      onClick={toggleDarkMode}
-                      className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition text-left"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{isDarkMode ? '☀️' : '🌙'}</span>
-                        <div>
-                          <p className="font-semibold text-sm text-black">Dark Mode</p>
-                          <p className="text-xs text-gray-600">{isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}</p>
-                        </div>
-                      </div>
-                    </button>
                   </div>
                 </div>
 
@@ -724,18 +702,6 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
                         <div>
                           <p className="font-semibold text-sm">Location Settings</p>
                           <p className="text-xs text-gray-600">Update search preferences</p>
-                        </div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={toggleDarkMode}
-                      className="w-full p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition text-left"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{isDarkMode ? '☀️' : '🌙'}</span>
-                        <div>
-                          <p className="font-semibold text-sm text-black">Dark Mode</p>
-                          <p className="text-xs text-gray-600">{isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}</p>
                         </div>
                       </div>
                     </button>
