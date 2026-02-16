@@ -724,7 +724,15 @@ const MainApp = () => {
             <Listings userId={user.uid} />
           </div>
         </div>
-        {renderFooter()}
+        <div className="fixed bottom-0 left-0 w-full z-50 flex justify-center bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 py-3 px-2 border-t border-slate-700">
+          <button
+            className="w-full max-w-xs bg-gray-700 text-white px-6 py-3 rounded-lg text-lg font-semibold shadow hover:bg-gray-800 transition focus:outline-none focus:ring-2 focus:ring-blue-400"
+            style={{ minWidth: '120px' }}
+            onClick={() => setShowListings(false)}
+          >
+            Back
+          </button>
+        </div>
       </div>
     );
   }
