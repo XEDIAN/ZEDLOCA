@@ -6,8 +6,6 @@ import LocationSettingsModal from './LocationSettingsModal';
 import { db, auth } from '../firebase';
 import { collection, onSnapshot, addDoc, serverTimestamp, query, where, orderBy, limit, doc, updateDoc } from 'firebase/firestore';
 
-const DARK_MODE_KEY = 'darkMode';
-
 function haversine(lat1, lon1, lat2, lon2) {
   if ([lat1, lon1, lat2, lon2].some(v => typeof v !== 'number')) return Infinity;
   const toRad = (v) => (v * Math.PI) / 180;
@@ -38,23 +36,11 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
   const [showEditPromotionModal, setShowEditPromotionModal] = useState(false);
   const [showCurrencySettingsModal, setShowCurrencySettingsModal] = useState(false);
   const [showLocationSettingsModal, setShowLocationSettingsModal] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const sidebarRef = useRef(null);
   const startXRef = useRef(0);
   const startWidthRef = useRef(0);
   const swipeStartXRef = useRef(0);
   const swipeStartYRef = useRef(0);
-
-  // Load dark mode preference from localStorage
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem(DARK_MODE_KEY) === 'true';
-    setIsDarkMode(savedDarkMode);
-    if (savedDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
 
   // Fetch seller data if role is seller
   useEffect(() => {
