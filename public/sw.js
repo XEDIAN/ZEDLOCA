@@ -22,10 +22,8 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+          // Delete all caches to ensure no stale assets remain
+          return caches.delete(cacheName);
         })
       );
     })
@@ -38,7 +36,7 @@ self.addEventListener('fetch', (event) => {
   // For navigation requests (HTML pages), use network-first strategy
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'reload' })
         .then((response) => {
           // Always fetch fresh HTML to avoid stale menu states
           return response;
