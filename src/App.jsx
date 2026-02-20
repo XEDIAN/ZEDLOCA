@@ -576,18 +576,45 @@ const MainApp = () => {
     );
   }
 
-  // Show error state if user is signed in but has no role
+  // Show role selection page for new users after Google sign-in
   if (user && !role && !roleLoading && authInitialized) {
+    // Handler to immediately redirect after role selection
+    const handleRoleSelected = (selectedRole) => {
+      if (selectedRole === 'buyer') {
+        setShowBuyerStores(true);
+        setShowMap(false);
+        setShowListings(false);
+        setShowSellerListings(null);
+        setShowBuyerMessages(false);
+        setShowBuyerMyOrders(false);
+        setShowBuyerMap(false);
+        setShowSellerOrders(false);
+        setShowSellerProfile(false);
+        setShowPlaceOrderPage(false);
+      } else if (selectedRole === 'seller') {
+        setShowListings(true);
+        setShowMap(false);
+        setShowBuyerStores(false);
+        setShowSellerListings(null);
+        setShowBuyerMessages(false);
+        setShowBuyerMyOrders(false);
+        setShowBuyerMap(false);
+        setShowSellerOrders(false);
+        setShowSellerProfile(false);
+        setShowPlaceOrderPage(false);
+      }
+    };
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-red-50 via-white to-red-50">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="text-center max-w-md">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <strong className="font-bold">Account Setup Required</strong>
-            <span className="block sm:inline ml-2">Your account needs to be configured. Please contact support.</span>
+          <div className="bg-white border border-blue-400 text-blue-700 px-6 py-8 rounded-2xl shadow-xl mb-6">
+            <strong className="font-bold text-2xl mb-2 block">Select Your Role</strong>
+            <span className="block mb-4">Please choose whether you want to use ZEDLOCA as a buyer or seller. This will configure your account.</span>
+            <Auth onRoleSelected={handleRoleSelected} />
           </div>
           <button 
             onClick={() => auth.signOut()}
-            className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
+            className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors mt-4"
           >
             Sign Out
           </button>

@@ -4,7 +4,7 @@ import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 
-function Auth() {
+function Auth({ onRoleSelected }) {
   const [user, setUser] = React.useState(null);
   const [role, setRole] = React.useState(null);
   const [showRoleSelect, setShowRoleSelect] = React.useState(false);
@@ -14,13 +14,19 @@ function Auth() {
     const unsubscribe = auth.onAuthStateChanged(async (u) => {
       setUser(u);
       if (u) {
-        // Check if user has a role in Firestore
+        // Always enable role selection for new users (no Firestore doc or no role)
         const userRef = doc(db, 'users', u.uid);
         const userSnap = await getDoc(userRef);
-        if (userSnap.exists() && userSnap.data().role) {
-          setRole(userSnap.data().role);
-          setShowRoleSelect(false);
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          if (data.role) {
+            setRole(data.role);
+            setShowRoleSelect(false);
+          } else {
+            setShowRoleSelect(true);
+          }
         } else {
+          // New user: show role selection
           setShowRoleSelect(true);
         }
       } else {
@@ -62,6 +68,9 @@ function Auth() {
       }, { merge: true });
       setRole(selectedRole);
       setShowRoleSelect(false);
+      if (onRoleSelected) {
+        onRoleSelected(selectedRole);
+      }
     } catch (err) {
       alert('Failed to set role: ' + err.message);
     }
