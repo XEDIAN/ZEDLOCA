@@ -496,7 +496,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
           onClick={onBack}
         >
           <span className="text-xl">⬅️</span>
-          Back to Map
+          Back to Menu
         </button>
       </footer>
 
@@ -862,7 +862,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
           onClick={onBack}
         >
           <span className="text-xl">⬅️</span>
-          Back to Map
+          Back to Menu
         </button>
       </footer>
     </div>

@@ -65,6 +65,7 @@ const MainApp = () => {
   const [sharedSellerId, setSharedSellerId] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [isFirstLogin, setIsFirstLogin] = useState(false);
 
 
 
@@ -113,6 +114,32 @@ const MainApp = () => {
             const userRole = userSnap.data().role;
             console.log('User role loaded:', userRole);
             setRole(userRole);
+            // Redirect buyer to stores page after login
+            if (userRole === 'buyer') {
+              setShowBuyerStores(true);
+              setShowMap(false);
+              setShowListings(false);
+              setShowSellerListings(null);
+              setShowBuyerMessages(false);
+              setShowBuyerMyOrders(false);
+              setShowBuyerMap(false);
+              setShowSellerOrders(false);
+              setShowSellerProfile(false);
+              setShowPlaceOrderPage(false);
+            }
+            // Redirect seller to listings page after login
+            if (userRole === 'seller') {
+              setShowListings(true);
+              setShowMap(false);
+              setShowBuyerStores(false);
+              setShowSellerListings(null);
+              setShowBuyerMessages(false);
+              setShowBuyerMyOrders(false);
+              setShowBuyerMap(false);
+              setShowSellerOrders(false);
+              setShowSellerProfile(false);
+              setShowPlaceOrderPage(false);
+            }
           } else {
             console.log('No role found in Firestore, setting to null');
             setRole(null);
@@ -724,7 +751,7 @@ const MainApp = () => {
             style={{ minWidth: '120px' }}
             onClick={() => setShowListings(false)}
           >
-            Back
+            Back to Menu
           </button>
         </div>
       </div>
