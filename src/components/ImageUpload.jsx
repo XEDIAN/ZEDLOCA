@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { uploadFileToS3, validateFile, compressImage } from '../utils/s3Upload';
+import { uploadImageToFirebase } from '../utils/firebaseStorageUpload';
+import { validateFile, compressImage } from '../utils/s3Upload';
 
 /**
  * Image Upload Component
@@ -36,7 +37,7 @@ function ImageUpload({ onUpload, onError, userId, accept = "image/*,video/*", mu
         // Compress image if it's an image file
         const fileToUpload = file.type.startsWith('image/') ? await compressImage(file) : file;
         
-        const url = await uploadFileToS3(fileToUpload, userId);
+        const url = await uploadImageToFirebase(fileToUpload, userId);
         return { file, url, type: file.type };
       });
 

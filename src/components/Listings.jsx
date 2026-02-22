@@ -14,6 +14,7 @@ function Listings({ userId }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [uploadedImages, setUploadedImages] = useState([]);
+  const [imageUploadKey, setImageUploadKey] = useState(0);
 
   const [editPromoModalOpen, setEditPromoModalOpen] = useState(false);
   const [selectedListingForPromo, setSelectedListingForPromo] = useState(null);
@@ -131,6 +132,8 @@ function Listings({ userId }) {
       });
 
       setForm({ title: '', price: '', description: '', category: '' });
+      setUploadedImages([]);
+      setImageUploadKey(prev => prev + 1); // Reset ImageUpload component
       setSuccessMessage('Listing created successfully!');
       setErrorMessage('');
 
@@ -350,7 +353,7 @@ function Listings({ userId }) {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Images</label>
-            <ImageUpload onImagesUploaded={setUploadedImages} />
+            <ImageUpload key={imageUploadKey} onUpload={setUploadedImages} userId={userId} onError={(msg) => alert(msg)} />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">

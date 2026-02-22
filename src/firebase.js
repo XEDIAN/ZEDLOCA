@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCgC8HWjuyT7jVLubWFziFX6eYS_B28aAQ",
   authDomain: "zedloca.firebaseapp.com",
   projectId: "zedloca",
-  storageBucket: "zedloca.appspot.com",
+  storageBucket: "zedloca.firebasestorage.app",
   messagingSenderId: "977523495380",
   appId: "1:977523495380:web:e75b89fa7601fc9e9ac641"
 };
