@@ -371,15 +371,15 @@ const StaffDashboard = () => {
         .map(user => [user.location.lat, user.location.lng, 0.5]);
     } else if (heatmapType === 'sellers') {
       data = sellers
-        .filter(seller => seller.lat && seller.lng)
-        .map(seller => [seller.lat, seller.lng, 0.7]);
+        .filter(seller => seller.location && seller.location.lat && seller.location.lng)
+        .map(seller => [seller.location.lat, seller.location.lng, 0.7]);
     } else if (heatmapType === 'listings') {
       // Group listings by seller location
       const locationCounts = {};
       listings.forEach(listing => {
         const seller = sellers.find(s => s.id === listing.sellerId);
-        if (seller && seller.lat && seller.lng) {
-          const key = `${seller.lat},${seller.lng}`;
+        if (seller && seller.location && seller.location.lat && seller.location.lng) {
+          const key = `${seller.location.lat},${seller.location.lng}`;
           locationCounts[key] = (locationCounts[key] || 0) + 1;
         }
       });
@@ -867,13 +867,29 @@ const StaffDashboard = () => {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {user.location && user.location.lat && user.location.lng
-                                  ? `${user.location.lat.toFixed(2)}, ${user.location.lng.toFixed(2)}`
+                                  ? `${user.location.lat.toFixed(4)}, ${user.location.lng.toFixed(4)}`
                                   : 'Not set'}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {user.location && user.location.accuracy
-                                  ? `${user.location.accuracy.toFixed(0)}m`
-                                  : 'N/A'}
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {user.location && user.location.accuracy ? (
+                                  <div className="flex items-center">
+                                    <span className="text-sm text-gray-500 mr-1">
+                                      {user.location.accuracy.toFixed(0)}m
+                                    </span>
+                                    <span className={`px-2 py-0.5 text-xs rounded-full ${
+                                      user.location.accuracy <= 10 ? 'bg-green-100 text-green-800' :
+                                      user.location.accuracy <= 25 ? 'bg-blue-100 text-blue-800' :
+                                      user.location.accuracy <= 50 ? 'bg-yellow-100 text-yellow-800' :
+                                      'bg-red-100 text-red-800'
+                                    }`}>
+                                      {user.location.accuracy <= 10 ? 'Excellent' :
+                                       user.location.accuracy <= 25 ? 'Good' :
+                                       user.location.accuracy <= 50 ? 'Fair' : 'Poor'}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-sm text-gray-500">N/A</span>
+                                )}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {user.location?.updatedAt

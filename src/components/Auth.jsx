@@ -106,8 +106,9 @@ function Auth({ onRoleSelected }) {
           </div>
         ) : null
       ) : (
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex flex-col items-center space-y-4 w-full">
           <button onClick={handleSignIn} className="bg-gray-700 text-white px-3 py-2 md:px-4 md:py-2 rounded text-base md:text-lg w-full max-w-xs">Sign in with Google</button>
+          <a href="/staff-login" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 md:px-4 md:py-2 rounded text-base md:text-lg w-full max-w-xs text-center transition-colors">Staff Portal</a>
         </div>
       )}
     </div>

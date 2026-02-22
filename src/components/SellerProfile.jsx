@@ -89,8 +89,8 @@ const SellerProfile = ({ sellerId, onBack }) => {
 
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000
+          timeout: 15000,
+          maximumAge: 0
         });
       });
 
@@ -98,8 +98,14 @@ const SellerProfile = ({ sellerId, onBack }) => {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
         accuracy: position.coords.accuracy,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        updatedAt: serverTimestamp()
       };
+
+      // Save immediately to Firebase
+      await updateDoc(doc(db, 'sellers', sellerId), {
+        location: location
+      });
 
       setProfile(prev => ({ ...prev, location }));
       setLocationError('Location updated successfully!');
@@ -110,6 +116,14 @@ const SellerProfile = ({ sellerId, onBack }) => {
     } finally {
       setLocationLoading(false);
     }
+  };
+
+  // Get accuracy quality based on GPS accuracy
+  const getAccuracyQuality = (accuracy) => {
+    if (accuracy <= 10) return { label: 'Excellent', color: 'text-green-600', bg: 'bg-green-100' };
+    if (accuracy <= 25) return { label: 'Good', color: 'text-blue-600', bg: 'bg-blue-100' };
+    if (accuracy <= 50) return { label: 'Fair', color: 'text-yellow-600', bg: 'bg-yellow-100' };
+    return { label: 'Poor', color: 'text-red-600', bg: 'bg-red-100' };
   };
 
   const handleShareWhatsApp = () => {
@@ -332,8 +346,18 @@ const SellerProfile = ({ sellerId, onBack }) => {
                     : 'No location set'
                   }
                 </p>
+                {profile.location && profile.location.accuracy && (
+                  <div className="flex items-center mt-1">
+                    <p className="text-sm text-blue-600">
+                      Accuracy: ±{Math.round(profile.location.accuracy)}m
+                    </p>
+                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${getAccuracyQuality(profile.location.accuracy).bg} ${getAccuracyQuality(profile.location.accuracy).color}`}>
+                      {getAccuracyQuality(profile.location.accuracy).label}
+                    </span>
+                  </div>
+                )}
                 {locationError && (
-                  <p className={`text-sm mt-1 ${locationError.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-sm mt-1 ${locationError.toLowerCase().includes('success') ? 'text-green-600' : 'text-red-600'}`}>
                     {locationError}
                   </p>
                 )}
@@ -350,11 +374,23 @@ const SellerProfile = ({ sellerId, onBack }) => {
                   </>
                 ) : (
                   <>
-                    Update Location
+                    📍 Update Location
                   </>
                 )}
               </button>
             </div>
+            
+            {/* Accuracy Warning */}
+            {profile.location && profile.location.accuracy > 50 && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm font-medium text-red-800">⚠️ Low Location Accuracy</p>
+                <p className="text-xs text-red-600 mt-1">
+                  Your current location accuracy is poor (±{Math.round(profile.location.accuracy)}m). 
+                  This may affect delivery accuracy. Try updating your location outdoors or enable 
+                  high-accuracy location mode in your device settings.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

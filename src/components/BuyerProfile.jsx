@@ -113,17 +113,13 @@ const BuyerProfile = ({ buyerId }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number
             </label>
-            {viewOnly ? (
-              <p className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">{profile.phone || 'Not specified'}</p>
-            ) : (
-              <input
-                type="tel"
-                value={profile.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="+1 (555) 123-4567"
-              />
-            )}
+            <input
+              type="tel"
+              value={profile.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="+1 (555) 123-4567"
+            />
           </div>
         </div>
         <div className="mt-4">
