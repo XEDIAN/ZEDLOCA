@@ -6,21 +6,21 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
-    port: 5173,
-    host: true,
+    port: 5193, // Use the actual port the server is running on
+    host: '0.0.0.0', // Allow connections from any host
     hmr: {
-      clientPort: 5173,
-      port: 5173
+      clientPort: 5193,
+      port: 5193,
+      overlay: false,
+      host: '0.0.0.0' // Allow HMR from any host
     },
+    cors: true, // Enable CORS
     allowedHosts: [
-      'db45323d2527.ngrok-free.app',
-      'd4a1d67ab524.ngrok-free.app',
-      'a4312e51d73f.ngrok-free.app',
-      '6029258da1bf.ngrok-free.app',
-      '94035653dfa8.ngrok-free.app',
-      '71ac22027af7.ngrok-free.app',
       'unmethodizing-precongressional-hudson.ngrok-free.dev',
-      /\.ngrok-free\.app$/ // allow any ngrok-free.app subdomain for convenience
-    ],
-  },
+      'localhost',
+      '127.0.0.1',
+      /\.ngrok-free\.app$/,
+      /\.ngrok-free\.dev$/
+    ]
+  }
 })

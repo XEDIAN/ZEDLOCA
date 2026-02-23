@@ -56,7 +56,9 @@ function ImageUpload({ onUpload, onError = () => {}, userId, accept = "image/*,v
       
     } catch (error) {
       console.error('Upload failed:', error);
-      onError(error.message || 'Failed to upload files. Please try again.');
+      if (typeof onError === 'function') {
+        onError(error.message || 'Failed to upload files. Please try again.');
+      }
     } finally {
       setUploading(false);
     }
@@ -111,6 +113,7 @@ function ImageUpload({ onUpload, onError = () => {}, userId, accept = "image/*,v
         multiple={multiple && files.length < maxFiles}
         onChange={handleFileInputChange}
         className="hidden"
+        capture="environment" // Enable camera access on mobile
       />
 
       {/* Drop Zone */}
@@ -131,10 +134,13 @@ function ImageUpload({ onUpload, onError = () => {}, userId, accept = "image/*,v
           <div className="flex flex-col items-center">
             <div className="text-4xl mb-2">📁</div>
             <p className="text-gray-600 mb-2">
-              Drag and drop files here, or click to select files
+              Tap to select files or use camera
             </p>
             <p className="text-xs text-gray-500">
               Supported: JPEG, PNG, GIF, MP4, MOV (Max 5MB each)
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Tip: On mobile, tap to access camera or gallery
             </p>
             {multiple && (
               <p className="text-xs text-gray-500 mt-1">

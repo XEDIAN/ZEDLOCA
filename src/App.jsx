@@ -27,6 +27,10 @@ import SellerOrders from './components/SellerOrders';
 import SellerProfile from './components/SellerProfile';
 import SellerListings from './components/SellerListings';
 import { setNgrokUrl } from './utils/linkUtils';
+import versionSync from './utils/versionSync';
+import VersionSyncIndicator from './components/VersionSyncIndicator';
+import CrossDeviceTestPanel from './components/CrossDeviceTestPanel';
+import { useUIConsistency } from './utils/uiConsistency';
 import { FaMapMarkerAlt, FaComments, FaDollarSign, FaUserCheck, FaShoppingCart, FaStore, FaArrowRight, FaUserShield } from 'react-icons/fa';
 
 
@@ -794,6 +798,8 @@ const MainApp = () => {
 
   return (
     <>
+      <VersionSyncIndicator />
+      <CrossDeviceTestPanel />
       <MapView
         onViewStore={setShowSellerListings}
         onBack={() => setShowMap(false)}
