@@ -419,11 +419,11 @@ function Listings({ userId }) {
                           key={index}
                           src={image}
                           alt={`${listing.title} ${index + 1}`}
-                          className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded border border-gray-200 flex-shrink-0"
+                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded border border-gray-200 flex-shrink-0"
                         />
                       ))}
                       {listing.images.length > 3 && (
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
                           +{listing.images.length - 3}
                         </div>
                       )}

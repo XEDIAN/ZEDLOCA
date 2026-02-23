@@ -1,13 +1,10 @@
-# Task: Move footer buttons to middle of page
+# Image Size Increase Task
 
-## TODO List:
-- [x] Analyze the codebase and understand the structure
-- [x] Create a plan and get user confirmation
-- [ ] Create renderMainMenuButtons() function with enlarged, well-styled buttons
-- [ ] Insert the buttons section in the middle of the landing page (after Auth section)
-- [ ] Keep the footer minimal (remove duplicate buttons or simplify)
+## TODO List
+- [ ] Update BuyerStores.jsx - Increase main listing images, seller store view images, recently viewed images, and seller photos
+- [ ] Update Listings.jsx - Increase product preview images
+- [ ] Update SellerDashboard.jsx - Increase product preview image size
+- [ ] Update SellerMap.jsx - Increase map popup product image size
 
-## Progress:
-- Started: Analyzed App.jsx and found the renderFooter() function
-- Plan approved: Move buttons to middle of page, enlarge and style them
-- Next step: Implement the changes in App.jsx
+## Changes Summary
+Increase image sizes across all store-related components to make images more visible.

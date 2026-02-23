@@ -364,11 +364,11 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                       <img
                         src={seller.photoURL}
                         alt={seller.displayName}
-                        className="w-16 h-16 rounded-full border-4 border-teal-400"
+                        className="w-24 h-24 rounded-full border-4 border-teal-400"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-r from-teal-400 to-purple-500 flex items-center justify-center">
-                        <span className="text-2xl text-white font-bold">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-r from-teal-400 to-purple-500 flex items-center justify-center">
+                        <span className="text-3xl text-white font-bold">
                           {seller.displayName?.charAt(0)?.toUpperCase() || 'S'}
                         </span>
                       </div>
@@ -448,7 +448,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                     {listing.images && listing.images.length > 0 && (
                       <div className="mb-4 flex gap-2 overflow-x-auto rounded-lg p-2 bg-gray-50">
                         {listing.images.slice(0, 4).map((img, idx) => (
-                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg shadow-sm" />
+                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg shadow-sm" />
                         ))}
                       </div>
                     )}
@@ -549,9 +549,9 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                     }}
                   >
                     {listing.images && listing.images.length > 0 && (
-                      <img src={listing.images[0]} alt={listing.title} className="w-16 h-16 object-cover rounded mb-2" />
+                      <img src={listing.images[0]} alt={listing.title} className="w-24 h-24 object-cover rounded mb-2" />
                     )}
-                    <div className="text-xs font-medium text-gray-800 truncate w-20">{listing.title}</div>
+                    <div className="text-xs font-medium text-gray-800 truncate w-24">{listing.title}</div>
                     <div className="text-xs text-gray-600">{formatPrice(listing.price)}</div>
                   </div>
                 ))}
@@ -698,7 +698,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                     {listing.images && listing.images.length > 0 && (
                       <div className="mb-4 flex gap-2 overflow-x-auto rounded-lg p-2 bg-gray-50">
                         {listing.images.slice(0, 4).map((img, idx) => (
-                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-16 h-16 object-cover rounded-lg shadow-sm" />
+                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-24 h-24 object-cover rounded-lg shadow-sm" />
                         ))}
                       </div>
                     )}
@@ -711,11 +711,11 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                             <img
                               src={seller.photoURL}
                               alt={seller.displayName}
-                              className="w-10 h-10 rounded-full border-2 border-teal-400"
+                              className="w-16 h-16 rounded-full border-2 border-teal-400"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-teal-400 to-purple-500 flex items-center justify-center">
-                              <span className="text-sm text-white font-bold">
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-teal-400 to-purple-500 flex items-center justify-center">
+                              <span className="text-lg text-white font-bold">
                                 {seller.displayName?.charAt(0)?.toUpperCase() || 'S'}
                               </span>
                             </div>

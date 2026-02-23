@@ -106,7 +106,7 @@ function SellerDashboard({ seller }) {
           placeholder="https://example.com/image.jpg"
         />
         {imageURL && (
-          <img src={imageURL} alt="Product Preview" className="mt-2 w-24 h-24 object-cover rounded" />
+          <img src={imageURL} alt="Product Preview" className="mt-2 w-32 h-32 object-cover rounded" />
         )}
       </div>
 

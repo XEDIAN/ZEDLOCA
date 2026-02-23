@@ -40,7 +40,7 @@ function SellerMap() {
                   <img
                     src={seller.image}
                     alt="Product"
-                    className="mt-2 w-24 h-24 object-cover rounded"
+                    className="mt-2 w-32 h-32 object-cover rounded"
                   />
                 )}
               </Popup>
