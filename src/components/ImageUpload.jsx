@@ -12,7 +12,7 @@ import { validateFile, compressImage } from '../utils/s3Upload';
  * @param {boolean} props.multiple - Allow multiple file uploads
  * @param {number} props.maxFiles - Maximum number of files (default: 5)
  */
-function ImageUpload({ onUpload, onError, userId, accept = "image/*,video/*", multiple = false, maxFiles = 5 }) {
+function ImageUpload({ onUpload, onError = () => {}, userId, accept = "image/*,video/*", multiple = false, maxFiles = 5 }) {
   const [uploading, setUploading] = useState(false);
   const [files, setFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -56,7 +56,7 @@ function ImageUpload({ onUpload, onError, userId, accept = "image/*,video/*", mu
       
     } catch (error) {
       console.error('Upload failed:', error);
-      onError('Failed to upload files. Please try again.');
+      onError(error.message || 'Failed to upload files. Please try again.');
     } finally {
       setUploading(false);
     }

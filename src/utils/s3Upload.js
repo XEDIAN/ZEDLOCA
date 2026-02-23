@@ -1,20 +1,9 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
-
-// S3 Configuration
-const s3Client = new S3Client({
-  region: 'us-east-1', // Change to your preferred region
-  credentials: {
-    accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || 'your-access-key',
-    secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || 'your-secret-key',
-  },
-});
 
 const BUCKET_NAME = import.meta.env.VITE_S3_BUCKET_NAME || 'zedloca-listings';
 
 /**
- * Upload file to S3 and return the URL
+ * Upload file to S3 using fetch API for better browser compatibility
  * @param {File} file - The file to upload
  * @param {string} userId - The user ID for folder organization
  * @returns {Promise<string>} - The S3 URL of the uploaded file
@@ -32,54 +21,45 @@ export async function uploadFileToS3(file, userId) {
   const contentType = file.type || 'application/octet-stream';
 
   try {
-    // Upload file to S3
-    const command = new PutObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: fileName,
-      Body: file,
-      ContentType: contentType,
-      ACL: 'public-read', // Make file publicly accessible
+    // Get presigned URL from backend
+    const response = await fetch('/api/s3-upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fileName: fileName,
+        contentType: contentType,
+        userId: userId
+      })
     });
 
-    await s3Client.send(command);
+    if (!response.ok) {
+      throw new Error('Failed to get upload URL');
+    }
+
+    const { uploadUrl, publicUrl } = await response.json();
     
-    // Return the public URL
-    return `https://${BUCKET_NAME}.s3.amazonaws.com/${fileName}`;
+    // Upload file to S3 using fetch
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': contentType,
+      },
+      body: file
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload file to S3');
+    }
+
+    return publicUrl;
   } catch (error) {
     console.error('Error uploading file to S3:', error);
     throw new Error('Failed to upload file');
   }
 }
 
-/**
- * Generate a presigned URL for uploading files
- * @param {string} fileName - The name of the file
- * @param {string} contentType - The content type of the file
- * @param {string} userId - The user ID for folder organization
- * @returns {Promise<string>} - The presigned URL
- */
-export async function getPresignedUploadUrl(fileName, contentType, userId) {
-  const uniqueFileName = `${userId}/${uuidv4()}.${fileName.split('.').pop()}`;
-  
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: uniqueFileName,
-    ContentType: contentType,
-    ACL: 'public-read',
-  });
-
-  try {
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // URL expires in 1 hour
-    return {
-      url,
-      key: uniqueFileName,
-      publicUrl: `https://${BUCKET_NAME}.s3.amazonaws.com/${uniqueFileName}`
-    };
-  } catch (error) {
-    console.error('Error generating presigned URL:', error);
-    throw new Error('Failed to generate upload URL');
-  }
-}
 
 /**
  * Validate file before upload
