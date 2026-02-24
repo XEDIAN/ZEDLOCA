@@ -12,17 +12,43 @@ import 'leaflet.heat';
 const isMobile = typeof window !== "undefined" && window.innerWidth <= 600;
 const sellerIcon = new L.Icon({
   iconUrl: 'https://cdn-icons-png.flaticon.com/512/190/190411.png',
-  iconSize: isMobile ? [22, 22] : [32, 32],
-  iconAnchor: isMobile ? [11, 22] : [16, 32],
-  popupAnchor: isMobile ? [0, -22] : [0, -32],
+  iconSize: isMobile ? [28, 28] : [38, 38],
+  iconAnchor: isMobile ? [14, 28] : [19, 38],
+  popupAnchor: isMobile ? [0, -28] : [0, -38],
 });
 
 const promotedIcon = new L.Icon({
   iconUrl: 'https://cdn-icons-png.flaticon.com/512/616/616490.png',
-  iconSize: isMobile ? [24, 24] : [36, 36],
-  iconAnchor: isMobile ? [12, 24] : [18, 36],
-  popupAnchor: isMobile ? [0, -24] : [0, -36],
+  iconSize: isMobile ? [30, 30] : [42, 42],
+  iconAnchor: isMobile ? [15, 30] : [21, 42],
+  popupAnchor: isMobile ? [0, -30] : [0, -42],
 });
+
+const userLocationIcon = new L.Icon({
+  iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+  iconSize: isMobile ? [20, 20] : [28, 28],
+  iconAnchor: isMobile ? [10, 10] : [14, 14],
+  popupAnchor: isMobile ? [0, -20] : [0, -28],
+});
+
+// Map style options
+const MAP_STYLES = {
+  standard: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
+    name: 'Standard'
+  },
+  light: {
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; CartoDB',
+    name: 'Light'
+  },
+  dark: {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; CartoDB',
+    name: 'Dark'
+  }
+};
 
 function haversine(lat1, lon1, lat2, lon2) {
   if ([lat1, lon1, lat2, lon2].some(v => typeof v !== 'number')) return Infinity;
@@ -256,9 +282,9 @@ useEffect(() => {
   return (
     <div className="h-screen w-screen relative bg-gray-50">
       {/* Header with Search and Controls */}
-      <div className="absolute top-0 left-0 right-0 z-40 bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
-          <div className="flex flex-col gap-2 sm:gap-4 items-center">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg border-b">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3">
+          <div className="flex flex-col gap-2 sm:gap-3 items-center">
             {/* Back Button and Search Row */}
             <div className="flex w-full gap-2 items-center">
               <button
@@ -279,20 +305,30 @@ useEffect(() => {
                   placeholder="Search sellers..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-8 sm:pl-10 pr-8 sm:pr-10 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                <svg className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3.5 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-2.5 sm:left-3 top-2.5 sm:top-3 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-2.5 top-2.5 sm:top-3 text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Filters Row */}
-            <div className="flex w-full gap-2 items-center overflow-x-auto">
+            <div className="flex w-full gap-2 items-center overflow-x-auto pb-1">
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-shrink-0"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-shrink-0"
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat}>
@@ -304,7 +340,7 @@ useEffect(() => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-shrink-0"
+                className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-shrink-0"
               >
                 <option value="distance">Distance</option>
                 <option value="name">Name</option>
@@ -315,7 +351,7 @@ useEffect(() => {
               <div className="flex bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
                 <button
                   onClick={() => setViewMode('map')}
-                  className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     viewMode === 'map' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -323,7 +359,7 @@ useEffect(() => {
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -336,25 +372,24 @@ useEffect(() => {
       </div>
 
       {/* Results Count */}
-      <div className="absolute top-20 left-4 z-30 bg-white px-3 py-2 rounded-lg shadow-sm border">
-        <span className="text-sm text-gray-600">
-          {filteredAndSortedSellers.length} seller{filteredAndSortedSellers.length !== 1 ? 's' : ''} found
+      <div className="fixed top-24 sm:top-28 left-4 z-40 bg-white px-3 py-1.5 rounded-lg shadow-md border">
+        <span className="text-sm font-medium text-gray-700">
+          {filteredAndSortedSellers.length} seller{filteredAndSortedSellers.length !== 1 ? 's' : ''}
         </span>
       </div>
 
-{/* Map View */}
+      {/* Map View */}
       {viewMode === 'map' && isMounted && (
-        <div className="pt-24 h-full">
+        <div className="pt-24 sm:pt-28 h-full">
           <MapContainer
             center={[-15.417, 28.283]}
             zoom={13}
             style={{ height: '100%', width: '100%' }}
-            className="z-0"
             zoomControl={false}
           >
             <TileLayer
               attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-              url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <MapContent
               sellers={filteredAndSortedSellers}
@@ -372,7 +407,7 @@ useEffect(() => {
 
       {/* List View */}
       {viewMode === 'list' && (
-        <div className="pt-20 sm:pt-24 h-full overflow-y-auto bg-gray-50">
+        <div className="pt-28 sm:pt-32 h-full overflow-y-auto bg-gray-50">
           <div className="max-w-4xl mx-auto p-4">
             <div className="space-y-4">
               {filteredAndSortedSellers.map(seller => {

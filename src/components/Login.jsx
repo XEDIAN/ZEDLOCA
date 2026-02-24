@@ -95,16 +95,17 @@ function Login({ onLogin }) {
         </svg>
         {loading ? 'Signing in...' : 'Sign in with Google'}
       </button>
-      
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <p className="text-center text-gray-500 text-sm mb-2">For Staff Members</p>
-        <a
-          href="/staff-login"
-          className="block w-full text-center bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded"
-        >
-          Staff Portal
-        </a>
-      </div>
+
+      {/* Staff Portal Button */}
+      <button
+        className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white py-2 px-4 rounded mt-2 border border-gray-500 flex items-center justify-center"
+        onClick={() => (window.location.href = '/staff-login')}
+      >
+        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        </svg>
+        Staff Portal
+      </button>
     </div>
   )
 }
