@@ -14,8 +14,6 @@ import DraggableSidebar from './components/DraggableSidebar';
 import Listings from './components/Listings';
 import RequireRole from './components/RequireRole';
 import SplashScreen from './components/SplashScreen';
-import StaffLogin from './components/StaffLogin';
-import StaffDashboard from './components/StaffDashboard';
 
 import SellerInbox from './components/SellerInbox';
 import BuyerMessages from './components/BuyerMessages';
@@ -26,6 +24,8 @@ import PlaceOrderPage from './pages/PlaceOrderPage';
 import SellerOrders from './components/SellerOrders';
 import SellerProfile from './components/SellerProfile';
 import SellerListings from './components/SellerListings';
+import StaffLogin from './components/StaffLogin';
+import StaffDashboard from './components/StaffDashboard';
 import { setNgrokUrl } from './utils/linkUtils';
 import versionSync from './utils/versionSync';
 import VersionSyncIndicator from './components/VersionSyncIndicator';

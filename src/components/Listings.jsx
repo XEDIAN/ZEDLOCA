@@ -4,6 +4,7 @@ import { collection, addDoc, query, where, onSnapshot, orderBy, updateDoc, doc, 
 import ImageUpload from './ImageUpload';
 import { useCurrency } from './CurrencyContext';
 import EditPromotionModal from './EditPromotionModal';
+import ImageLightbox from './ImageLightbox';
 
 function Listings({ userId }) {
   const { formatPrice } = useCurrency();
@@ -18,6 +19,9 @@ function Listings({ userId }) {
 
   const [editPromoModalOpen, setEditPromoModalOpen] = useState(false);
   const [selectedListingForPromo, setSelectedListingForPromo] = useState(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
     if (!userId) return;
@@ -405,17 +409,27 @@ function Listings({ userId }) {
                 {/* Images Preview */}
                 {listing.images && listing.images.length > 0 && (
                   <div className="mb-3">
-                    <div className="flex gap-1 overflow-x-auto">
+                    <div className="flex gap-2 overflow-x-auto">
                       {listing.images.slice(0, 3).map((image, index) => (
                         <img
                           key={index}
                           src={image}
                           alt={`${listing.title} ${index + 1}`}
-                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded border border-gray-200 flex-shrink-0"
+                          className="w-32 h-32 sm:w-40 sm:h-40 object-cover rounded border border-gray-200 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => {
+                            setLightboxImages(listing.images);
+                            setLightboxIndex(index);
+                            setLightboxOpen(true);
+                          }}
                         />
                       ))}
                       {listing.images.length > 3 && (
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-xs text-gray-500 flex-shrink-0">
+                        <div className="w-32 h-32 sm:w-40 sm:h-40 bg-gray-100 rounded border border-gray-200 flex items-center justify-center text-xs text-gray-500 flex-shrink-0 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => {
+                            setLightboxImages(listing.images);
+                            setLightboxIndex(3);
+                            setLightboxOpen(true);
+                          }}>
                           +{listing.images.length - 3}
                         </div>
                       )}
@@ -486,6 +500,14 @@ function Listings({ userId }) {
           initialPromoActive={selectedListingForPromo.promo_active || false}
         />
       )}
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        isOpen={lightboxOpen}
+        images={lightboxImages}
+        initialIndex={lightboxIndex}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   );
 }

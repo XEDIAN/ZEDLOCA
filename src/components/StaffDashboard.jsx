@@ -9,6 +9,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
 import { isStaffSessionValid, refreshStaffSession, clearStaffSession, getRemainingSessionTime, isSessionExpiringSoon } from '../utils/staffAuth';
+import ImageLightbox from './ImageLightbox';
 
 const StaffDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -16,6 +17,8 @@ const StaffDashboard = () => {
   const [sellers, setSellers] = useState([]);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
@@ -50,10 +53,11 @@ const StaffDashboard = () => {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
-  // Geographic heatmap states
+// Geographic heatmap states
   const [heatmapType, setHeatmapType] = useState('users');
   const [mapCenter, setMapCenter] = useState([40.7128, -74.0060]); // Default to NYC
   const [mapZoom, setMapZoom] = useState(10);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -88,13 +92,20 @@ const StaffDashboard = () => {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
-  useEffect(() => {
-    // Check authentication
-    const isAuthenticated = localStorage.getItem('staffAuthenticated');
-    if (!isAuthenticated) {
+  // Image Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+useEffect(() => {
+    // Check authentication using proper session validation from staffAuth
+    if (!isStaffSessionValid()) {
       window.location.href = '/staff-login';
       return;
     }
+
+    // Set mounted state
+    setIsMounted(true);
 
     // Set up real-time listeners
     const usersUnsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
@@ -219,10 +230,6 @@ const StaffDashboard = () => {
     setActivityLogs(logs);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('staffAuthenticated');
-    window.location.href = '/';
-  };
 
   const suspendUser = async (userId) => {
     try {
@@ -435,7 +442,10 @@ const StaffDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -450,13 +460,6 @@ const StaffDashboard = () => {
               <FaUserShield className="text-blue-600 text-2xl mr-3" />
               <h1 className="text-2xl font-bold text-gray-900">ZEDLOCA Staff Dashboard</h1>
             </div>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <FaSignOutAlt className="mr-2" />
-              Logout
-            </button>
           </div>
         </div>
       </header>
@@ -572,6 +575,7 @@ const StaffDashboard = () => {
                           <div>
                             <p className="text-sm font-medium text-blue-600">Total Users</p>
                             <p className="text-2xl font-bold text-blue-900">{users.length}</p>
+                            {users.length === 0 && <p className="text-xs text-blue-400">No users yet</p>}
                           </div>
                         </div>
                       </div>
@@ -581,6 +585,7 @@ const StaffDashboard = () => {
                           <div>
                             <p className="text-sm font-medium text-green-600">Active Sellers</p>
                             <p className="text-2xl font-bold text-green-900">{sellers.length}</p>
+                            {sellers.length === 0 && <p className="text-xs text-green-400">No sellers yet</p>}
                           </div>
                         </div>
                       </div>
@@ -590,6 +595,7 @@ const StaffDashboard = () => {
                           <div>
                             <p className="text-sm font-medium text-purple-600">Total Listings</p>
                             <p className="text-2xl font-bold text-purple-900">{listings.length}</p>
+                            {listings.length === 0 && <p className="text-xs text-purple-400">No listings yet</p>}
                           </div>
                         </div>
                       </div>
@@ -598,11 +604,27 @@ const StaffDashboard = () => {
                           <FaChartLine className="text-orange-600 text-2xl mr-3" />
                           <div>
                             <p className="text-sm font-medium text-orange-600">Platform Health</p>
-                            <p className="text-2xl font-bold text-orange-900">Good</p>
+                            <p className="text-2xl font-bold text-orange-900">
+                              {users.length === 0 && sellers.length === 0 && listings.length === 0 ? 'No Data' : 'Good'}
+                            </p>
                           </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* No Data Message */}
+                    {users.length === 0 && sellers.length === 0 && listings.length === 0 && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center mb-8">
+                        <FaUserShield className="mx-auto text-blue-500 text-4xl mb-4" />
+                        <h3 className="text-xl font-semibold text-blue-800 mb-2">Welcome to ZEDLOCA Staff Dashboard</h3>
+                        <p className="text-blue-600 mb-4">
+                          No data available yet. The platform is ready for users, sellers, and listings to be added.
+                        </p>
+                        <p className="text-sm text-blue-500">
+                          Data will appear here once users start registering and creating listings.
+                        </p>
+                      </div>
+                    )}
 
                     {/* Charts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -659,54 +681,69 @@ const StaffDashboard = () => {
                       </ResponsiveContainer>
                     </div>
 
-                    {/* Geographic Analytics */}
-                    <div className="bg-white p-6 rounded-lg border mb-8">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Geographic Analytics</h3>
-                        <div className="flex items-center space-x-2">
-                          <select
-                            value={heatmapType}
-                            onChange={(e) => setHeatmapType(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="users">User Density</option>
-                            <option value="sellers">Seller Density</option>
-                            <option value="listings">Listing Activity</option>
-                          </select>
+{/* Geographic Analytics - Only show when there's location data */}
+                    {isMounted && (users.some(u => u.location?.lat && u.location?.lng) || sellers.some(s => s.lat && s.lng)) ? (
+                      <div className="bg-white p-6 rounded-lg border mb-8">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900">Geographic Analytics</h3>
+                          <div className="flex items-center space-x-2">
+                            <select
+                              value={heatmapType}
+                              onChange={(e) => setHeatmapType(e.target.value)}
+                              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                            >
+                              <option value="users">User Density</option>
+                              <option value="sellers">Seller Density</option>
+                              <option value="listings">Listing Activity</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="h-96 rounded-lg overflow-hidden border">
+                          {isMounted && (
+                            <MapContainer
+                              center={mapCenter}
+                              zoom={mapZoom}
+                              style={{ height: '100%', width: '100%' }}
+                            >
+                              <TileLayer
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                              />
+                              <HeatmapLayer
+                                data={getHeatmapData()}
+                                type={heatmapType}
+                              />
+                            </MapContainer>
+                          )}
+                        </div>
+                        <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+                          <div className="flex items-center space-x-4">
+                            <span>Showing: {heatmapType === 'users' ? users.length : heatmapType === 'sellers' ? sellers.length : listings.length} locations</span>
+                            <span>•</span>
+                            <span>Heat intensity indicates density</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-4 h-4 bg-red-500 rounded"></div>
+                            <span className="text-xs">High</span>
+                            <div className="w-4 h-4 bg-yellow-400 rounded"></div>
+                            <span className="text-xs">Medium</span>
+                            <div className="w-4 h-4 bg-green-400 rounded"></div>
+                            <span className="text-xs">Low</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="h-96 rounded-lg overflow-hidden border">
-                        <MapContainer
-                          center={mapCenter}
-                          zoom={mapZoom}
-                          style={{ height: '100%', width: '100%' }}
-                        >
-                          <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                          />
-                          <HeatmapLayer
-                            data={getHeatmapData()}
-                            type={heatmapType}
-                          />
-                        </MapContainer>
-                      </div>
-                      <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-                        <div className="flex items-center space-x-4">
-                          <span>Showing: {heatmapType === 'users' ? users.length : heatmapType === 'sellers' ? sellers.length : listings.length} locations</span>
-                          <span>•</span>
-                          <span>Heat intensity indicates density</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 bg-red-500 rounded"></div>
-                          <span className="text-xs">High</span>
-                          <div className="w-4 h-4 bg-yellow-400 rounded"></div>
-                          <span className="text-xs">Medium</span>
-                          <div className="w-4 h-4 bg-green-400 rounded"></div>
-                          <span className="text-xs">Low</span>
+                    ) : (
+                      <div className="bg-white p-6 rounded-lg border mb-8">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Geographic Analytics</h3>
+                        <div className="h-96 rounded-lg border bg-gray-50 flex items-center justify-center">
+                          <div className="text-center">
+                            <FaMap className="mx-auto text-gray-300 text-4xl mb-4" />
+                            <p className="text-gray-500">No location data available yet.</p>
+                            <p className="text-sm text-gray-400">Location data will appear here when users and sellers set their locations.</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Recent Activity */}
                     <div className="bg-white p-6 rounded-lg border">
@@ -1105,7 +1142,16 @@ const StaffDashboard = () => {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                   <div className="flex-shrink-0 h-10 w-10">
-                                    <img className="h-10 w-10 rounded-lg object-cover" src={listing.images?.[0] || '/placeholder.jpg'} alt="" />
+                                    <img 
+                                      className="h-10 w-10 rounded-lg object-cover cursor-pointer hover:opacity-75 transition-opacity"
+                                      src={listing.images?.[0] || '/placeholder.jpg'} 
+                                      alt={listing.title}
+                                      onClick={() => {
+                                        setLightboxImages(listing.images || [listing.images?.[0] || '/placeholder.jpg']);
+                                        setLightboxIndex(0);
+                                        setLightboxOpen(true);
+                                      }}
+                                    />
                                   </div>
                                   <div className="ml-4">
                                     <div className="text-sm font-medium text-gray-900">{listing.title}</div>
@@ -1549,7 +1595,12 @@ const StaffDashboard = () => {
                       <img
                         src={selectedItem.images?.[0] || '/placeholder.jpg'}
                         alt={selectedItem.title}
-                        className="w-full h-48 object-cover rounded-lg"
+                        className="w-full h-48 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
+                        onClick={() => {
+                          setLightboxImages(selectedItem.images || [selectedItem.images?.[0] || '/placeholder.jpg']);
+                          setLightboxIndex(0);
+                          setLightboxOpen(true);
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -1581,6 +1632,15 @@ const StaffDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        isOpen={lightboxOpen}
+        images={lightboxImages}
+        currentIndex={lightboxIndex}
+        onClose={() => setLightboxOpen(false)}
+        onImageChange={(index) => setLightboxIndex(index)}
+      />
     </div>
   );
 };

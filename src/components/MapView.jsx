@@ -164,8 +164,10 @@ function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMes
   const [sortBy, setSortBy] = useState('distance'); // 'distance', 'name', 'rating'
   const [loading, setLoading] = useState(true);
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
+    setIsMounted(true);
     const unsub = onSnapshot(collection(db, 'sellers'), (snapshot) => {
       setSellers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
@@ -340,8 +342,8 @@ function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMes
         </span>
       </div>
 
-      {/* Map View */}
-      {viewMode === 'map' && (
+{/* Map View */}
+      {viewMode === 'map' && isMounted && (
         <div className="pt-24 h-full">
           <MapContainer
             center={[-15.417, 28.283]}

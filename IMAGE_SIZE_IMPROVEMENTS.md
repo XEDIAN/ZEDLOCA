@@ -1,40 +1,46 @@
 # Image Size Improvements Summary
 
 ## Overview
-**NOTE: All image size changes have been reverted back to original sizes.**
+This document tracks the image size improvements made to enhance the visibility of product images in stores.
 
-This document was created when image sizes were temporarily increased but has been kept for reference.
-
-## Changes Made
-
-**All image size increases have been reverted back to original sizes:**
+## Latest Changes (Current)
 
 ### 1. BuyerStores Component (`src/components/BuyerStores.jsx`)
-- Main listing images: `w-12 h-12 sm:w-16 sm:h-16` (12x12 to 16x16 pixels)
-- Seller store view images: `w-16 h-16` (16x16 pixels)
+
+**Main listing grid images:**
+- Changed from: `w-24 h-24` (96x96 pixels)
+- Changed to: `w-32 h-32` (128x128 pixels)
+
+**Seller store view images:**
+- Changed from: `w-20 h-20 sm:w-24 sm:h-24` (80-96 pixels)
+- Changed to: `w-28 h-28 sm:w-32 sm:h-32` (112-128 pixels)
+
+**Recently viewed images:**
+- Changed from: `w-24 h-24` (96x96 pixels)
+- Changed to: `w-32 h-32` (128x128 pixels)
 
 ### 2. Listings Component (`src/components/Listings.jsx`)
-- Product preview images: `w-10 h-10 sm:w-12 sm:h-12` (10x10 to 12x12 pixels)
 
-### 3. SellerDashboard Component (`src/components/SellerDashboard.jsx`)
-- Product preview image: `w-24 h-24` (24x24 pixels)
+**Product preview images:**
+- Changed from: `w-24 h-24 sm:w-32 sm:h-32` (96-128 pixels)
+- Changed to: `w-32 h-32 sm:w-40 sm:h-40` (128-160 pixels)
 
-### 4. SellerMap Component (`src/components/SellerMap.jsx`)
-- Map popup product image: `w-24 h-24` (24x24 pixels)
+**Additional changes:**
+- Increased gap between images from `gap-1` to `gap-2` for better spacing
 
-## Current Status
+## Summary of Changes
 
-All components have been reverted to their original image sizes. The application now displays images at their original smaller sizes:
+| Component | Location | Old Size | New Size |
+|-----------|----------|----------|----------|
+| BuyerStores | Main listing grid | 96x96px | 128x128px |
+| BuyerStores | Seller store view | 80-96px | 112-128px |
+| BuyerStores | Recently viewed | 96x96px | 128x128px |
+| Listings | Product preview | 96-128px | 128-160px |
 
-- **BuyerStores**: 12x12 to 16x16 pixels for listing images
-- **Listings**: 10x10 to 12x12 pixels for product previews  
-- **SellerDashboard**: 24x24 pixels for product preview
-- **SellerMap**: 24x24 pixels for map popup images
-
-## Files Modified (Reverted)
+## Files Modified
 - `src/components/BuyerStores.jsx`
 - `src/components/Listings.jsx`
-- `src/components/SellerDashboard.jsx`
-- `src/components/SellerMap.jsx`
 
-The application is now back to its original state with smaller image sizes across all store-related components.
+## Previous History
+- Previous image size increases were reverted back to original sizes (as documented in historical versions of this file)
+- Current changes represent a medium-sized increase for better product visibility

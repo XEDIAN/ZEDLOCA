@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy, doc, getDoc } from 'firebase/firestore';
+import ImageLightbox from './ImageLightbox';
 
 /**
  * Simple haversine implementation to compute distances in meters.
@@ -24,6 +25,25 @@ function SellerListings({ sellerId, onBack, user }) {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
+  
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Open lightbox with image(s)
+  const openLightbox = (images, index = 0) => {
+    if (images && images.length > 0) {
+      setLightboxImages(images);
+      setLightboxIndex(index);
+      setLightboxOpen(true);
+    }
+  };
+
+  // Close lightbox
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+  };
 
   const handleNavigateToSeller = (seller) => {
     if (!userLocation) {
@@ -172,7 +192,17 @@ function SellerListings({ sellerId, onBack, user }) {
                   <div key={listing.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
                     {listing.images && listing.images.length > 0 && (
                       <div className="relative">
-                        <img src={listing.images[0]} alt={listing.title} className="w-full h-40 object-cover" />
+                        <img 
+                          src={listing.images[0]} 
+                          alt={listing.title} 
+                          className="w-full h-40 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => openLightbox(listing.images, 0)}
+                        />
+                        {listing.images.length > 1 && (
+                          <span className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-full">
+                            +{listing.images.length - 1} more
+                          </span>
+                        )}
                         {listing.category && (
                           <span className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
                             {listing.category.charAt(0).toUpperCase() + listing.category.slice(1)}
@@ -217,6 +247,14 @@ function SellerListings({ sellerId, onBack, user }) {
           Back
         </button>
       </footer>
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        isOpen={lightboxOpen}
+        images={lightboxImages}
+        initialIndex={lightboxIndex}
+        onClose={closeLightbox}
+      />
     </div>
   );
 }

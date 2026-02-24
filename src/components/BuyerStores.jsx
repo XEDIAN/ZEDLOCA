@@ -444,11 +444,11 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                       <span className="text-xl">{favorites.has(listing.id) ? '❤️' : '🤍'}</span>
                     </button>
 
-                    {/* Images */}
+                      {/* Images */}
                     {listing.images && listing.images.length > 0 && (
                       <div className="mb-4 flex gap-2 overflow-x-auto rounded-lg p-2 bg-gray-50">
                         {listing.images.slice(0, 4).map((img, idx) => (
-                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg shadow-sm" />
+                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-28 h-28 sm:w-32 sm:h-32 object-cover rounded-lg shadow-sm" />
                         ))}
                       </div>
                     )}
@@ -539,22 +539,22 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                 Recently Viewed
               </h3>
               <div className="flex gap-3 overflow-x-auto pb-2">
-                {recentlyViewed.slice(0, 5).map(listing => (
-                  <div
-                    key={listing.id}
-                    className="flex-shrink-0 bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => {
-                      addToRecentlyViewed(listing);
-                      handleViewSeller(listing.userId);
-                    }}
-                  >
-                    {listing.images && listing.images.length > 0 && (
-                      <img src={listing.images[0]} alt={listing.title} className="w-24 h-24 object-cover rounded mb-2" />
-                    )}
-                    <div className="text-xs font-medium text-gray-800 truncate w-24">{listing.title}</div>
-                    <div className="text-xs text-gray-600">{formatPrice(listing.price)}</div>
-                  </div>
-                ))}
+                  {recentlyViewed.slice(0, 5).map(listing => (
+                    <div
+                      key={listing.id}
+                      className="flex-shrink-0 bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => {
+                        addToRecentlyViewed(listing);
+                        handleViewSeller(listing.userId);
+                      }}
+                    >
+                      {listing.images && listing.images.length > 0 && (
+                        <img src={listing.images[0]} alt={listing.title} className="w-32 h-32 object-cover rounded mb-2" />
+                      )}
+                      <div className="text-xs font-medium text-gray-800 truncate w-32">{listing.title}</div>
+                      <div className="text-xs text-gray-600">{formatPrice(listing.price)}</div>
+                    </div>
+                  ))}
               </div>
             </div>
           )}
@@ -698,7 +698,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                     {listing.images && listing.images.length > 0 && (
                       <div className="mb-4 flex gap-2 overflow-x-auto rounded-lg p-2 bg-gray-50">
                         {listing.images.slice(0, 4).map((img, idx) => (
-                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-24 h-24 object-cover rounded-lg shadow-sm" />
+                          <img key={idx} src={img} alt={`Listing ${idx + 1}`} className="w-32 h-32 object-cover rounded-lg shadow-sm" />
                         ))}
                       </div>
                     )}
