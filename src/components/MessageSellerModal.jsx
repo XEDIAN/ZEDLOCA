@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from 'react';
-
-/**
- * Props:
- * - open: boolean
- * - onClose: function
- * - sellerId: string
- * - sellerName: string
- * - buyerId: string
- * - listing: object (optional) - listing context
- * - seller: object (optional) - seller details
- */
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
+import { uploadImageToFirebase } from '../utils/firebaseStorageUpload';
 
 const MESSAGE_TEMPLATES = {
   'price-inquiry': 'Hi! I\'m interested in this item. Is the price negotiable?',
@@ -36,6 +26,8 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
   const [buyerLocation, setBuyerLocation] = useState(null);
   const [locationError, setLocationError] = useState('');
   const [userProfiles, setUserProfiles] = useState({});
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   // Load recent message history
   useEffect(() => {
@@ -54,6 +46,7 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
       setSuccess(false);
       setError('');
       setShowConfirmation(false);
+      setSelectedImages([]);
     }
   }, [open, listing, prefillMessage]);
 
@@ -69,7 +62,7 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
       );
       const snapshot = await getDocs(q);
       const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setRecentMessages(messages.reverse()); // Show oldest first
+      setRecentMessages(messages.reverse());
     } catch (err) {
       console.error('Error loading message history:', err);
     }
@@ -132,10 +125,38 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
     );
   };
 
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + selectedImages.length > 5) {
+      setError('Maximum 5 images allowed per message');
+      return;
+    }
+    const newImages = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+    setSelectedImages(prev => [...prev, ...newImages]);
+  };
+
+  const removeImage = (index) => {
+    const newImages = [...selectedImages];
+    URL.revokeObjectURL(newImages[index].preview);
+    newImages.splice(index, 1);
+    setSelectedImages(newImages);
+  };
+
+  const uploadImages = async (files) => {
+    const urls = [];
+    for (const file of files) {
+      const url = await uploadImageToFirebase(file, buyerId);
+      urls.push(url);
+    }
+    return urls;
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
 
-    // Enhanced validation
     if (message.trim().length < 10) {
       setError('Please write a message with at least 10 characters.');
       return;
@@ -146,7 +167,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
       return;
     }
 
-    // Show confirmation for long messages
     if (message.length > 200 && !showConfirmation) {
       setShowConfirmation(true);
       return;
@@ -158,6 +178,21 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
     setShowConfirmation(false);
 
     try {
+      let imageUrls = [];
+      
+      if (selectedImages.length > 0) {
+        setUploadingImages(true);
+        try {
+          imageUrls = await uploadImages(selectedImages.map(img => img.file));
+        } catch (uploadErr) {
+          setError('Failed to upload images: ' + uploadErr.message);
+          setSending(false);
+          setUploadingImages(false);
+          return;
+        }
+        setUploadingImages(false);
+      }
+
       await addDoc(collection(db, 'messages'), {
         sellerId,
         sellerName,
@@ -168,6 +203,7 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
         listingTitle: listing?.title || null,
         buyerLat: buyerLocation?.lat || null,
         buyerLng: buyerLocation?.lng || null,
+        imageUrls: imageUrls,
         timestamp: serverTimestamp(),
         read: false,
       });
@@ -175,7 +211,7 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
       setMessage('');
       setSubject('');
       setSelectedTemplate('');
-      // Reload message history
+      setSelectedImages([]);
       loadMessageHistory();
     } catch (err) {
       setError('Failed to send message: ' + err.message);
@@ -192,7 +228,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
     <>
       <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
-          {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -222,9 +257,7 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
             </div>
           </div>
 
-          {/* Content */}
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-            {/* Listing Context */}
             {listing && (
               <div className="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
                 <h3 className="font-semibold text-gray-800 mb-2">Regarding: {listing.title}</h3>
@@ -232,7 +265,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
               </div>
             )}
 
-            {/* Recent Messages */}
             {recentMessages.length > 0 && (
               <div className="mb-4">
                 <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
@@ -253,6 +285,18 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                           <span className="font-medium text-xs text-gray-600">{senderName}</span>
                         </div>
                         <p className="text-gray-800">{msg.message}</p>
+                        {msg.imageUrls && msg.imageUrls.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {msg.imageUrls.map((url, idx) => (
+                              <img
+                                key={idx}
+                                src={url}
+                                alt={`Attachment ${idx + 1}`}
+                                className="w-16 h-16 object-cover rounded"
+                              />
+                            ))}
+                          </div>
+                        )}
                         {(msg.buyerLat && msg.buyerLng && !msg.fromSeller) || (msg.sellerLat && msg.sellerLng && msg.fromSeller) ? (
                           <div className="mt-2">
                             <button
@@ -275,7 +319,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                                 }
                               }}
                               className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition-colors"
-                              title="Navigate to shared location"
                             >
                               🧭 Navigate
                             </button>
@@ -291,7 +334,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
               </div>
             )}
 
-            {/* Message Templates */}
             <div className="mb-4">
               <h3 className="font-semibold text-gray-800 mb-2">Quick Templates</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -312,7 +354,48 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
               </div>
             </div>
 
-            {/* Location Capture */}
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-800 mb-2">Share Images (Optional)</h3>
+              <p className="text-sm text-gray-600 mb-2">Add images to your message (max 5)</p>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageSelect}
+                className="hidden"
+                id="image-upload-message"
+                disabled={sending || selectedImages.length >= 5}
+              />
+              <label
+                htmlFor="image-upload-message"
+                className={`inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm cursor-pointer ${sending || selectedImages.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                📷 Add Images
+              </label>
+              
+              {selectedImages.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {selectedImages.map((img, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={img.preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-16 h-16 object-cover rounded"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        disabled={sending}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="mb-4">
               <h3 className="font-semibold text-gray-800 mb-2">Share Your Location (Optional)</h3>
               <p className="text-sm text-gray-600 mb-2">Allow the seller to see your location for easier navigation.</p>
@@ -321,6 +404,7 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                   type="button"
                   onClick={handleLocationCapture}
                   className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  disabled={sending}
                 >
                   📍 Share Location
                 </button>
@@ -335,9 +419,7 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
               )}
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSend}>
-              {/* Subject */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Subject (Optional)
@@ -352,7 +434,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                 />
               </div>
 
-              {/* Message */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Message *
@@ -380,7 +461,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                 </div>
               </div>
 
-              {/* Error/Success Messages */}
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <div className="text-red-700 text-sm">{error}</div>
@@ -393,7 +473,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                 </div>
               )}
 
-              {/* Action Buttons */}
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
@@ -406,9 +485,9 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
                 <button
                   type="submit"
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={sending || !message.trim() || message.length > MAX_MESSAGE_LENGTH}
+                  disabled={sending || !message.trim() || message.length > MAX_MESSAGE_LENGTH || uploadingImages}
                 >
-                  {sending ? 'Sending...' : 'Send Message'}
+                  {sending ? (uploadingImages ? 'Uploading...' : 'Sending...') : 'Send Message'}
                 </button>
               </div>
             </form>
@@ -416,7 +495,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
         </div>
       </div>
 
-      {/* Confirmation Dialog */}
       {showConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
@@ -434,7 +512,6 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
               <button
                 onClick={() => {
                   setShowConfirmation(false);
-                  // Trigger form submission
                   const form = document.querySelector('form');
                   if (form) form.requestSubmit();
                 }}

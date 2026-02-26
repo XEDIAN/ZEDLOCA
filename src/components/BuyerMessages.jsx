@@ -2,16 +2,20 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDoc } from 'firebase/firestore';
 import ReplyToSellerModal from './ReplyToSellerModal';
+import ImageLightbox from './ImageLightbox';
 
 function BuyerMessages({ buyerId }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all'); // all, unread, read
+  const [filter, setFilter] = useState('all');
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [userProfiles, setUserProfiles] = useState({});
   const [replyModal, setReplyModal] = useState({ open: false, sellerId: '', originalMessageId: '' });
+  const [lightboxImages, setLightboxImages] = useState([]);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
     if (!buyerId) return;
@@ -31,7 +35,6 @@ function BuyerMessages({ buyerId }) {
     return () => unsub();
   }, [buyerId]);
 
-  // Load user profiles for all unique user IDs in messages
   useEffect(() => {
     if (messages.length === 0) return;
 
@@ -39,7 +42,7 @@ function BuyerMessages({ buyerId }) {
     messages.forEach(msg => {
       uniqueUserIds.add(msg.sellerId);
     });
-    uniqueUserIds.add(buyerId); // Include buyer
+    uniqueUserIds.add(buyerId);
 
     const loadProfiles = async () => {
       const profiles = {};
@@ -73,7 +76,6 @@ function BuyerMessages({ buyerId }) {
     loadProfiles();
   }, [messages, buyerId]);
 
-  // Group messages by seller for conversation view
   const conversations = useMemo(() => {
     const grouped = {};
     messages.forEach(msg => {
@@ -97,19 +99,16 @@ function BuyerMessages({ buyerId }) {
         grouped[sellerId].lastMessageTime = msgTime;
       }
     });
-
-    // Sort conversations by last message time
     return Object.values(grouped).sort((a, b) => b.lastMessageTime - a.lastMessageTime);
   }, [messages]);
 
-  // Filter conversations based on search and filter
   const filteredConversations = useMemo(() => {
     return conversations.filter(conv => {
       const sellerName = userProfiles[conv.sellerId]?.displayName || conv.sellerId;
       const matchesSearch = searchTerm === '' ||
         sellerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         conv.sellerId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        conv.messages.some(msg => msg.message.toLowerCase().includes(searchTerm.toLowerCase()));
+        conv.messages.some(msg => msg.message?.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesFilter = filter === 'all' ||
         (filter === 'unread' && conv.unreadCount > 0) ||
@@ -142,6 +141,12 @@ function BuyerMessages({ buyerId }) {
         alert('Failed to delete message: ' + err.message);
       }
     }
+  };
+
+  const openLightbox = (images, index) => {
+    setLightboxImages(images);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
   };
 
   const totalUnread = conversations.reduce((sum, conv) => sum + conv.unreadCount, 0);
@@ -179,7 +184,6 @@ function BuyerMessages({ buyerId }) {
     <div className="min-h-screen bg-gray-50 p-2 sm:p-4">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm">
-          {/* Header */}
           <div className="border-b border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-bold text-gray-900">My Messages</h1>
@@ -189,8 +193,6 @@ function BuyerMessages({ buyerId }) {
                 </span>
               )}
             </div>
-
-            {/* Search and Filter */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <input
@@ -215,9 +217,7 @@ function BuyerMessages({ buyerId }) {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="flex flex-col lg:flex-row">
-            {/* Conversations List */}
             <div className="w-full lg:w-1/3 border-b lg:border-b-0 lg:border-r border-gray-200">
               <div className="p-3 sm:p-4">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Conversations</h2>
@@ -268,7 +268,6 @@ function BuyerMessages({ buyerId }) {
               </div>
             </div>
 
-            {/* Messages View */}
             <div className="flex-1 min-h-0">
               {selectedConversation ? (
                 <div className="p-3 sm:p-4">
@@ -277,7 +276,6 @@ function BuyerMessages({ buyerId }) {
                       Conversation with {userProfiles[selectedConversation.sellerId]?.displayName || selectedConversation.sellerId}
                     </h3>
                     <div className="flex gap-2">
-                      {/* Back button for mobile */}
                       <button
                         onClick={() => setSelectedConversation(null)}
                         className="lg:hidden bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300"
@@ -313,6 +311,21 @@ function BuyerMessages({ buyerId }) {
                             }`}
                           >
                             <p className="text-xs sm:text-sm">{msg.message}</p>
+                            
+                            {msg.imageUrls && msg.imageUrls.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {msg.imageUrls.map((url, idx) => (
+                                  <img
+                                    key={idx}
+                                    src={url}
+                                    alt={`Attachment ${idx + 1}`}
+                                    className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80"
+                                    onClick={() => openLightbox(msg.imageUrls, idx)}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                            
                             <div className={`text-xs mt-1 ${msg.fromSeller ? 'text-gray-500' : 'text-blue-200'}`}>
                               {msg.timestamp?.toDate?.().toLocaleString?.() || ''}
                               {msg.fromSeller && !msg.read && (
@@ -388,6 +401,13 @@ function BuyerMessages({ buyerId }) {
         sellerId={replyModal.sellerId}
         buyerId={buyerId}
         originalMessageId={replyModal.originalMessageId}
+      />
+
+      <ImageLightbox
+        isOpen={lightboxOpen}
+        images={lightboxImages}
+        initialIndex={lightboxIndex}
+        onClose={() => setLightboxOpen(false)}
       />
     </div>
   );

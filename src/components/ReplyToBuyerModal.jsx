@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { uploadImageToFirebase } from '../utils/firebaseStorageUpload';
 
 /**
  * Props:
@@ -17,6 +18,8 @@ function ReplyToBuyerModal({ open, onClose, buyerId, sellerId, originalMessageId
   const [error, setError] = useState('');
   const [sellerLocation, setSellerLocation] = useState(null);
   const [locationError, setLocationError] = useState('');
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   if (!open) return null;
 
@@ -37,12 +40,59 @@ function ReplyToBuyerModal({ open, onClose, buyerId, sellerId, originalMessageId
     );
   };
 
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + selectedImages.length > 5) {
+      setError('Maximum 5 images allowed per message');
+      return;
+    }
+    // Create preview URLs
+    const newImages = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+    setSelectedImages(prev => [...prev, ...newImages]);
+  };
+
+  const removeImage = (index) => {
+    const newImages = [...selectedImages];
+    URL.revokeObjectURL(newImages[index].preview);
+    newImages.splice(index, 1);
+    setSelectedImages(newImages);
+  };
+
+  const uploadImages = async (files) => {
+    const urls = [];
+    for (const file of files) {
+      const url = await uploadImageToFirebase(file, sellerId);
+      urls.push(url);
+    }
+    return urls;
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     setSending(true);
     setError('');
     setSuccess(false);
+
     try {
+      let imageUrls = [];
+      
+      // Upload images if any
+      if (selectedImages.length > 0) {
+        setUploadingImages(true);
+        try {
+          imageUrls = await uploadImages(selectedImages.map(img => img.file));
+        } catch (uploadErr) {
+          setError('Failed to upload images: ' + uploadErr.message);
+          setSending(false);
+          setUploadingImages(false);
+          return;
+        }
+        setUploadingImages(false);
+      }
+
       await addDoc(collection(db, 'messages'), {
         sellerId,
         buyerId,
@@ -51,12 +101,14 @@ function ReplyToBuyerModal({ open, onClose, buyerId, sellerId, originalMessageId
         fromSeller: true,
         sellerLat: sellerLocation?.lat || null,
         sellerLng: sellerLocation?.lng || null,
+        imageUrls: imageUrls,
         timestamp: serverTimestamp(),
         read: false,
       });
       setSuccess(true);
       setReply('');
       setSellerLocation(null);
+      setSelectedImages([]);
     } catch (err) {
       setError('Failed to send reply: ' + err.message);
     }
@@ -65,7 +117,7 @@ function ReplyToBuyerModal({ open, onClose, buyerId, sellerId, originalMessageId
 
   return (
     <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center z-50">
-      <div className="bg-white rounded shadow-lg p-6 w-full max-w-md">
+      <div className="bg-white rounded shadow-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-bold mb-2">Reply to Buyer</h2>
         <form onSubmit={handleSend}>
           <textarea
@@ -77,6 +129,50 @@ function ReplyToBuyerModal({ open, onClose, buyerId, sellerId, originalMessageId
             required
             disabled={sending}
           />
+
+          {/* Image Upload */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-gray-800 mb-2">Share Images (Optional)</h3>
+            <p className="text-sm text-gray-600 mb-2">Add images to your message (max 5)</p>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageSelect}
+              className="hidden"
+              id="image-upload-reply-buyer"
+              disabled={sending || selectedImages.length >= 5}
+            />
+            <label
+              htmlFor="image-upload-reply-buyer"
+              className={`inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm cursor-pointer ${sending || selectedImages.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              📷 Add Images
+            </label>
+            
+            {/* Image Previews */}
+            {selectedImages.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {selectedImages.map((img, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={img.preview}
+                      alt={`Preview ${index + 1}`}
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                      disabled={sending}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Location Sharing */}
           <div className="mb-4">
@@ -106,8 +202,8 @@ function ReplyToBuyerModal({ open, onClose, buyerId, sellerId, originalMessageId
           {success && <div className="text-green-600 mb-2">Reply sent!</div>}
           <div className="flex justify-end gap-2">
             <button type="button" className="px-3 py-1 rounded bg-gray-300" onClick={onClose} disabled={sending}>Cancel</button>
-            <button type="submit" className="px-4 py-1 rounded bg-blue-600 text-white" disabled={sending || !reply.trim()}>
-              {sending ? 'Sending...' : 'Send'}
+            <button type="submit" className="px-4 py-1 rounded bg-blue-600 text-white" disabled={sending || !reply.trim() || uploadingImages}>
+              {sending ? (uploadingImages ? 'Uploading...' : 'Sending...') : 'Send'}
             </button>
           </div>
         </form>
