@@ -5,6 +5,7 @@ import { collection, onSnapshot, query, where, getDocs, orderBy, limit } from 'f
 import MessageSellerModal from './MessageSellerModal';
 import MapControls from './MapControls';
 import DraggableSidebar from './DraggableSidebar';
+import { trackMessageSent, trackSaveSeller, trackSearch, trackButtonClick } from '../utils/analytics';
 import L from 'leaflet';
 import 'leaflet.heat';
 
@@ -369,7 +370,7 @@ function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMes
     window.open(googleMapsUrl, '_blank');
   };
 
-  // Handle save seller
+// Handle save seller
   const handleSaveSeller = (seller) => {
     const userId = auth?.currentUser?.uid;
     if (userId) {
@@ -380,6 +381,7 @@ function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMes
         currentSaved.push(newSeller);
         localStorage.setItem(savedKey, JSON.stringify(currentSaved));
         setSavedSellers(currentSaved);
+        trackSaveSeller(seller.id);
         alert('Seller saved to favorites!');
       } else {
         alert('Seller already saved!');

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
+import MessageSellerModal from './MessageSellerModal';
 
 // Error Boundary Component
 class SellerOrdersErrorBoundary extends React.Component {
@@ -87,6 +88,8 @@ const SellerOrders = ({ sellerId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all'); // all, pending, completed, cancelled
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [selectedBuyerId, setSelectedBuyerId] = useState(null);
 
   console.log('SellerOrders: Component state initialized');
 
@@ -353,62 +356,64 @@ const SellerOrders = ({ sellerId }) => {
                               <span className="font-medium text-gray-800 ml-1">{buyers[order.buyerId].phone}</span>
                             </div>
                           )}
-                          {(() => {
-                            console.log('Order delivery address:', order.deliveryAddress);
-                            const hasDeliveryAddress = order.deliveryAddress && order.deliveryAddress.trim();
-                            console.log('Has delivery address:', hasDeliveryAddress);
-                            return hasDeliveryAddress ? (
-                              <div className="mt-3">
-                                <button
-                                  onClick={() => {
-                                    const address = order.deliveryAddress.trim();
-                                    if (address) {
-                                      // Check if address contains GPS coordinates
-                                      const gpsMatch = address.match(/GPS Location:\s*([-\d.]+),\s*([-\d.]+)/);
-                                      let destination;
+                          {/* Action Buttons */}
+                          <div className="mt-3 flex flex-col gap-2">
+                            {(() => {
+                              const hasDeliveryAddress = order.deliveryAddress && order.deliveryAddress.trim();
+                              return (
+                                <>
+                                  {hasDeliveryAddress && (
+                                    <button
+                                      onClick={() => {
+                                        const address = order.deliveryAddress.trim();
+                                        if (address) {
+                                          const gpsMatch = address.match(/GPS Location:\s*([-\d.]+),\s*([-\d.]+)/);
+                                          let destination;
 
-                                      if (gpsMatch) {
-                                        // Use coordinates directly for precise navigation
-                                        const lat = parseFloat(gpsMatch[1]);
-                                        const lng = parseFloat(gpsMatch[2]);
-                                        destination = `${lat},${lng}`;
-                                      } else {
-                                        // Use address as-is for text-based locations
-                                        destination = address;
-                                      }
+                                          if (gpsMatch) {
+                                            const lat = parseFloat(gpsMatch[1]);
+                                            const lng = parseFloat(gpsMatch[2]);
+                                            destination = `${lat},${lng}`;
+                                          } else {
+                                            destination = address;
+                                          }
 
-                                      // Create navigation URLs
-                                      const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
-                                      const appleMapsUrl = `http://maps.apple.com/?daddr=${encodeURIComponent(destination)}`;
+                                          const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+                                          const appleMapsUrl = `http://maps.apple.com/?daddr=${encodeURIComponent(destination)}`;
+                                          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-                                      // Check if user is on iOS
-                                      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-                                      try {
-                                        if (isIOS) {
-                                          window.open(appleMapsUrl, '_blank');
-                                        } else {
-                                          window.open(googleMapsUrl, '_blank');
+                                          try {
+                                            if (isIOS) {
+                                              window.open(appleMapsUrl, '_blank');
+                                            } else {
+                                              window.open(googleMapsUrl, '_blank');
+                                            }
+                                          } catch (error) {
+                                            console.error('Error opening navigation:', error);
+                                            window.open(`https://maps.google.com/maps?q=${encodeURIComponent(destination)}`, '_blank');
+                                          }
                                         }
-                                      } catch (error) {
-                                        console.error('Error opening navigation:', error);
-                                        // Fallback: try to open in new tab with basic URL
-                                        window.open(`https://maps.google.com/maps?q=${encodeURIComponent(destination)}`, '_blank');
-                                      }
-                                    }
-                                  }}
-                                  className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
-                                >
-                                  <span className="text-base">🗺️</span>
-                                  Navigate to Delivery Location
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="mt-3 text-xs text-gray-500">
-                                No delivery address available for navigation
-                              </div>
-                            );
-                          })()}
+                                      }}
+                                      className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+                                    >
+                                      <span className="text-base">🗺️</span>
+                                      Navigate
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => {
+                                      setSelectedBuyerId(order.buyerId);
+                                      setShowMessageModal(true);
+                                    }}
+                                    className="inline-flex items-center gap-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                                  >
+                                    <span className="text-base">💬</span>
+                                    Message Buyer
+                                  </button>
+                                </>
+                              );
+                            })()}
+                          </div>
                         </>
                       ) : (
                         <div className="text-gray-500 text-sm">
@@ -444,6 +449,21 @@ const SellerOrders = ({ sellerId }) => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Message Modal */}
+      {showMessageModal && selectedBuyerId && (
+        <MessageSellerModal
+          open={showMessageModal}
+          onClose={() => {
+            setShowMessageModal(false);
+            setSelectedBuyerId(null);
+          }}
+          sellerId={sellerId}
+          sellerName={auth.currentUser?.displayName || 'Seller'}
+          buyerId={selectedBuyerId}
+          prefillMessage={`Hi! Regarding your recent order.`}
+        />
       )}
     </div>
   );

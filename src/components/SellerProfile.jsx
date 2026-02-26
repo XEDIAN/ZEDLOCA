@@ -123,8 +123,13 @@ const SellerProfile = ({ sellerId, onBack }) => {
         updatedAt: serverTimestamp()
       };
 
-      // Save immediately to Firebase
+      // Save to sellers collection
       await updateDoc(doc(db, 'sellers', sellerId), {
+        location: location
+      });
+
+      // Also save to users collection for real-time profile updates
+      await updateDoc(doc(db, 'users', sellerId), {
         location: location
       });
 

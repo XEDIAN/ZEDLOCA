@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
+import MessageSellerModal from './MessageSellerModal';
 
 const BuyerOrders = ({ buyerId, sellerId, onBack }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [buyer, setBuyer] = useState(null);
+  const [showMessageModal, setShowMessageModal] = useState(false);
 
   const { formatPrice } = useCurrency();
 
@@ -167,7 +169,7 @@ const BuyerOrders = ({ buyerId, sellerId, onBack }) => {
                       </div>
                     </div>
 
-                    {/* Buyer Profile Info */}
+{/* Buyer Profile Info */}
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-3">👤 Buyer Profile</h4>
                       <div className="space-y-2 text-sm">
@@ -193,6 +195,13 @@ const BuyerOrders = ({ buyerId, sellerId, onBack }) => {
                           <p className="text-gray-500 italic">No profile information available</p>
                         )}
                       </div>
+                      <button
+                        onClick={() => setShowMessageModal(true)}
+                        className="mt-3 w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>💬</span>
+                        Message Buyer
+                      </button>
                     </div>
 
                     {/* Seller Profile Info */}
@@ -249,8 +258,20 @@ const BuyerOrders = ({ buyerId, sellerId, onBack }) => {
               </div>
             ))}
           </div>
-        )}
+)}
       </div>
+
+      {/* Message Modal */}
+      {showMessageModal && (
+        <MessageSellerModal
+          open={showMessageModal}
+          onClose={() => setShowMessageModal(false)}
+          sellerId={sellerId}
+          sellerName={auth.currentUser?.displayName || 'Seller'}
+          buyerId={buyerId}
+          prefillMessage={`Hi! Regarding Order #${orders[0]?.id?.slice(-8) || 'recent'}`}
+        />
+      )}
     </div>
   );
 };
