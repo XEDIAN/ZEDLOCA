@@ -795,7 +795,6 @@ const MainApp = () => {
   return (
     <>
       <VersionSyncIndicator />
-      <CrossDeviceTestPanel />
       <MapView
         onViewStore={setShowSellerListings}
         onBack={() => setShowMap(false)}

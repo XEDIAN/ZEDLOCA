@@ -63,7 +63,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessageModal, onNavigate }) {
+function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessageModal, onNavigate, onNavigateToMessages }) {
   const map = useMap();
 
   useEffect(() => {
@@ -398,6 +398,7 @@ useEffect(() => {
               messageModal={messageModal}
               setMessageModal={setMessageModal}
               onNavigate={handleNavigateToSeller}
+              onNavigateToMessages={onNavigateToMessages}
             />
             <HeatmapLayer sellers={filteredAndSortedSellers} enabled={heatmapEnabled} />
             <MapControls heatmapEnabled={heatmapEnabled} onToggleHeatmap={() => setHeatmapEnabled(!heatmapEnabled)} />
@@ -448,7 +449,7 @@ useEffect(() => {
                           >
                             View Store
                           </button>
-                          <button
+<button
                             className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
                             onClick={() => setMessageModal({ open: true, seller })}
                           >
