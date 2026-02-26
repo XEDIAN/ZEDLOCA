@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useCurrency } from '../components/CurrencyContext';
+import { sendOrderNotificationToSeller } from '../utils/orderNotification';
 
 function PlaceOrderPage({ listing, seller, buyer, onBack }) {
   const { formatPrice } = useCurrency();
@@ -332,6 +333,26 @@ function PlaceOrderPage({ listing, seller, buyer, onBack }) {
       };
 
       await addDoc(collection(db, 'orders'), orderData);
+
+      // Send notification to seller
+      await sendOrderNotificationToSeller({
+        sellerId: seller.id,
+        sellerName: sellerName,
+        buyer: {
+          uid: buyer.uid,
+          displayName: buyer.displayName,
+          email: buyer.email
+        },
+        listing: {
+          id: listing.id,
+          title: listing.title,
+          price: listing.price
+        },
+        quantity: quantity,
+        deliveryAddress: deliveryAddress.trim(),
+        specialInstructions: specialInstructions.trim()
+      });
+
       setSuccess(true);
 
       // Reset form
