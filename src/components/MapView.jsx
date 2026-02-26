@@ -1,12 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { db, auth } from '../firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import MessageSellerModal from './MessageSellerModal';
 import MapControls from './MapControls';
 import DraggableSidebar from './DraggableSidebar';
 import L from 'leaflet';
 import 'leaflet.heat';
+
+// Quick message templates
+const QUICK_MESSAGES = [
+  { id: 'inquiry', label: 'Ask about price', message: "Hi! I'm interested in your products. Is the price negotiable?" },
+  { id: 'availability', label: 'Check availability', message: 'Hello! Are your products still available?' },
+  { id: 'visit', label: 'Plan visit', message: 'Hi! What are your operating hours? I would like to visit your store.' },
+];
 
 // Custom icons
 const isMobile = typeof window !== "undefined" && window.innerWidth <= 600;
@@ -63,7 +70,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessageModal, onNavigate, onNavigateToMessages }) {
+function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessageModal, onNavigate, onNavigateToMessages, sellerMessageStatus = {}, onSaveSeller, savedSellers = [] }) {
   const map = useMap();
 
   useEffect(() => {
@@ -76,6 +83,10 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
     }
   }, [sellers, map]);
 
+  const isSellerSaved = (sellerId) => {
+    return savedSellers.some(s => s.id === sellerId);
+  };
+
   return (
     <>
       {sellers
@@ -84,16 +95,18 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
           const distanceToUser = userLocation ? haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng) : Infinity;
           const promoActive = !!seller.promo_active && typeof seller.promo_radius_meters === 'number' && distanceToUser <= seller.promo_radius_meters;
           const icon = promoActive ? promotedIcon : sellerIcon;
+          const isSaved = isSellerSaved(seller.id);
 
           return (
             <Marker key={seller.id} position={[seller.lat, seller.lng]} icon={icon}>
-              <Popup maxWidth={300}>
+              <Popup maxWidth={320}>
                 <div className="p-2">
                   <div className="flex items-center mb-2">
                     <span className="text-2xl mr-2">🏪</span>
                     <div>
                       <h3 className="font-semibold text-gray-900">{seller.displayName || 'Seller'}</h3>
                       {promoActive && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Promotion</span>}
+                      {isSaved && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded ml-1">⭐</span>}
                     </div>
                   </div>
 
@@ -114,12 +127,6 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
                     >
                       View Store
                     </button>
-                    <button
-                      className="w-full bg-green-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-green-700 transition-colors"
-                      onClick={() => setMessageModal({ open: true, seller })}
-                    >
-                      Message
-                    </button>
                     {seller.phone && (
                       <a
                         href={`tel:${seller.phone}`}
@@ -134,6 +141,18 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
                       title="Get directions to this seller"
                     >
                       🗺️ Navigate
+                    </button>
+                    {/* Save Seller Button */}
+                    <button
+                      className={`w-full px-3 py-2 rounded text-sm font-medium transition-colors ${
+                        isSaved 
+                          ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                      onClick={() => onSaveSeller && onSaveSeller(seller)}
+                      title={isSaved ? 'Remove from saved sellers' : 'Save seller to favorites'}
+                    >
+                      {isSaved ? '⭐ Saved' : '☆ Save'}
                     </button>
                   </div>
                 </div>
@@ -183,7 +202,7 @@ function HeatmapLayer({ sellers, enabled }) {
 function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMessages }) {
   const [sellers, setSellers] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
-  const [messageModal, setMessageModal] = useState({ open: false, seller: null });
+  const [messageModal, setMessageModal] = useState({ open: false, seller: null, prefillMessage: '' });
   const [viewMode, setViewMode] = useState('map'); // 'map' or 'list'
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -191,8 +210,90 @@ function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMes
   const [loading, setLoading] = useState(true);
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [sellerMessageStatus, setSellerMessageStatus] = useState({}); // Track message history per seller
+  const [expandedQuickMessage, setExpandedQuickMessage] = useState(null); // Track which seller's quick messages are expanded
+  const [totalUnreadMessages, setTotalUnreadMessages] = useState(0); // Total unread replies from sellers
+  const [savedSellers, setSavedSellers] = useState([]); // Saved sellers list
 
-useEffect(() => {
+  // Real-time tracking of unread messages from sellers (matching sidebar functionality)
+  useEffect(() => {
+    if (role !== 'buyer' || !auth?.currentUser?.uid) return;
+
+    const userId = auth.currentUser.uid;
+
+    // Fetch unread replies count (messages from sellers to this buyer)
+    const repliesQuery = query(
+      collection(db, 'messages'),
+      where('buyerId', '==', userId),
+      where('fromSeller', '==', true),
+      where('read', '==', false)
+    );
+
+    const unsubReplies = onSnapshot(repliesQuery, (snapshot) => {
+      setTotalUnreadMessages(snapshot.size);
+    }, (err) => {
+      console.error('Failed to load unread replies:', err);
+      setTotalUnreadMessages(0);
+    });
+
+    return () => unsubReplies();
+  }, [role, auth?.currentUser?.uid]);
+
+  // Load saved sellers from local storage
+  useEffect(() => {
+    if (role === 'buyer' && auth?.currentUser?.uid) {
+      const userId = auth.currentUser.uid;
+      const savedKey = `savedSellers_${userId}`;
+      const saved = JSON.parse(localStorage.getItem(savedKey) || '[]');
+      setSavedSellers(saved);
+    }
+  }, [role, auth?.currentUser?.uid]);
+
+  // Fetch message history for all sellers (both map and list views)
+  useEffect(() => {
+    if (!auth?.currentUser?.uid) return;
+
+    const fetchMessageStatus = async () => {
+      const status = {};
+      for (const seller of sellers) {
+        try {
+          const q = query(
+            collection(db, 'messages'),
+            where('sellerId', '==', seller.id),
+            where('buyerId', '==', auth.currentUser.uid),
+            limit(10)
+          );
+          const snapshot = await getDocs(q);
+          const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const lastMessage = messages[messages.length - 1];
+          const unreadFromSeller = messages.filter(m => m.fromSeller && !m.read).length;
+          status[seller.id] = {
+            hasMessaged: messages.length > 0,
+            lastMessage: lastMessage?.message || null,
+            unreadCount: unreadFromSeller,
+            timestamp: lastMessage?.timestamp
+          };
+        } catch (err) {
+          status[seller.id] = { hasMessaged: false, lastMessage: null, unreadCount: 0 };
+        }
+      }
+      setSellerMessageStatus(status);
+    };
+
+    fetchMessageStatus();
+  }, [sellers, auth?.currentUser?.uid]);
+
+  // Handle quick message selection
+  const handleQuickMessage = (seller, templateMessage) => {
+    setMessageModal({ 
+      open: true, 
+      seller, 
+      prefillMessage: templateMessage 
+    });
+    setExpandedQuickMessage(null);
+  };
+
+  useEffect(() => {
     setIsMounted(true);
     const unsub = onSnapshot(collection(db, 'sellers'), (snapshot) => {
       setSellers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -266,6 +367,29 @@ useEffect(() => {
 
     // Open in new tab/window
     window.open(googleMapsUrl, '_blank');
+  };
+
+  // Handle save seller
+  const handleSaveSeller = (seller) => {
+    const userId = auth?.currentUser?.uid;
+    if (userId) {
+      const savedKey = `savedSellers_${userId}`;
+      const currentSaved = JSON.parse(localStorage.getItem(savedKey) || '[]');
+      if (!currentSaved.find(s => s.id === seller.id)) {
+        const newSeller = { id: seller.id, displayName: seller.displayName || 'Seller' };
+        currentSaved.push(newSeller);
+        localStorage.setItem(savedKey, JSON.stringify(currentSaved));
+        setSavedSellers(currentSaved);
+        alert('Seller saved to favorites!');
+      } else {
+        alert('Seller already saved!');
+      }
+    }
+  };
+
+  // Check if seller is saved
+  const isSellerSaved = (sellerId) => {
+    return savedSellers.some(s => s.id === sellerId);
   };
 
   if (loading) {
@@ -371,11 +495,33 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Results Count */}
-      <div className="fixed top-24 sm:top-28 left-4 z-40 bg-white px-3 py-1.5 rounded-lg shadow-md border">
-        <span className="text-sm font-medium text-gray-700">
-          {filteredAndSortedSellers.length} seller{filteredAndSortedSellers.length !== 1 ? 's' : ''}
-        </span>
+      {/* Results Count and Message Status */}
+      <div className="fixed top-24 sm:top-28 left-4 z-40 flex gap-2">
+        <div className="bg-white px-3 py-1.5 rounded-lg shadow-md border">
+          <span className="text-sm font-medium text-gray-700">
+            {filteredAndSortedSellers.length} seller{filteredAndSortedSellers.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+        
+        {/* Message Status Banner for Buyers */}
+        {role === 'buyer' && (totalUnreadMessages > 0 || savedSellers.length > 0) && (
+          <div className="bg-white px-3 py-1.5 rounded-lg shadow-md border flex items-center gap-2">
+            {totalUnreadMessages > 0 && (
+              <button
+                onClick={() => onNavigateToMessages && onNavigateToMessages()}
+                className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700 cursor-pointer"
+              >
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="font-medium">{totalUnreadMessages} unread message{totalUnreadMessages > 1 ? 's' : ''}</span>
+              </button>
+            )}
+            {savedSellers.length > 0 && (
+              <span className="text-sm text-yellow-600">
+                ⭐ {savedSellers.length} saved
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Map View */}
@@ -399,6 +545,9 @@ useEffect(() => {
               setMessageModal={setMessageModal}
               onNavigate={handleNavigateToSeller}
               onNavigateToMessages={onNavigateToMessages}
+              sellerMessageStatus={sellerMessageStatus}
+              onSaveSeller={handleSaveSeller}
+              savedSellers={savedSellers}
             />
             <HeatmapLayer sellers={filteredAndSortedSellers} enabled={heatmapEnabled} />
             <MapControls heatmapEnabled={heatmapEnabled} onToggleHeatmap={() => setHeatmapEnabled(!heatmapEnabled)} />
@@ -410,20 +559,62 @@ useEffect(() => {
       {viewMode === 'list' && (
         <div className="pt-28 sm:pt-32 h-full overflow-y-auto bg-gray-50">
           <div className="max-w-4xl mx-auto p-4">
+            {/* Messages Summary Banner */}
+            {role === 'buyer' && (
+              <div className="mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-lg">Your Messages</h3>
+                    <p className="text-blue-100 text-sm">
+                      {totalUnreadMessages > 0 
+                        ? `You have ${totalUnreadMessages} unread message${totalUnreadMessages > 1 ? 's' : ''} from sellers`
+                        : 'No unread messages'
+                      }
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onNavigateToMessages && onNavigateToMessages()}
+                    className="bg-white text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+                  >
+                    {totalUnreadMessages > 0 ? 'View Messages' : 'All Messages'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               {filteredAndSortedSellers.map(seller => {
                 const distanceToUser = userLocation ? haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng) : null;
                 const promoActive = !!seller.promo_active && typeof seller.promo_radius_meters === 'number' && distanceToUser <= seller.promo_radius_meters;
-
+                const msgStatus = sellerMessageStatus[seller.id] || {};
+                const isSaved = isSellerSaved(seller.id);
+                
                 return (
                   <div key={seller.id} className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow">
+                    {/* Message Status Indicator */}
+                    {msgStatus.hasMessaged && (
+                      <div className="mb-3 flex items-center gap-2">
+                        {msgStatus.unreadCount > 0 ? (
+                          <span className="flex items-center gap-1 text-sm text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            {msgStatus.unreadCount} new reply{msgStatus.unreadCount > 1 ? 's' : ''}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                            ✓ Previously messaged
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center mb-2">
+<div className="flex items-center mb-2">
                           <span className="text-2xl mr-3">🏪</span>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900">{seller.displayName || 'Seller'}</h3>
                             {promoActive && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded ml-2">Promotion</span>}
+                            {isSaved && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded ml-2">⭐ Saved</span>}
                           </div>
                         </div>
 
@@ -439,6 +630,14 @@ useEffect(() => {
                             <span className="bg-gray-100 px-2 py-1 rounded">{seller.category}</span>
                           )}
                         </div>
+                        
+                        {/* Last Message Preview */}
+                        {msgStatus.lastMessage && (
+                          <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                            <span className="text-gray-500">Last message: </span>
+                            <span className="text-gray-700 italic">"{msgStatus.lastMessage.substring(0, 50)}{msgStatus.lastMessage.length > 50 ? '...' : ''}"</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-col gap-2 ml-4">
@@ -449,14 +648,33 @@ useEffect(() => {
                           >
                             View Store
                           </button>
-<button
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
-                            onClick={() => setMessageModal({ open: true, seller })}
+                          <button
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                              msgStatus.hasMessaged 
+                                ? 'bg-green-600 text-white hover:bg-green-700' 
+                                : 'bg-green-600 text-white hover:bg-green-700'
+                            }`}
+                            onClick={() => setMessageModal({ open: true, seller, prefillMessage: '' })}
                           >
-                            Message
+                            {msgStatus.hasMessaged ? '💬 Reply' : '✉️ Message'}
                           </button>
                         </div>
-                        <div className="flex flex-col gap-2">
+                        
+                        {/* Quick Message Buttons */}
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {QUICK_MESSAGES.map(template => (
+                            <button
+                              key={template.id}
+                              onClick={() => handleQuickMessage(seller, template.message)}
+                              className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
+                              title={template.message}
+                            >
+                              {template.label}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        <div className="flex flex-col gap-2 mt-1">
                           {seller.phone && (
                             <a
                               href={`tel:${seller.phone}`}
@@ -471,6 +689,18 @@ useEffect(() => {
                             title="Get directions to this seller"
                           >
                             🗺️ Navigate
+                          </button>
+                          {/* Save Seller Button */}
+                          <button
+                            className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              isSaved 
+                                ? 'bg-yellow-500 text-white hover:bg-yellow-600' 
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                            onClick={() => handleSaveSeller(seller)}
+                            title={isSaved ? 'Remove from saved sellers' : 'Save seller to favorites'}
+                          >
+                            {isSaved ? '⭐ Saved' : '☆ Save'}
                           </button>
                         </div>
                       </div>
@@ -493,10 +723,11 @@ useEffect(() => {
 
       <MessageSellerModal
         open={messageModal.open}
-        onClose={() => setMessageModal({ open: false, seller: null })}
+        onClose={() => setMessageModal({ open: false, seller: null, prefillMessage: '' })}
         sellerId={messageModal.seller?.id || ''}
         sellerName={messageModal.seller?.displayName || ''}
         buyerId={auth?.currentUser?.uid || ''}
+        prefillMessage={messageModal.prefillMessage || ''}
       />
 
       <DraggableSidebar

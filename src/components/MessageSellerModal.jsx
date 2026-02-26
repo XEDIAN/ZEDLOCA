@@ -23,7 +23,7 @@ const MESSAGE_TEMPLATES = {
 
 const MAX_MESSAGE_LENGTH = 500;
 
-function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, listing, seller }) {
+function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, listing, seller, prefillMessage = '' }) {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState('');
@@ -49,13 +49,13 @@ function MessageSellerModal({ open, onClose, sellerId, sellerName, buyerId, list
   useEffect(() => {
     if (open) {
       setSubject(listing ? `Regarding: ${listing.title}` : '');
-      setMessage('');
+      setMessage(prefillMessage || '');
       setSelectedTemplate('');
       setSuccess(false);
       setError('');
       setShowConfirmation(false);
     }
-  }, [open, listing]);
+  }, [open, listing, prefillMessage]);
 
   const loadMessageHistory = async () => {
     setLoadingHistory(true);
