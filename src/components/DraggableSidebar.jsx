@@ -511,36 +511,55 @@ function DraggableSidebar({ role, onNavigateToInbox, onNavigateToMessages, onNav
                           return;
                         }
 
-                        try {
+try {
                           const position = await new Promise((resolve, reject) => {
                             navigator.geolocation.getCurrentPosition(resolve, reject, {
                               enableHighAccuracy: true,
-                              timeout: 10000,
+                              timeout: 60000, // Increased to 60 seconds for mobile devices
                               maximumAge: 0
                             });
                           });
 
-                          const { latitude, longitude } = position.coords;
+                          // Validate coordinates
+                          if (!position.coords || typeof position.coords.latitude !== 'number' || typeof position.coords.longitude !== 'number') {
+                            throw new Error('Invalid GPS coordinates received');
+                          }
+
+                          const { latitude, longitude, accuracy } = position.coords;
                           const sellerRef = doc(db, 'sellers', auth.currentUser.uid);
 
                           await updateDoc(sellerRef, {
                             lat: latitude,
                             lng: longitude,
+                            location: {
+                              lat: latitude,
+                              lng: longitude,
+                              accuracy: accuracy || 0,
+                              timestamp: new Date().toISOString(),
+                              updatedAt: serverTimestamp()
+                            },
                             updatedAt: serverTimestamp()
                           });
 
-                          alert(`Location updated successfully!\nLatitude: ${latitude.toFixed(6)}\nLongitude: ${longitude.toFixed(6)}`);
+                          alert(`✓ Location updated successfully!\nLatitude: ${latitude.toFixed(6)}\nLongitude: ${longitude.toFixed(6)}\nAccuracy: ±${Math.round(accuracy || 0)}m`);
                         } catch (error) {
                           console.error('Error updating location:', error);
-                          if (error.code === error.PERMISSION_DENIED) {
-                            alert('Location access denied. Please enable location permissions and try again.');
-                          } else if (error.code === error.POSITION_UNAVAILABLE) {
-                            alert('Location information is unavailable. Please try again.');
-                          } else if (error.code === error.TIMEOUT) {
-                            alert('Location request timed out. Please try again.');
+                          
+                          let errorMessage = 'Failed to update location. ';
+                          
+                          if (error.code === error.PERMISSION_DENIED || error.code === 1) {
+                            errorMessage = 'Location permission denied. Please allow location access when prompted and try again.';
+                          } else if (error.code === error.POSITION_UNAVAILABLE || error.code === 2) {
+                            errorMessage = 'Location unavailable. Please check your GPS is enabled and you have an internet connection.';
+                          } else if (error.code === error.TIMEOUT || error.code === 3) {
+                            errorMessage = 'Location request timed out. Please try again in an open outdoor area with clear sky view.';
+                          } else if (error.message) {
+                            errorMessage = error.message;
                           } else {
-                            alert('Failed to update location. Please try again.');
+                            errorMessage += 'Please try again.';
                           }
+                          
+                          alert(errorMessage);
                         }
                       }}
                       className="w-full p-3 bg-indigo-50 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition text-left"
