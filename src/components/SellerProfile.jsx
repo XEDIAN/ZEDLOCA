@@ -80,24 +80,45 @@ const SellerProfile = ({ sellerId, onBack }) => {
     setLocationLoading(true);
     setLocationError('');
 
-    try {
-      const position = await new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-          reject(new Error('Geolocation is not supported'));
-          return;
-        }
+    // Check if geolocation is available
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported on this device. Please use a modern browser.');
+      setLocationLoading(false);
+      return;
+    }
 
+    try {
+      // Check permission status first
+      if (navigator.permissions) {
+        try {
+          const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+          if (permissionStatus.state === 'denied') {
+            setLocationError('Location permission denied. Please enable location access in your device settings and refresh.');
+            setLocationLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.log('Permissions API not supported');
+        }
+      }
+
+      const position = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
-          timeout: 15000,
+          timeout: 60000, // Increased timeout for mobile devices
           maximumAge: 0
         });
       });
 
+      // Validate coordinates
+      if (!position.coords || typeof position.coords.latitude !== 'number' || typeof position.coords.longitude !== 'number') {
+        throw new Error('Invalid GPS coordinates received');
+      }
+
       const location = {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
-        accuracy: position.coords.accuracy,
+        accuracy: position.coords.accuracy || 0,
         timestamp: new Date().toISOString(),
         updatedAt: serverTimestamp()
       };
@@ -108,11 +129,27 @@ const SellerProfile = ({ sellerId, onBack }) => {
       });
 
       setProfile(prev => ({ ...prev, location }));
-      setLocationError('Location updated successfully!');
+      setLocationError('✓ Location updated successfully!');
       setTimeout(() => setLocationError(''), 3000);
     } catch (error) {
       console.error('Error getting location:', error);
-      setLocationError('Failed to get current location. Please try again.');
+      
+      let errorMessage = 'Failed to get current location. ';
+      
+      // Handle specific geolocation errors
+      if (error.code === 1) {
+        errorMessage = 'Location permission denied. Please allow location access when prompted and try again.';
+      } else if (error.code === 2) {
+        errorMessage = 'Location unavailable. Please check your GPS is enabled and you have an internet connection.';
+      } else if (error.code === 3) {
+        errorMessage = 'Location request timed out. Please try again in an open outdoor area with clear sky view.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else {
+        errorMessage += 'Please try again.';
+      }
+      
+      setLocationError(errorMessage);
     } finally {
       setLocationLoading(false);
     }
@@ -158,8 +195,6 @@ const SellerProfile = ({ sellerId, onBack }) => {
   };
 
   const isOwnProfile = auth.currentUser && auth.currentUser.uid === sellerId;
-
-
 
   if (loading) {
     return (
@@ -337,13 +372,13 @@ const SellerProfile = ({ sellerId, onBack }) => {
 
           {/* Location Update */}
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex-1">
                 <h3 className="font-medium text-blue-800">Store Location</h3>
                 <p className="text-sm text-blue-600 mt-1">
                   {profile.location
                     ? `Current: ${profile.location.lat.toFixed(4)}, ${profile.location.lng.toFixed(4)}`
-                    : 'No location set'
+                    : 'No location set - Click below to set your location'
                   }
                 </p>
                 {profile.location && profile.location.accuracy && (
@@ -357,7 +392,7 @@ const SellerProfile = ({ sellerId, onBack }) => {
                   </div>
                 )}
                 {locationError && (
-                  <p className={`text-sm mt-1 ${locationError.toLowerCase().includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-sm mt-2 ${locationError.includes('✓') ? 'text-green-600 font-medium' : 'text-red-600'}`}>
                     {locationError}
                   </p>
                 )}
@@ -365,16 +400,16 @@ const SellerProfile = ({ sellerId, onBack }) => {
               <button
                 onClick={handleLocationUpdate}
                 disabled={locationLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center gap-2 whitespace-nowrap"
               >
                 {locationLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Updating...
+                    Getting location...
                   </>
                 ) : (
                   <>
-                    📍 Update Location
+                    📍 {profile.location ? 'Update Location' : 'Set Location'}
                   </>
                 )}
               </button>
@@ -393,8 +428,6 @@ const SellerProfile = ({ sellerId, onBack }) => {
             )}
           </div>
         </div>
-
-
 
         {/* Payment & Delivery Options */}
         <div className="bg-white rounded-xl shadow-lg p-4">

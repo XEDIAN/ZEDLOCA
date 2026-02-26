@@ -13,7 +13,8 @@ export default defineConfig({
     },
     cors: true, // Enable CORS
     allowedHosts: [
-      'all'
+      'all',
+      'unmethodizing-precongressional-hudson.ngrok-free.dev'
     ]
   }
 })
