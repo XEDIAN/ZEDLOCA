@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getAnalytics as firebaseGetAnalytics, logEvent } from 'firebase/analytics';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -17,14 +18,13 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Analytics - lazy loaded when needed
+// Initialize Analytics immediately
 let analytics = null;
 
 export const getAnalytics = () => {
   if (!analytics) {
     try {
-      const { getAnalytics } = require('firebase/analytics');
-      analytics = getAnalytics(app);
+      analytics = firebaseGetAnalytics(app);
       console.log('Firebase Analytics initialized successfully');
     } catch (error) {
       console.log('Firebase Analytics initialization error:', error);
@@ -33,7 +33,12 @@ export const getAnalytics = () => {
   return analytics;
 };
 
-export { analytics };
+// Initialize analytics on module load (client-side only)
+if (typeof window !== 'undefined') {
+  getAnalytics();
+}
+
+export { analytics, logEvent };
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);

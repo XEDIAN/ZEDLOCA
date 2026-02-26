@@ -1,8 +1,18 @@
-import { logEvent } from 'firebase/analytics';
-import { analytics } from '../firebase';
+import { getAnalytics, logEvent } from '../firebase';
+
+// Get analytics instance - ensures it's initialized
+const getAnalyticsInstance = () => {
+  try {
+    return getAnalytics();
+  } catch (error) {
+    console.error('Error getting analytics instance:', error);
+    return null;
+  }
+};
 
 // Track custom events
 export const trackEvent = (eventName, params = {}) => {
+  const analytics = getAnalyticsInstance();
   if (analytics) {
     try {
       logEvent(analytics, eventName, params);
@@ -57,6 +67,33 @@ export const trackButtonClick = (buttonName, buttonLocation) => {
   });
 };
 
+export const trackScreenView = (screenName, screenClass) => {
+  const analytics = getAnalyticsInstance();
+  if (analytics) {
+    try {
+      logEvent(analytics, 'screen_view', {
+        screen_name: screenName,
+        screen_class: screenClass
+      });
+      console.log(`Screen view tracked: ${screenName}`);
+    } catch (error) {
+      console.error('Error tracking screen view:', error);
+    }
+  }
+};
+
+export const trackAppOpen = () => {
+  trackEvent('app_open');
+};
+
+export const trackUserLogin = (method) => {
+  trackEvent('login', { method });
+};
+
+export const trackSignUp = (method) => {
+  trackEvent('sign_up', { method });
+};
+
 export default {
   trackEvent,
   trackPageView,
@@ -64,5 +101,9 @@ export default {
   trackMessageSent,
   trackSaveSeller,
   trackSearch,
-  trackButtonClick
+  trackButtonClick,
+  trackScreenView,
+  trackAppOpen,
+  trackUserLogin,
+  trackSignUp
 };

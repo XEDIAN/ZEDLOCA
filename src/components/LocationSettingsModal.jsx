@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import LocationService from '../services/LocationService';
-import { auth } from '../firebase';
+import { db, auth } from '../firebase';
+import { doc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
 const LocationSettingsModal = ({ onClose }) => {
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -8,62 +9,180 @@ const LocationSettingsModal = ({ onClose }) => {
   const [permissionStatus, setPermissionStatus] = useState('unknown');
   const [loading, setLoading] = useState(false);
   const [locationService, setLocationService] = useState(null);
+  const [locationError, setLocationError] = useState('');
+  const [userId, setUserId] = useState(null);
 
+  // Subscribe to Firebase for real-time location updates
   useEffect(() => {
-    if (auth.currentUser) {
-      const service = new LocationService(auth.currentUser.uid);
-      setLocationService(service);
+    if (!auth.currentUser) return;
+    
+    const uid = auth.currentUser.uid;
+    setUserId(uid);
 
-      // Check permission
-      service.requestPermission().then(setPermissionStatus);
+    const service = new LocationService(uid);
+    setLocationService(service);
 
-      // Get status
-      const status = service.getStatus();
-      setLocationEnabled(status.isTracking);
-      if (status.lastPosition) {
-        setCurrentLocation(status.lastPosition);
+    // Subscribe to user document for real-time location updates
+    const unsubscribe = onSnapshot(doc(db, 'users', uid), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data?.location) {
+          setCurrentLocation(data.location);
+          setLocationEnabled(data.location.trackingEnabled || false);
+        }
       }
-    }
+    });
+
+    // Check permission
+    service.requestPermission().then(setPermissionStatus);
+
+    // Get status
+    const status = service.getStatus();
+    setLocationEnabled(status.isTracking);
+
+    return () => unsubscribe();
   }, []);
 
   const handleToggleLocation = async () => {
-    if (!locationService) return;
+    if (!locationService || !userId) return;
+
+    setLocationError('');
 
     if (locationEnabled) {
+      // Stop tracking and update Firebase
       locationService.stopTracking();
       setLocationEnabled(false);
+      
+      try {
+        await updateDoc(doc(db, 'users', userId), {
+          'location.trackingEnabled': false
+        });
+      } catch (error) {
+        console.error('Error updating tracking state:', error);
+      }
     } else {
-      const success = await locationService.startTracking();
-      setLocationEnabled(success);
-      if (success) {
+      // Try to get initial location before starting tracking
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 30000,
+            maximumAge: 0
+          });
+        });
+
+        const locationData = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: position.coords.timestamp || Date.now(),
+          updatedAt: serverTimestamp(),
+          batteryLevel: 100,
+          trackingEnabled: true
+        };
+
+        // Update Firebase with initial location
+        await updateDoc(doc(db, 'users', userId), {
+          location: locationData
+        });
+
+        setCurrentLocation(locationData);
+      } catch (error) {
+        console.warn('Failed to get initial location:', error);
+      }
+
+      // Start tracking
+      const started = await locationService.startTracking();
+      setLocationEnabled(started);
+      
+      if (started) {
         setPermissionStatus('granted');
+        try {
+          await updateDoc(doc(db, 'users', userId), {
+            'location.trackingEnabled': true
+          });
+        } catch (error) {
+          console.error('Error updating tracking state:', error);
+        }
       }
     }
   };
 
   const handleManualUpdate = async () => {
-    if (!locationService) return;
+    if (!locationService || !userId) return;
 
     setLoading(true);
+    setLocationError('');
+
     try {
+      // Check if geolocation is available
+      if (!navigator.geolocation) {
+        throw new Error('Geolocation is not supported on this device');
+      }
+
+      // Get position with high accuracy
       const position = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
-          timeout: 10000
+          timeout: 30000,
+          maximumAge: 0
         });
       });
-      const newPos = {
+
+      // Validate coordinates
+      if (!position.coords.latitude || !position.coords.longitude) {
+        throw new Error('Invalid GPS coordinates received');
+      }
+
+      // Create location data object with all required fields
+      const locationData = {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
-        accuracy: position.coords.accuracy,
-        timestamp: position.timestamp
+        accuracy: position.coords.accuracy || 0,
+        timestamp: position.timestamp || Date.now(),
+        updatedAt: serverTimestamp(),
+        batteryLevel: 100,
+        trackingEnabled: locationEnabled,
+        source: 'manual_update'
       };
-      await locationService.updateFirebaseLocation(newPos);
-      setCurrentLocation(newPos);
+
+      // Update Firebase immediately - real-time sync
+      await updateDoc(doc(db, 'users', userId), {
+        location: locationData
+      });
+
+      // Update local state immediately for instant UI feedback
+      setCurrentLocation(locationData);
+      
+      console.log('Location updated successfully:', locationData);
     } catch (error) {
-      console.error('Manual location update failed:', error);
+      console.error('Location update failed:', error);
+      
+      let errorMessage = 'Failed to update location. ';
+      
+      // Handle specific geolocation errors
+      if (error.code === 1) {
+        errorMessage = 'Location permission denied. Please enable location access in your device settings.';
+      } else if (error.code === 2) {
+        errorMessage = 'Location unavailable. Please check your GPS and internet connection.';
+      } else if (error.code === 3) {
+        errorMessage = 'Location request timed out. Please try again in an open outdoor area.';
+      } else {
+        errorMessage = error.message || 'Please try again.';
+      }
+      
+      setLocationError(errorMessage);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  // Get accuracy quality based on GPS accuracy
+  const getAccuracyQuality = (accuracy) => {
+    if (accuracy <= 10) return { label: 'Excellent', color: 'text-green-600', bg: 'bg-green-100' };
+    if (accuracy <= 25) return { label: 'Good', color: 'text-blue-600', bg: 'bg-blue-100' };
+    if (accuracy <= 50) return { label: 'Fair', color: 'text-yellow-600', bg: 'bg-yellow-100' };
+    return { label: 'Poor', color: 'text-red-600', bg: 'bg-red-100' };
   };
 
   return (
@@ -118,21 +237,43 @@ const LocationSettingsModal = ({ onClose }) => {
             <button
               onClick={handleManualUpdate}
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
             >
-              {loading ? 'Updating...' : 'Update Location Manually'}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Updating Location...
+                </>
+              ) : (
+                '📍 Update My Location Now'
+              )}
             </button>
           </div>
 
+          {/* Error Message */}
+          {locationError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">{locationError}</p>
+            </div>
+          )}
+
           {/* Current Location Display */}
           {currentLocation && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm font-medium text-gray-700">Current Location:</p>
-              <p className="text-xs text-gray-600">
-                Lat: {currentLocation.lat.toFixed(6)}, Lng: {currentLocation.lng.toFixed(6)}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm font-medium text-blue-800">Current Location:</p>
+              <p className="text-xs text-blue-600 mt-1">
+                {currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)}
               </p>
-              <p className="text-xs text-gray-600">
-                Accuracy: {currentLocation.accuracy.toFixed(1)}m
+              <div className="flex items-center mt-2">
+                <p className="text-xs text-blue-600">
+                  Accuracy: ±{Math.round(currentLocation.accuracy)}m
+                </p>
+                <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${getAccuracyQuality(currentLocation.accuracy).bg} ${getAccuracyQuality(currentLocation.accuracy).color}`}>
+                  {getAccuracyQuality(currentLocation.accuracy).label}
+                </span>
+              </div>
+              <p className="text-xs text-blue-600 mt-1">
+                {currentLocation.source === 'manual_update' ? 'Updated manually' : 'Auto-updating'}
               </p>
             </div>
           )}

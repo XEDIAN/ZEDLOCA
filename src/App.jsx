@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import MapView from './components/MapView';
 import BuyersPage from './components/BuyersPage';
 import MapControls from './components/MapControls';
-import { auth, db } from './firebase';
+import { auth, db, getAnalytics } from './firebase';
 import { setDoc, getDoc, doc } from 'firebase/firestore';
 import 'leaflet/dist/leaflet.css';
 import Auth from './components/Auth';
@@ -29,6 +29,7 @@ import versionSync from './utils/versionSync';
 import VersionSyncIndicator from './components/VersionSyncIndicator';
 import CrossDeviceTestPanel from './components/CrossDeviceTestPanel';
 import { useUIConsistency } from './utils/uiConsistency';
+import { trackAppOpen, trackScreenView } from './utils/analytics';
 import { FaMapMarkerAlt, FaComments, FaDollarSign, FaUserCheck, FaShoppingCart, FaStore, FaArrowRight, FaUserShield } from 'react-icons/fa';
 
 
@@ -68,6 +69,13 @@ const MainApp = () => {
   const [isFirstLogin, setIsFirstLogin] = useState(false);
 
 
+  // Initialize analytics on app mount
+  useEffect(() => {
+    getAnalytics();
+    trackAppOpen();
+    trackScreenView('App', 'MainApp');
+    console.log('Firebase Analytics initialized and app_open event tracked');
+  }, []);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {

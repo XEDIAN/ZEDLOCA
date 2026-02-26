@@ -80,7 +80,7 @@ class LocationService {
     return false;
   }
 
-  async updateFirebaseLocation(position) {
+  async updateFirebaseLocation(position, options = {}) {
     try {
       const { db } = await import('../firebase');
       const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
@@ -89,10 +89,11 @@ class LocationService {
         lat: position.lat,
         lng: position.lng,
         accuracy: position.accuracy,
-        timestamp: position.timestamp,
+        timestamp: position.timestamp || Date.now(),
         updatedAt: serverTimestamp(),
         batteryLevel: this.batteryLevel,
-        trackingEnabled: true
+        trackingEnabled: options.trackingEnabled !== undefined ? options.trackingEnabled : true,
+        source: options.source || 'automatic_tracking'
       };
 
       await updateDoc(
