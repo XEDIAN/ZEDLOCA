@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../firebase';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
 import { getSellerProfileUrl } from '../utils/linkUtils';
 
@@ -123,15 +123,45 @@ const SellerProfile = ({ sellerId, onBack }) => {
         updatedAt: serverTimestamp()
       };
 
-      // Save to sellers collection
+      // Save to sellers collection - update both nested location object and flat lat/lng fields
+      // Flat fields are needed for map components and distance calculations
       await updateDoc(doc(db, 'sellers', sellerId), {
-        location: location
+        location: location,
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        updatedAt: serverTimestamp()
       });
 
       // Also save to users collection for real-time profile updates
       await updateDoc(doc(db, 'users', sellerId), {
         location: location
       });
+
+      // Update all the seller's listings with the new location
+      try {
+        const listingsQuery = query(
+          collection(db, 'listings'),
+          where('userId', '==', sellerId)
+        );
+        const listingsSnapshot = await getDocs(listingsQuery);
+        
+        if (!listingsSnapshot.empty) {
+          const updatePromises = listingsSnapshot.docs.map(listingDoc => 
+            updateDoc(doc(db, 'listings', listingDoc.id), {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+              sellerLat: position.coords.latitude,
+              sellerLng: position.coords.longitude,
+              updatedAt: serverTimestamp()
+            })
+          );
+          await Promise.all(updatePromises);
+          console.log(`Updated ${listingsSnapshot.size} listings with new location`);
+        }
+      } catch (listingsErr) {
+        console.warn('Failed to update listings location:', listingsErr);
+        // Don't fail the whole operation if listings update fails
+      }
 
       setProfile(prev => ({ ...prev, location }));
       setLocationError('✓ Location updated successfully!');
