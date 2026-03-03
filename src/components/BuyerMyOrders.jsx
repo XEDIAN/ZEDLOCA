@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { useCurrency } from './CurrencyContext';
 import MessageSellerModal from './MessageSellerModal';
+import ReorderModal from './ReorderModal';
 
 const BuyerMyOrders = ({ buyerId, onBack }) => {
   const [orders, setOrders] = useState([]);
@@ -14,7 +15,9 @@ const BuyerMyOrders = ({ buyerId, onBack }) => {
   const [sortBy, setSortBy] = useState('newest');
   const [sellers, setSellers] = useState({});
   const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [reorderModalOpen, setReorderModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedReorderOrder, setSelectedReorderOrder] = useState(null);
 
   const { formatPrice } = useCurrency();
 
@@ -345,8 +348,8 @@ const BuyerMyOrders = ({ buyerId, onBack }) => {
                       <button
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                         onClick={() => {
-                          // Implement reorder functionality
-                          alert('Reorder functionality coming soon!');
+                          setSelectedReorderOrder(order);
+                          setReorderModalOpen(true);
                         }}
                       >
                         🔄 Reorder
@@ -387,6 +390,19 @@ const BuyerMyOrders = ({ buyerId, onBack }) => {
           sellerName={sellers[selectedOrder.sellerId]?.displayName}
           buyerId={buyerId}
           listing={{ id: selectedOrder.id, title: selectedOrder.title, description: selectedOrder.description || '' }}
+        />
+      )}
+
+      {/* Reorder Modal */}
+      {selectedReorderOrder && (
+        <ReorderModal
+          open={reorderModalOpen}
+          onClose={() => {
+            setReorderModalOpen(false);
+            setSelectedReorderOrder(null);
+          }}
+          originalOrder={selectedReorderOrder}
+          buyer={{ uid: buyerId }}
         />
       )}
     </div>

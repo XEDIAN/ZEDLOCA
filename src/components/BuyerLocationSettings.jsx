@@ -1,7 +1,102 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { doc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import LocationService from '../services/LocationService';
+
+// Reverse geocoding function to convert coordinates to address
+const reverseGeocode = async (lat, lng) => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+      {
+        headers: {
+          'User-Agent': 'ZEDLOCA/1.0'
+        }
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Reverse geocoding failed');
+    }
+    
+    const data = await response.json();
+    
+    if (data.display_name) {
+      return data.display_name;
+    }
+    
+    // Fallback: construct address from address components
+    const addr = data.address;
+    if (addr) {
+      const parts = [];
+      if (addr.road) parts.push(addr.road);
+      if (addr.neighbourhood) parts.push(addr.neighbourhood);
+      if (addr.suburb) parts.push(addr.suburb);
+      if (addr.city || addr.town || addr.village) parts.push(addr.city || addr.town || addr.village);
+      if (addr.state) parts.push(addr.state);
+      if (addr.postcode) parts.push(addr.postcode);
+      return parts.join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+    
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  } catch (error) {
+    console.warn('Reverse geocoding error:', error);
+    // Return coordinates as fallback
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+};
+
+// Update undelivered orders with new buyer location
+const updateUndeliveredOrdersLocation = async (userId, locationData) => {
+  const undeliveredStatuses = ['pending', 'confirmed', 'preparing', 'ready'];
+  
+  try {
+    // Query orders that are undelivered for this buyer
+    const ordersRef = collection(db, 'orders');
+    const ordersQuery = query(
+      ordersRef,
+      where('buyerId', '==', userId),
+      where('status', 'in', undeliveredStatuses)
+    );
+    
+    const ordersSnapshot = await getDocs(ordersQuery);
+    
+    if (ordersSnapshot.empty) {
+      return { success: true, updatedCount: 0, message: 'No undelivered orders to update' };
+    }
+    
+    // Reverse geocode the new location to get address
+    const address = await reverseGeocode(locationData.lat, locationData.lng);
+    
+    // Update each undelivered order
+    const updatePromises = ordersSnapshot.docs.map(async (orderDoc) => {
+      await updateDoc(doc(db, 'orders', orderDoc.id), {
+        deliveryAddress: address,
+        buyerLocation: {
+          lat: locationData.lat,
+          lng: locationData.lng,
+          accuracy: locationData.accuracy,
+          timestamp: locationData.timestamp,
+          updatedAt: serverTimestamp(),
+          source: 'buyer_location_update'
+        },
+        updatedAt: serverTimestamp()
+      });
+    });
+    
+    await Promise.all(updatePromises);
+    
+    return { 
+      success: true, 
+      updatedCount: ordersSnapshot.size,
+      address: address,
+      message: `Updated delivery address for ${ordersSnapshot.size} order(s)`
+    };
+  } catch (error) {
+    console.error('Error updating undelivered orders:', error);
+    return { success: false, updatedCount: 0, message: error.message };
+  }
+};
 
 const BuyerLocationSettings = ({ userId }) => {
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -11,6 +106,7 @@ const BuyerLocationSettings = ({ userId }) => {
   const [locationService, setLocationService] = useState(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [locationSuccess, setLocationSuccess] = useState('');
 
   useEffect(() => {
     if (userId) {
@@ -135,6 +231,22 @@ const BuyerLocationSettings = ({ userId }) => {
       setCurrentLocation(locationData);
       
       console.log('Location updated successfully:', locationData);
+
+      // Also update undelivered orders with the new location
+      const orderUpdateResult = await updateUndeliveredOrdersLocation(userId, locationData);
+      
+      if (orderUpdateResult.success && orderUpdateResult.updatedCount > 0) {
+        console.log('Orders updated:', orderUpdateResult.message);
+        // Show success message for order updates
+        setLocationSuccess(`✅ Location updated! ${orderUpdateResult.message}. New address: ${orderUpdateResult.address}`);
+      } else if (orderUpdateResult.success && orderUpdateResult.updatedCount === 0) {
+        console.log('No undelivered orders to update');
+        setLocationSuccess('✅ Location updated successfully!');
+      } else {
+        console.warn('Failed to update orders:', orderUpdateResult.message);
+        // Only show order update error if it wasn't the main location update that failed
+        setLocationError(`⚠️ Location updated, but failed to update orders: ${orderUpdateResult.message}`);
+      }
     } catch (error) {
       console.error('Location update failed:', error);
       
@@ -223,6 +335,13 @@ const BuyerLocationSettings = ({ userId }) => {
             <p className="text-xs text-blue-600">
               Last updated: {new Date(currentLocation.timestamp).toLocaleTimeString()}
             </p>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {locationSuccess && (
+          <div className="bg-green-50 border border-green-200 rounded p-3">
+            <p className="text-sm text-green-800">{locationSuccess}</p>
           </div>
         )}
 
