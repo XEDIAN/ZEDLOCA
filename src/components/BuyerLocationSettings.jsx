@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { doc, updateDoc, onSnapshot, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import LocationService from '../services/LocationService';
+import HybridLocationService from '../services/HybridLocationService';
 
 // Reverse geocoding function to convert coordinates to address
 const reverseGeocode = async (lat, lng) => {
@@ -104,6 +105,9 @@ const BuyerLocationSettings = ({ userId }) => {
   const [isTracking, setIsTracking] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState('unknown');
   const [locationService, setLocationService] = useState(null);
+  const [hybridService, setHybridService] = useState(null);
+  const [networkInfo, setNetworkInfo] = useState(null);
+  const [hybridStatus, setHybridStatus] = useState(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [locationSuccess, setLocationSuccess] = useState('');
@@ -113,6 +117,14 @@ const BuyerLocationSettings = ({ userId }) => {
       const service = new LocationService(userId);
       setLocationService(service);
 
+      // Initialize hybrid positioning service
+      const hybridService = new HybridLocationService(userId, {
+        enableHybridPositioning: true,
+        enableCellularFallback: true,
+        enableNetworkMonitoring: true
+      });
+      setHybridService(hybridService);
+
       // Listen for location updates in Firebase - real-time
       const unsubscribe = onSnapshot(doc(db, 'users', userId), (doc) => {
         const data = doc.data();
@@ -121,6 +133,34 @@ const BuyerLocationSettings = ({ userId }) => {
           setLocationEnabled(data.location.trackingEnabled || false);
         }
       });
+
+      // Monitor network changes
+      const monitorNetwork = async () => {
+        if (hybridService) {
+          try {
+            await hybridService.initialize();
+            
+            // Get initial network info
+            const networkInfo = hybridService.networkService.getNetworkInfo();
+            setNetworkInfo(networkInfo);
+
+            // Get hybrid positioning status
+            const hybridStatus = hybridService.getHybridStatus();
+            setHybridStatus(hybridStatus);
+
+            // Set up network monitoring
+            hybridService.networkService.onNetworkChange((networkInfo) => {
+              setNetworkInfo(networkInfo);
+              const status = hybridService.getHybridStatus();
+              setHybridStatus(status);
+            });
+          } catch (error) {
+            console.warn('Hybrid positioning initialization failed:', error);
+          }
+        }
+      };
+
+      monitorNetwork();
 
       return () => unsubscribe();
     }
@@ -183,7 +223,7 @@ const BuyerLocationSettings = ({ userId }) => {
     }
   };
 
-  // Mobile-optimized location update - no delays or errors
+  // Mobile-optimized location update using hybrid positioning
   const handleManualLocationUpdate = async () => {
     if (!userId) return;
 
@@ -191,35 +231,51 @@ const BuyerLocationSettings = ({ userId }) => {
     setLocationError('');
 
     try {
-      // Check if geolocation is available
-      if (!navigator.geolocation) {
-        throw new Error('Geolocation is not supported on this device');
+      // Initialize hybrid service if not already done
+      if (!hybridService) {
+        const newHybridService = new HybridLocationService(userId, {
+          enableHybridPositioning: true,
+          enableCellularFallback: true,
+          enableNetworkMonitoring: true,
+          maxGnssAccuracy: 15
+        });
+        await newHybridService.initialize();
+        setHybridService(newHybridService);
       }
 
-      // Get position with high accuracy for mobile
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 30000,
-          maximumAge: 0
-        });
+      // Get position using hybrid positioning (GNSS + Cellular fallback)
+      const position = await hybridService.getLocationWithFallback({
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 0
       });
 
-      // Validate coordinates
-      if (!position.coords.latitude || !position.coords.longitude) {
-        throw new Error('Invalid GPS coordinates received');
+      // Check if positioning was successful
+      if (!position.success) {
+        throw new Error(position.error || 'Failed to get location');
       }
 
-      // Create location data object
+      // Validate coordinates
+      if (!position.lat || !position.lng) {
+        throw new Error('Invalid coordinates received');
+      }
+
+      // Create location data object with hybrid positioning metadata
       const locationData = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-        accuracy: position.coords.accuracy || 0,
+        lat: position.lat,
+        lng: position.lng,
+        accuracy: position.accuracy || 0,
         timestamp: position.timestamp || Date.now(),
         updatedAt: serverTimestamp(),
         batteryLevel: 100,
         trackingEnabled: locationEnabled,
-        source: 'manual_update'
+        source: position.source || 'hybrid_manual_update',
+        positioningMethod: position.positioningMethod || 'hybrid',
+        hybridPositioning: {
+          method: hybridService.hybridState.positioningMethod,
+          gnssAvailable: hybridService.hybridState.gnssAvailable,
+          networkAvailable: hybridService.hybridState.networkAvailable
+        }
       };
 
       // Update Firebase immediately - real-time sync
@@ -230,7 +286,11 @@ const BuyerLocationSettings = ({ userId }) => {
       // Update local state immediately for instant UI feedback
       setCurrentLocation(locationData);
       
-      console.log('Location updated successfully:', locationData);
+      // Update hybrid status display
+      const status = hybridService.getHybridStatus();
+      setHybridStatus(status);
+      
+      console.log('Location updated successfully using hybrid positioning:', locationData);
 
       // Also update undelivered orders with the new location
       const orderUpdateResult = await updateUndeliveredOrdersLocation(userId, locationData);
@@ -380,10 +440,87 @@ const BuyerLocationSettings = ({ userId }) => {
           </div>
         )}
 
+        {/* Network Information */}
+        {networkInfo && (
+          <div className="bg-gray-50 border border-gray-200 rounded p-3">
+            <h4 className="font-medium text-sm mb-2">📡 Network Positioning</h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-gray-600">Network Type:</span>
+                <span className="ml-2 font-medium">{networkInfo.type}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Signal Quality:</span>
+                <span className={`ml-2 px-1 py-0.5 rounded text-xs ${
+                  networkInfo.effectiveType === '5g' ? 'bg-green-100 text-green-700' :
+                  networkInfo.effectiveType === '4g' ? 'bg-blue-100 text-blue-700' :
+                  networkInfo.effectiveType === '3g' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-red-100 text-red-700'
+                }`}>
+                  {networkInfo.effectiveType.toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Download Speed:</span>
+                <span className="ml-2 font-medium">{networkInfo.downlink || 'Unknown'} Mbps</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Latency:</span>
+                <span className="ml-2 font-medium">{networkInfo.rtt || 'Unknown'} ms</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hybrid Positioning Status */}
+        {hybridStatus && (
+          <div className="bg-purple-50 border border-purple-200 rounded p-3">
+            <h4 className="font-medium text-sm mb-2">🔀 Hybrid Positioning</h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-gray-600">Current Method:</span>
+                <span className={`ml-2 px-1 py-0.5 rounded text-xs ${
+                  hybridStatus.currentMethod === 'gnss_primary' ? 'bg-green-100 text-green-700' :
+                  hybridStatus.currentMethod === 'cellular_fallback' ? 'bg-blue-100 text-blue-700' :
+                  hybridStatus.currentMethod === 'cellular_primary' ? 'bg-purple-100 text-purple-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>
+                  {hybridStatus.currentMethod.replace('_', ' ').toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">GNSS Available:</span>
+                <span className={`ml-2 font-medium ${
+                  hybridStatus.gnssAvailable ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {hybridStatus.gnssAvailable ? 'Yes' : 'No'}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Network Available:</span>
+                <span className={`ml-2 font-medium ${
+                  hybridStatus.networkAvailable ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {hybridStatus.networkAvailable ? 'Yes' : 'No'}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Hybrid Enabled:</span>
+                <span className={`ml-2 font-medium ${
+                  hybridStatus.hybridEnabled ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {hybridStatus.hybridEnabled ? 'Yes' : 'No'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="text-xs text-gray-500">
           <p>• Location updates every 5 minutes or 100m movement</p>
           <p>• Tracking stops automatically below 20% battery</p>
-          <p>• You can disable tracking anytime</p>
+          <p>• Hybrid positioning provides fallback when GPS is unavailable</p>
+          <p>• Network-based positioning works indoors and in urban areas</p>
         </div>
       </div>
     </div>
