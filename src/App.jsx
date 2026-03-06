@@ -49,6 +49,8 @@ const MainApp = () => {
   const [showListings, setShowListings] = useState(false);
   const [showSellerListings, setShowSellerListings] = useState(null);
   const [showInbox, setShowInbox] = useState(false);
+  const [sellerViewSource, setSellerViewSource] = useState(null); // 'map' | 'stores' | null
+  const [preselectedSellerId, setPreselectedSellerId] = useState(null); // For showing a specific seller directly
   const [showBuyerMessages, setShowBuyerMessages] = useState(false);
   const [showBuyerStores, setShowBuyerStores] = useState(false);
   const [showBuyerMyOrders, setShowBuyerMyOrders] = useState(false);
@@ -261,12 +263,42 @@ const MainApp = () => {
     );
   }
 
-  // Show seller listings
+  // Show seller listings - use BuyerStores with preselectedSeller when from map, otherwise use SellerListings
   if (showSellerListings) {
+    // If triggered from map, show BuyerStores with preselected seller for consistent UI
+    if (sellerViewSource === 'map') {
+      return (
+        <BuyerStores
+          preselectedSellerId={showSellerListings}
+          onViewSeller={(sellerId) => {
+            setShowSellerListings(sellerId);
+            // Keep source as map since we're navigating within map-triggered views
+          }}
+          onBack={() => {
+            setShowSellerListings(null);
+            setSellerViewSource(null);
+          }}
+          onMessageSeller={(sellerData) => {
+            setMessageSellerData(sellerData);
+            setShowMessageSellerModal(true);
+          }}
+          onNavigateToPlaceOrder={(data) => {
+            setPlaceOrderData(data);
+            setShowPlaceOrderPage(true);
+          }}
+          user={user}
+          role={role}
+        />
+      );
+    }
+    // Otherwise show the simpler SellerListings view
     return (
       <SellerListings
         sellerId={showSellerListings}
-        onBack={() => setShowSellerListings(null)}
+        onBack={() => {
+          setShowSellerListings(null);
+          setSellerViewSource(null);
+        }}
         user={user}
       />
     );
@@ -804,7 +836,10 @@ const MainApp = () => {
     <>
       <VersionSyncIndicator />
       <MapView
-        onViewStore={setShowSellerListings}
+        onViewStore={(sellerId) => {
+          setSellerViewSource('map');
+          setShowSellerListings(sellerId);
+        }}
         onBack={() => setShowMap(false)}
         role={role}
         onNavigateToInbox={() => setShowInbox(true)}

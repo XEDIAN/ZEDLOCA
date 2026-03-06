@@ -19,7 +19,7 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNavigateToPlaceOrder, user, role }) {
+function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNavigateToPlaceOrder, user, role, preselectedSellerId }) {
   console.log('BuyerStores: Component rendering');
   const { formatPrice } = useCurrency();
   console.log('BuyerStores: Currency context loaded');
@@ -28,7 +28,7 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
-  const [viewingSellerId, setViewingSellerId] = useState(null);
+  const [viewingSellerId, setViewingSellerId] = useState(preselectedSellerId || null);
   const [sellerListings, setSellerListings] = useState([]);
   const [sellerLoading, setSellerLoading] = useState(false);
 
@@ -130,6 +130,13 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
       setRecentlyViewed(JSON.parse(savedRecentlyViewed));
     }
   }, []);
+
+  // Handle preselected seller (from map view)
+  useEffect(() => {
+    if (preselectedSellerId) {
+      handleViewSeller(preselectedSellerId);
+    }
+  }, [preselectedSellerId]);
 
   // Helper functions
   const toggleFavorite = (listingId) => {
