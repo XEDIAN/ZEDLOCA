@@ -193,7 +193,7 @@ const MainApp = () => {
     return () => unsubscribe();
   }, [showMap]);
 
-  // Show shared seller listings and contact details
+  // Show shared seller listings and contact details - use BuyerStores for consistent UI
   if (sharedSellerId) {
     return (
       <>
@@ -203,11 +203,29 @@ const MainApp = () => {
             You're offline. Some features may be limited.
           </div>
         )}
-        <SellerListings
-          sellerId={sharedSellerId}
+        <BuyerStores
+          preselectedSellerId={sharedSellerId}
+          onViewSeller={(sellerId) => {
+            setSharedSellerId(sellerId);
+          }}
           onBack={() => setSharedSellerId(null)}
+          onMessageSeller={(sellerData) => {
+            setMessageSellerData(sellerData);
+            setShowMessageSellerModal(true);
+          }}
+          onNavigateToPlaceOrder={(data) => {
+            setPlaceOrderData(data);
+            setShowPlaceOrderPage(true);
+          }}
           user={user}
-          isSharedView={true}
+          role={role}
+        />
+        <MessageSellerModal
+          open={showMessageSellerModal}
+          onClose={() => setShowMessageSellerModal(false)}
+          sellerId={messageSellerData?.id}
+          sellerName={messageSellerData?.displayName}
+          buyerId={user?.uid}
         />
       </>
     );
