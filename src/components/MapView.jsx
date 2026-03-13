@@ -71,6 +71,21 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+/**
+ * Format distance for display.
+ * If distance is less than 1km, display in meters.
+ * Otherwise, display in kilometers with 1 decimal place.
+ */
+function formatDistance(distanceInMeters) {
+  if (distanceInMeters === null || distanceInMeters === undefined || distanceInMeters === Infinity) {
+    return null;
+  }
+  if (distanceInMeters < 1000) {
+    return `${Math.round(distanceInMeters)} m away`;
+  }
+  return `${(distanceInMeters / 1000).toFixed(1)} km away`;
+}
+
 function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessageModal, onNavigate, onNavigateToMessages, sellerMessageStatus = {}, onSaveSeller, savedSellers = [] }) {
   const map = useMap();
 
@@ -115,9 +130,9 @@ function MapContent({ sellers, userLocation, onViewStore, messageModal, setMessa
                     <p className="text-sm text-gray-600 mb-3 italic">"{seller.promo_text}"</p>
                   )}
 
-                  {userLocation && (
+                  {userLocation && distanceToUser && (
                     <p className="text-xs text-gray-500 mb-3">
-                      📍 {(distanceToUser / 1000).toFixed(1)} km away
+                      📍 {formatDistance(distanceToUser)}
                     </p>
                   )}
 
@@ -626,7 +641,7 @@ function MapView({ onViewStore, onBack, role, onNavigateToInbox, onNavigateToMes
 
                         <div className="flex items-center text-sm text-gray-500 mb-3">
                           {distanceToUser && (
-                            <span className="mr-4">📍 {(distanceToUser / 1000).toFixed(1)} km away</span>
+                            <span className="mr-4">📍 {formatDistance(distanceToUser)}</span>
                           )}
                           {seller.category && (
                             <span className="bg-gray-100 px-2 py-1 rounded">{seller.category}</span>

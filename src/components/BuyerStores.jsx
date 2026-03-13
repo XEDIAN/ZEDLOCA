@@ -19,6 +19,21 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+/**
+ * Format distance for display.
+ * If distance is less than 1km, display in meters.
+ * Otherwise, display in kilometers with 1 decimal place.
+ */
+function formatDistance(distanceInMeters) {
+  if (distanceInMeters === null || distanceInMeters === undefined || distanceInMeters === Infinity) {
+    return null;
+  }
+  if (distanceInMeters < 1000) {
+    return `${Math.round(distanceInMeters)} m away`;
+  }
+  return `${(distanceInMeters / 1000).toFixed(1)} km away`;
+}
+
 function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNavigateToPlaceOrder, user, role, preselectedSellerId }) {
   console.log('BuyerStores: Component rendering');
   const { formatPrice } = useCurrency();
@@ -677,8 +692,9 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
               {paginatedListings.map(listing => {
                 const seller = sellers[listing.userId];
                 const distance = userLocation && seller && seller.lat && seller.lng
-                  ? (haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng) / 1000).toFixed(1)
+                  ? haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng)
                   : null;
+                const formattedDistance = distance !== null ? formatDistance(distance) : null;
                 const distanceToSeller = seller && userLocation && typeof seller.lat === 'number' && typeof seller.lng === 'number'
                   ? haversine(userLocation.lat, userLocation.lng, seller.lat, seller.lng)
                   : Infinity;
@@ -755,10 +771,10 @@ function BuyerStores({ onViewSeller, onBack, onMessageSeller, onPlaceOrder, onNa
                               WhatsApp: {seller.phone}
                             </a>
                           )}
-                          {distance && (
+                          {formattedDistance && (
                             <div className="text-xs text-gray-600 flex items-center gap-1">
                               <span className="text-lg">📍</span>
-                              {distance} km away
+                              {formattedDistance}
                             </div>
                           )}
                           {(promoActiveForListing || promoActiveForSeller) && (
